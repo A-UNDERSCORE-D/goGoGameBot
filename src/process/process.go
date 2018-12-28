@@ -2,11 +2,14 @@ package process
 
 import (
     "fmt"
+    "golang.org/x/sys/unix"
     "io"
     "log"
+    "os"
     "os/exec"
     "strings"
     "sync"
+    "time"
 )
 
 const (
@@ -83,6 +86,7 @@ func (p *Process) IsRunning() bool {
     return p.Status == Running
 }
 
+// writes data to stdin on this process, adding a newline if one does not exist
 func (p *Process) Write(data string) (int, error) {
     toWrite := data
     if !strings.HasSuffix(toWrite, "\n") {
@@ -125,5 +129,46 @@ loop:
                 log.Printf("[%s] Could not Write %q to stdin: %v", p.Name, data, err)
             }
         }
+    }
+}
+
+// sends the given signal to the underlying process
+func (p *Process) SendSignal(sig os.Signal) error {
+    if !p.IsRunning() {
+        p.log("[WARN] attempt to send non-running process a signal")
+        return nil
+    }
+
+    if err := p.Cmd.Process.Signal(sig); err != nil {
+        p.logf("[WARN] could not send signal %s to process: %s", sig.String(), err)
+        return err
+    }
+    return nil
+}
+
+
+// sends SIGTERM to the process if it is running
+func (p *Process) Stop() error {
+    return p.SendSignal(unix.SIGTERM)
+}
+
+// sends SIGKILL to the process if it is running
+func (p *Process) Kill() error {
+    return p.SendSignal(unix.SIGKILL)
+}
+
+// asks the process to stop and waits for the configured timeout, after which it kills the process
+func (p *Process) StopOrKillTimeout(timeout time.Duration) error {
+    err := p.Stop()
+    if err != nil {
+        return err
+    }
+
+    select {
+    case <-time.After(timeout):
+        return p.Kill()
+
+    case <-p.DoneChan:
+        return nil
     }
 }
