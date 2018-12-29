@@ -5,9 +5,11 @@ import (
     "crypto/tls"
     "errors"
     "github.com/chzyer/readline"
+    "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "log"
     "net"
+    "strings"
 )
 
 const (
@@ -21,6 +23,14 @@ const (
 
     // Connecting means the bot is in progress of connecting and negotiating with the target IRC server
     CONNECTING
+)
+
+const(
+    PriLowest = 16
+    PriLow = 32
+    PriNorm = 48
+    PriHigh = 64
+    PriHighest = 80
 )
 
 var (
@@ -47,10 +57,14 @@ type Bot struct {
     Status   int
     DoneChan chan bool
     Log      *log.Logger
+    EventMgr eventmgr.EventManager
 }
 
 func NewBot(config IRCConfig, rl *readline.Instance) *Bot {
-    return &Bot{Config: config, Status: DISCONNECTED, Log: log.New(rl, "[bot] ", log.Flags())}
+    b := &Bot{Config: config, Status: DISCONNECTED, Log: log.New(rl, "[bot] ", log.Flags())}
+    b.EventMgr.Attach("RAW_PING", b.onPing, PriNorm)
+    b.EventMgr.Attach("RAW_001", b.onWelcome, PriNorm)
+    return b
 }
 
 func (b *Bot) Run() error {
@@ -132,13 +146,21 @@ func (b *Bot) readLoop() {
 }
 
 func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
-    switch line.Command {
-    case "PING":
-        if err := b.WriteLine(makeSimpleIRCLine("PONG", line.Params...)); err != nil {
-            b.Log.Printf("could not write line: %s", err)
-        }
-    case "001":
-        //b.onWelcome()
-        b.Status = CONNECTED
+    im := eventmgr.NewInfoMap()
+    im["line"] = line
+    im["bot"] = b
+    b.EventMgr.Dispatch("RAW_" + strings.ToUpper(line.Command), im)
+}
+
+func (b *Bot) onPing(event string, data eventmgr.InfoMap) {
+    lineIn := data["line"].(ircmsg.IrcMessage)
+    if err := b.WriteLine(makeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
+        b.EventMgr.Dispatch("error", eventmgr.InfoMap{"error": err})
     }
+}
+
+func (b *Bot) onWelcome(event string, data eventmgr.InfoMap) {
+    // This should set a few things like max targets etc at some point.
+    //lineIn := data["line"].(ircmsg.IrcMessage)
+    b.Status = CONNECTED
 }
