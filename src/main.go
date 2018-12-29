@@ -3,6 +3,7 @@ package main
 import (
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/cli"
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/command"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/irc/bot"
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/process"
     "github.com/chzyer/readline"
     "log"
@@ -41,5 +42,9 @@ func main() {
 
     man.StartAllProcessesDelay(time.Millisecond * 10)
     man.WriteToProcess("client", "test!")
+
+
+    b := bot.NewBot(bot.IRCConfig{Nick: "adtestbot", Ident: "adtest", Ssl: true, ServerHost: "irc.snoonet.org", ServerPort: "6697"}, rl)
+    panic(b.Run())
     time.Sleep(time.Hour)
 }
