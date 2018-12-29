@@ -42,7 +42,7 @@ func (h *Handler) RegisterCommand(cmd string, f HandleFunc) error {
 
 func (h *Handler) HandleCommand(cmd string, args []string, source string) {
     if hf, ok := h.commands[cmd]; ok {
-        hf(cmd, args, source)
+        go hf(cmd, args, source)
     } else {
         h.NotFoundHandler(cmd, args, source)
     }
