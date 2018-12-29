@@ -2,6 +2,7 @@ package process
 
 import (
     "fmt"
+    "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
     "io"
     "log"
@@ -20,7 +21,7 @@ const (
     Errored
 )
 
-func NewProcess(name string, command string, args []string) (*Process, error) {
+func NewProcess(name string, command string, args []string, readline *readline.Instance) (*Process, error) {
     cmd := exec.Command(command, args...)
     stdin, err := cmd.StdinPipe()
     if err != nil {
@@ -47,9 +48,19 @@ func NewProcess(name string, command string, args []string) (*Process, error) {
         WriteChan:  make(chan string),
         Status:     NotStarted,
         DoneChan:   make(chan bool, 1),
+        log:        log.New(readline, "["+name+"] ", log.Flags()),
     }, nil
 }
 
+func NewProcessMustSucceed(name, command string, args []string, readline *readline.Instance) *Process {
+    p, err := NewProcess(name, command, args, readline)
+    if err != nil {
+        panic(err)
+    }
+    return p
+}
+
+// Process is a representation of a command to be run and access to its stdin/out/err
 type Process struct {
     Name       string
     Cmd        *exec.Cmd
@@ -61,9 +72,11 @@ type Process struct {
     DoneChan   chan bool
     Status     int
     Err        error
+    log        *log.Logger
 }
 
 func (p *Process) Start() error {
+    p.log.Print("Starting")
     err := p.Cmd.Start()
     if err != nil {
         return fmt.Errorf("could not Start process %s: %v", p.Name, err)
@@ -71,15 +84,8 @@ func (p *Process) Start() error {
     go p.watchWriteChan()
     go p.waitOnProc()
     p.Status = Running
+    p.log.Print("Started")
     return nil
-}
-
-func (p *Process) log(msg string) {
-    log.Printf("[%s] %s", p.Name, msg)
-}
-
-func (p *Process) logf(formatStr string, args ...interface{}) {
-    p.log(fmt.Sprintf(formatStr, args...))
 }
 
 func (p *Process) IsRunning() bool {
@@ -95,7 +101,7 @@ func (p *Process) Write(data string) (int, error) {
 
     p.StdinMutex.Lock()
     defer p.StdinMutex.Unlock()
-    p.logf("[STDIN] %s", data)
+    p.log.Printf("[STDIN] %s", data)
     return p.Stdin.Write([]byte(toWrite))
 }
 
@@ -104,11 +110,11 @@ func (p *Process) waitOnProc() {
     if err != nil {
         p.Status = Errored
         p.Err = err
-        p.logf("command returned an error: %v", err)
+        p.log.Printf("command returned an error: %v", err)
     } else {
         p.Status = Done
         p.Err = nil
-        p.logf("command completed successfully")
+        p.log.Print("command completed successfully")
     }
     p.DoneChan <- true
     close(p.WriteChan)
@@ -120,13 +126,13 @@ loop:
         select {
         case data, ok := <-p.WriteChan:
             if !ok {
-                log.Printf("[%s] WriteChan on Process closed", p.Name)
+                p.log.Print("WriteChan on Process closed")
                 break loop
             }
 
             _, err := p.Write(data)
             if err != nil {
-                log.Printf("[%s] Could not Write %q to stdin: %v", p.Name, data, err)
+                p.log.Printf("Could not Write %q to stdin: %v", data, err)
             }
         }
     }
@@ -135,17 +141,16 @@ loop:
 // sends the given signal to the underlying process
 func (p *Process) SendSignal(sig os.Signal) error {
     if !p.IsRunning() {
-        p.log("[WARN] attempt to send non-running process a signal")
+        p.log.Printf("[WARN] attempt to send non-running process a signal")
         return nil
     }
 
     if err := p.Cmd.Process.Signal(sig); err != nil {
-        p.logf("[WARN] could not send signal %s to process: %s", sig.String(), err)
+        p.log.Printf("[WARN] could not send signal %s to process: %s", sig.String(), err)
         return err
     }
     return nil
 }
-
 
 // sends SIGTERM to the process if it is running
 func (p *Process) Stop() error {
