@@ -78,8 +78,8 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
-    userMsg := ircmsg.MakeMessage(nil, "", "USER", b.Config.Ident, "*", "*", b.Config.Gecos)
-    nickMsg := ircmsg.MakeMessage(nil, "", "NICK", b.Config.Nick)
+    userMsg := makeSimpleIRCLine("USER", b.Config.Ident, "*", "*", b.Config.Gecos)
+    nickMsg := makeSimpleIRCLine("NICK", b.Config.Nick)
 
     if err := b.WriteLine(userMsg); err != nil {
         b.Status = ERRORED
