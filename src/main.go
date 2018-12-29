@@ -1,6 +1,8 @@
 package main
 
 import (
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/cli"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/command"
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/process"
     "github.com/chzyer/readline"
     "log"
@@ -17,6 +19,8 @@ func init() {
     }
     rl = lrl
     log.SetOutput(rl)
+    cli.InitCLI(rl)
+
 }
 
 func main() {
@@ -28,7 +32,14 @@ func main() {
         process.NewProcessMustSucceed("client", "/usr/bin/ncat", []string{"127.0.0.1", "1337"}, rl),
     )
 
+    h := command.Instance
+    err := h.RegisterCommand("panic", func(cmd string, args []string, source string) bool {panic(args); return true})
+
+    if err != nil {
+        panic(err)
+    }
+
     man.StartAllProcessesDelay(time.Millisecond * 10)
     man.WriteToProcess("client", "test!")
-    time.Sleep(time.Minute)
+    time.Sleep(time.Hour)
 }
