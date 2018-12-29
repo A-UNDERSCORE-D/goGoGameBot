@@ -52,16 +52,22 @@ type IRCConfig struct {
 }
 
 type Bot struct {
+    // Config for the IRC connection etc
     Config   IRCConfig
     sock     net.Conn
+    // Current connection status
     Status   int
+    // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
     DoneChan chan bool
+    // Logger setup to have a prefix etc, for easy logging
     Log      *log.Logger
-    EventMgr eventmgr.EventManager
+    // Main heavy lifter for the event system
+    EventMgr *eventmgr.EventManager
 }
 
 func NewBot(config IRCConfig, rl *readline.Instance) *Bot {
     b := &Bot{Config: config, Status: DISCONNECTED, Log: log.New(rl, "[bot] ", log.Flags())}
+    b.EventMgr = &eventmgr.EventManager{}
     b.EventMgr.Attach("RAW_PING", b.onPing, PriNorm)
     b.EventMgr.Attach("RAW_001", b.onWelcome, PriNorm)
     return b
