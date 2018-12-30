@@ -14,7 +14,9 @@ func init() {
 
 // a HandleFunc takes the full command it got, any arguments, and the source of the command. the bool returned is a
 // success indicator
-
+// TODO: Honestly this could deal with a rewrite. I didnt expect to have the event handler that I now have and using it with
+//       prefixes heads back to the event based system on older bots like gonzo and some of my own bots. Its a good system
+//       that works well.
 var Instance *Handler
 type HandleFunc func(cmd string, args []string, source string, fromIRC bool) bool
 type Handler struct {
