@@ -25,11 +25,11 @@ const (
     CONNECTING
 )
 
-const(
-    PriLowest = 16
-    PriLow = 32
-    PriNorm = 48
-    PriHigh = 64
+const (
+    PriLowest  = 16
+    PriLow     = 32
+    PriNorm    = 48
+    PriHigh    = 64
     PriHighest = 80
 )
 
@@ -53,14 +53,14 @@ type IRCConfig struct {
 
 type Bot struct {
     // Config for the IRC connection etc
-    Config   IRCConfig
-    sock     net.Conn
+    Config IRCConfig
+    sock   net.Conn
     // Current connection status
-    Status   int
+    Status int
     // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
     DoneChan chan bool
     // Logger setup to have a prefix etc, for easy logging
-    Log      *log.Logger
+    Log *log.Logger
     // Main heavy lifter for the event system
     EventMgr *eventmgr.EventManager
 }
@@ -77,7 +77,7 @@ func (b *Bot) Run() error {
     if err := b.connect(); err != nil {
         return err
     }
-    <- b.DoneChan
+    <-b.DoneChan
     return nil
 }
 
@@ -88,7 +88,7 @@ func (b *Bot) connect() error {
     if !b.Config.Ssl {
         sock, err = net.Dial("tcp", b.Config.ServerHost+":"+b.Config.ServerPort)
     } else {
-        sock, err = tls.Dial("tcp", b.Config.ServerHost + ":" + b.Config.ServerPort, nil)
+        sock, err = tls.Dial("tcp", b.Config.ServerHost+":"+b.Config.ServerPort, nil)
     }
 
     if err != nil {
@@ -155,7 +155,7 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
     im := eventmgr.NewInfoMap()
     im["line"] = line
     im["bot"] = b
-    b.EventMgr.Dispatch("RAW_" + strings.ToUpper(line.Command), im)
+    b.EventMgr.Dispatch("RAW_"+strings.ToUpper(line.Command), im)
 }
 
 func (b *Bot) onPing(event string, data eventmgr.InfoMap) {
