@@ -13,7 +13,7 @@ import (
 var rl *readline.Instance
 
 func init() {
-    log.SetFlags(/*log.LstdFlags*/0)
+    log.SetFlags( /*log.LstdFlags*/ 0)
     lrl, err := readline.New("> ")
     if err != nil {
         panic(err)
@@ -34,7 +34,7 @@ func main() {
     )
 
     h := command.Instance
-    err := h.RegisterCommand("panic", func(cmd string, args []string, source string) bool {panic(args); return true})
+    err := h.RegisterCommand("panic", func(string, []string, string, bool) bool {panic(""); return true })
 
     if err != nil {
         panic(err)
@@ -43,8 +43,17 @@ func main() {
     man.StartAllProcessesDelay(time.Millisecond * 10)
     man.WriteToProcess("client", "test!")
 
-
     b := bot.NewBot(bot.IRCConfig{Nick: "adtestbot", Ident: "adtest", Ssl: true, ServerHost: "irc.snoonet.org", ServerPort: "6697"}, rl)
+    b.EventMgr.Attach("RAW_PRIVMSG", command.Instance.EventListener, bot.PriNorm)
+    _ = command.Instance.RegisterCommand("test", func(cmd string, args []string, source string, fromIRC bool) bool {
+        log.Print(cmd)
+        log.Print(args)
+        log.Print(source)
+        log.Print(fromIRC)
+        return true
+        },
+    )
+
     panic(b.Run())
     time.Sleep(time.Hour)
 }

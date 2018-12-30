@@ -2,6 +2,8 @@ package command
 
 import (
     "fmt"
+    "github.com/goshuirc/eventmgr"
+    "github.com/goshuirc/irc-go/ircmsg"
     "log"
     "strings"
 )
@@ -14,7 +16,7 @@ func init() {
 // success indicator
 
 var Instance *Handler
-type HandleFunc func(cmd string, args []string, source string) bool
+type HandleFunc func(cmd string, args []string, source string, fromIRC bool) bool
 type Handler struct {
     // TODO: Maybe it would be nice for multiple handlers to go on one command? if I do that it needs to have some sort
     //       of priority system. maybe turn HandleFunc into a struct with some numbers on it, and store a list here?
@@ -22,7 +24,7 @@ type Handler struct {
     NotFoundHandler HandleFunc
 }
 
-func defaultNotFound(cmd string, args []string, source string) bool {
+func defaultNotFound(cmd string, args []string, source string, fromIRC bool) bool {
     log.Printf("unknown command: %q", cmd)
     return false
 }
@@ -40,10 +42,18 @@ func (h *Handler) RegisterCommand(cmd string, f HandleFunc) error {
     return nil
 }
 
-func (h *Handler) HandleCommand(cmd string, args []string, source string) {
+func (h *Handler) HandleCommand(cmd string, args []string, source string, fromIRC bool) {
     if hf, ok := h.commands[cmd]; ok {
-        go hf(cmd, args, source)
+        go hf(cmd, args, source, fromIRC)
     } else {
-        h.NotFoundHandler(cmd, args, source)
+        h.NotFoundHandler(cmd, args, source, fromIRC)
     }
+}
+
+func (h *Handler) EventListener(event string, info eventmgr.InfoMap) {
+    line := info["line"].(ircmsg.IrcMessage)
+    msg := line.Params[len(line.Params) -1]
+    splitCmd := strings.Split(msg, " ")
+
+    h.HandleCommand(splitCmd[0], splitCmd[1:], line.Prefix[1:], true)
 }
