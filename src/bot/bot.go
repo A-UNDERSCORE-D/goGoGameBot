@@ -70,6 +70,7 @@ func NewBot(config IRCConfig, rl *readline.Instance) *Bot {
     b.EventMgr = &eventmgr.EventManager{}
     b.EventMgr.Attach("RAW_PING", b.onPing, PriNorm)
     b.EventMgr.Attach("RAW_001", b.onWelcome, PriNorm)
+
     return b
 }
 
@@ -161,7 +162,7 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 func (b *Bot) onPing(event string, data eventmgr.InfoMap) {
     lineIn := data["line"].(ircmsg.IrcMessage)
     if err := b.WriteLine(makeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
-        b.EventMgr.Dispatch("error", eventmgr.InfoMap{"error": err})
+        b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"error": err})
     }
 }
 

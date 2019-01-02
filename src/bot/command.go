@@ -1,30 +1,30 @@
-package command
+package bot
 
 import (
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/irc/bot"
+    "fmt"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "strings"
 )
 
-type HandleFunc func(data Data) error
+type HandleFunc func(data CommandData) error
 
-// Handler wraps the event manager on a Bot and uses it to build a command interface
-type Handler struct {
-    bot    *bot.Bot
+// CommandHandler wraps the event manager on a Bot and uses it to build a command interface
+type CommandHandler struct {
+    bot    *Bot
     prefix string
 }
 
-// NewHandler creates a Handler and attaches its primary listener to the event manager on the given bot
-func NewHandler(b *bot.Bot, prefixes string) *Handler {
-    h := &Handler{bot: b, prefix: prefixes}
-    b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, bot.PriNorm)
+// NewCommandHandler creates a CommandHandler and attaches its primary listener to the event manager on the given bot
+func NewCommandHandler(b *Bot, prefixes string) *CommandHandler {
+    h := &CommandHandler{bot: b, prefix: prefixes}
+    b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, PriNorm)
     return h
 }
 
 // mainListener is the main PRIVMSG handler for the command handler. It dispatches events for commands after they have
-// been broken up into a Data
-func (h *Handler) mainListener(event string, infoMap eventmgr.InfoMap) {
+// been broken up into a CommandData
+func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
     line := infoMap["line"].(ircmsg.IrcMessage)
     msg := line.Params[1]
     if len(msg) < 1 {
@@ -35,10 +35,12 @@ func (h *Handler) mainListener(event string, infoMap eventmgr.InfoMap) {
     sMsg := strings.Split(msg, " ")
     cmd := strings.ToUpper(sMsg[0])
 
-    if !strings.HasPrefix(h.prefix, cmd) {
+    if !strings.HasPrefix(cmd, h.prefix) {
         // Not a command we understand
         return
     }
+
+    cmd = cmd[1:]
 
     var args []string
     if len(sMsg) > 1 {
@@ -49,7 +51,7 @@ func (h *Handler) mainListener(event string, infoMap eventmgr.InfoMap) {
 
     im := eventmgr.NewInfoMap()
 
-    im["data"] = Data{
+    im["data"] = CommandData{
         Command:   cmd,
         Target:    target,
         Args:      args,
@@ -58,12 +60,11 @@ func (h *Handler) mainListener(event string, infoMap eventmgr.InfoMap) {
         IsFromIRC: true,
     }
 
-    h.bot.EventMgr.Dispatch("CMD_"+cmd, im)
-
+    h.FireCommand(cmd, im)
 }
 
 // FireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
-func (h *Handler) FireCommand(cmd string, im eventmgr.InfoMap) {
+func (h *CommandHandler) FireCommand(cmd string, im eventmgr.InfoMap) {
 
     go h.bot.EventMgr.Dispatch("CMD", im)
 
@@ -75,10 +76,10 @@ func (h *Handler) FireCommand(cmd string, im eventmgr.InfoMap) {
 }
 
 // RegisterCommand registers a callback with a command
-func (h *Handler) RegisterCommand(cmd string, f HandleFunc, priority int) {
+func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int) {
     wrapped := func(event string, infoMap eventmgr.InfoMap){
-        data := infoMap["data"].(Data)
-
+        data := infoMap["data"].(CommandData)
+        fmt.Println("DATA")
         if data.IsCancelled() {
             return
         }

@@ -1,9 +1,7 @@
 package cli
 
 import (
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/command"
     "github.com/chzyer/readline"
-    "strings"
 )
 
 var rl *readline.Instance
@@ -25,6 +23,5 @@ func runCLI() {
 }
 
 func handleLine(line string) {
-    split := strings.Split(line, " ")
-    command.Instance.HandleCommand(split[0], split[1:], "commandline", false)
+    //split := strings.Split(line, " ")
 }
