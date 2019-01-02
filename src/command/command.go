@@ -1,61 +1,73 @@
 package command
 
 import (
-    "fmt"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/irc/bot"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
-    "log"
     "strings"
 )
 
-func init() {
-    Instance = &Handler{commands: make(map[string]HandleFunc), NotFoundHandler: defaultNotFound}
-}
+type HandleFunc func(command string, data *Data) error
 
-// a HandleFunc takes the full command it got, any arguments, and the source of the command. the bool returned is a
-// success indicator
-// TODO: Honestly this could deal with a rewrite. I didnt expect to have the event handler that I now have and using it with
-//       prefixes heads back to the event based system on older bots like gonzo and some of my own bots. Its a good system
-//       that works well.
-var Instance *Handler
-type HandleFunc func(cmd string, args []string, source string, fromIRC bool) bool
+// Handler wraps the event manager on a Bot and uses it to build a command interface
 type Handler struct {
-    // TODO: Maybe it would be nice for multiple handlers to go on one command? if I do that it needs to have some sort
-    //       of priority system. maybe turn HandleFunc into a struct with some numbers on it, and store a list here?
-    commands        map[string]HandleFunc
-    NotFoundHandler HandleFunc
+    bot    *bot.Bot
+    prefix string
 }
 
-func defaultNotFound(cmd string, args []string, source string, fromIRC bool) bool {
-    log.Printf("unknown command: %q", cmd)
-    return false
+func NewHandler(b *bot.Bot, prefixes string) *Handler {
+    h := &Handler{bot: b, prefix: prefixes}
+    b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, bot.PriNorm)
+    return h
 }
 
-func (h *Handler) RegisterCommand(cmd string, f HandleFunc) error {
-    if _, ok := h.commands[cmd]; ok {
-        return fmt.Errorf("%q already exists as a command", cmd)
+// mainListener is the main PRIVMSG handler for the command handler. It dispatches events for commands after they have
+// been broken up into a Data
+func (h *Handler) mainListener(event string, infoMap eventmgr.InfoMap) {
+    line := infoMap["line"].(ircmsg.IrcMessage)
+    msg := line.Params[1]
+    if len(msg) < 1 {
+        return
     }
 
-    if strings.Contains(" ", cmd) {
-        return fmt.Errorf("commands may not contain spaces (%q)", cmd)
+    target := line.Params[0]
+    sMsg := strings.Split(msg, " ")
+    cmd := strings.ToUpper(sMsg[0])
+
+    if !strings.HasPrefix(h.prefix, cmd) {
+        // Not a command we understand
+        return
     }
 
-    h.commands[cmd] = f
-    return nil
-}
-
-func (h *Handler) HandleCommand(cmd string, args []string, source string, fromIRC bool) {
-    if hf, ok := h.commands[cmd]; ok {
-        go hf(cmd, args, source, fromIRC)
+    var args []string
+    if len(sMsg) > 1 {
+        args = sMsg[1:]
     } else {
-        h.NotFoundHandler(cmd, args, source, fromIRC)
+        args = []string{}
     }
+
+    im := eventmgr.NewInfoMap()
+
+    im["data"] = Data{
+        Command:   cmd,
+        Target:    target,
+        Args:      args,
+        Line:      &line,
+        Source:    line.Prefix,
+        IsFromIRC: true,
+    }
+
+    h.bot.EventMgr.Dispatch("CMD_"+cmd, im)
+
 }
 
-func (h *Handler) EventListener(event string, info eventmgr.InfoMap) {
-    line := info["line"].(ircmsg.IrcMessage)
-    msg := line.Params[len(line.Params) -1]
-    splitCmd := strings.Split(msg, " ")
+func (h *Handler) fireCommand(cmd string, im eventmgr.InfoMap) {
 
-    h.HandleCommand(splitCmd[0], splitCmd[1:], line.Prefix[1:], true)
+    go h.bot.EventMgr.Dispatch("CMD", im)
+
+    if _, exists := h.bot.EventMgr.Events["CMD_"+cmd]; exists {
+        go h.bot.EventMgr.Dispatch("CMD_"+cmd, im)
+    } else {
+        go h.bot.EventMgr.Dispatch("CMDNOTFOUND", im)
+    }
 }
