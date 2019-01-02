@@ -116,7 +116,7 @@ func (p *Process) waitOnProc() {
         p.Err = nil
         p.log.Print("command completed successfully")
     }
-    p.DoneChan <- true
+    close(p.DoneChan)
     close(p.WriteChan)
 }
 
