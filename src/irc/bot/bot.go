@@ -26,11 +26,11 @@ const (
 )
 
 const (
-    PriLowest  = 16
-    PriLow     = 32
+    PriHighest  = 16
+    PriHigh     = 32
     PriNorm    = 48
-    PriHigh    = 64
-    PriHighest = 80
+    PriLow    = 64
+    PriLowest = 80
 )
 
 var (
