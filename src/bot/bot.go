@@ -26,6 +26,7 @@ const (
 )
 
 const (
+    // TODO: These may be backwards. check.
     PriHighest  = 16
     PriHigh     = 32
     PriNorm    = 48
@@ -68,8 +69,8 @@ type Bot struct {
 func NewBot(config IRCConfig, rl *readline.Instance) *Bot {
     b := &Bot{Config: config, Status: DISCONNECTED, Log: log.New(rl, "[bot] ", log.Flags())}
     b.EventMgr = &eventmgr.EventManager{}
-    b.EventMgr.Attach("RAW_PING", b.onPing, PriNorm)
-    b.EventMgr.Attach("RAW_001", b.onWelcome, PriNorm)
+    b.HookRaw("PING", b.onPing, PriHighest)
+    b.HookRaw("001", b.onWelcome, PriNorm)
 
     return b
 }
@@ -159,14 +160,23 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
     b.EventMgr.Dispatch("RAW_"+strings.ToUpper(line.Command), im)
 }
 
-func (b *Bot) onPing(event string, data eventmgr.InfoMap) {
-    lineIn := data["line"].(ircmsg.IrcMessage)
+func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage), priority int) {
+    b.EventMgr.Attach(
+        "RAW_"+cmd,
+        func(s string, info eventmgr.InfoMap) {
+            go f(info["line"].(ircmsg.IrcMessage))
+        },
+        priority,
+        )
+}
+
+func (b *Bot) onPing(lineIn ircmsg.IrcMessage) {
     if err := b.WriteLine(makeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
         b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"error": err})
     }
 }
 
-func (b *Bot) onWelcome(event string, data eventmgr.InfoMap) {
+func (b *Bot) onWelcome(lineIn ircmsg.IrcMessage) {
     // This should set a few things like max targets etc at some point.
     //lineIn := data["line"].(ircmsg.IrcMessage)
     b.Status = CONNECTED
