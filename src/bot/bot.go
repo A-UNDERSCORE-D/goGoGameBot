@@ -10,6 +10,7 @@ import (
     "log"
     "net"
     "strings"
+    "sync"
 )
 
 const (
@@ -27,11 +28,11 @@ const (
 
 const (
     // TODO: These may be backwards. check.
-    PriHighest  = 16
-    PriHigh     = 32
+    PriHighest = 16
+    PriHigh    = 32
     PriNorm    = 48
-    PriLow    = 64
-    PriLowest = 80
+    PriLow     = 64
+    PriLowest  = 80
 )
 
 var (
@@ -54,8 +55,9 @@ type IRCConfig struct {
 
 type Bot struct {
     // Config for the IRC connection etc
-    Config IRCConfig
-    sock   net.Conn
+    Config    IRCConfig
+    sockMutex sync.Mutex
+    sock      net.Conn
     // Current connection status
     Status int
     // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
@@ -116,6 +118,8 @@ func (b *Bot) connect() error {
 }
 
 func (b *Bot) writeRaw(line []byte) (int, error) {
+    b.sockMutex.Lock()
+    defer b.sockMutex.Unlock()
     b.Log.Printf("<< %s", string(line))
     return b.sock.Write(line)
 }
@@ -167,7 +171,7 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage), priority int) {
             go f(info["line"].(ircmsg.IrcMessage))
         },
         priority,
-        )
+    )
 }
 
 func (b *Bot) onPing(lineIn ircmsg.IrcMessage) {
