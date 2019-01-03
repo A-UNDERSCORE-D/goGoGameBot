@@ -3,6 +3,7 @@ package main
 import (
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/bot"
     "github.com/A-UNDERSCORE-D/goGoGameBot/src/cli"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/config"
     "github.com/chzyer/readline"
     "log"
 )
@@ -32,8 +33,13 @@ func main() {
 
     //man.StartAllProcessesDelay(time.Millisecond * 10)
     //man.WriteToProcess("client", "test!")
+    conf, err := config.GetConfig("test.xml")
+    if err != nil {
+        panic(err)
+    }
+    log.Print(conf)
 
-    b := bot.NewBot(bot.IRCConfig{Nick: "adtestbot", Ident: "adtest", Ssl: true, ServerHost: "bot.snoonet.org", ServerPort: "6697"}, rl)
+    b := bot.NewBot(bot.IRCConfig{Nick: "adtestbot", Ident: "adtest", Ssl: true, ServerHost: "snoonet.org", ServerPort: "6697"}, rl)
     ch := bot.NewCommandHandler(b, "~")
     ch.RegisterCommand("test", func(data bot.CommandData) error {
         _, err := rl.Write([]byte("test"))
