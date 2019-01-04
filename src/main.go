@@ -23,8 +23,11 @@ func init() {
 }
 
 func main() {
+    rl, err := readline.New("> ")
+    if err != nil {
+        panic(err)
+    }
     defer rl.Close()
-
     conf, err := config.GetConfig("config.xml")
     if err != nil {
         panic(err)
