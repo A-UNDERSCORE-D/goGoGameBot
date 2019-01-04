@@ -4,7 +4,7 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/config"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "log"

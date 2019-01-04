@@ -1,9 +1,9 @@
 package main
 
 import (
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/bot"
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/cli"
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/config"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/bot"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/cli"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "github.com/chzyer/readline"
     "log"
 )
