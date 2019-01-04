@@ -4,7 +4,7 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
-    "github.com/chzyer/readline"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/config"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "log"
@@ -43,19 +43,10 @@ func makeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
     return ircmsg.MakeMessage(nil, "", command, args...)
 }
 
-type IRCConfig struct {
-    Nick  string
-    Ident string
-    Gecos string
-
-    Ssl        bool
-    ServerHost string
-    ServerPort string
-}
-
 type Bot struct {
     // Config for the IRC connection etc
-    Config    IRCConfig
+    Config    config.Config
+    IrcConf   config.IRC
     sockMutex sync.Mutex
     sock      net.Conn
     // Current connection status
@@ -68,12 +59,16 @@ type Bot struct {
     EventMgr *eventmgr.EventManager
 }
 
-func NewBot(config IRCConfig, rl *readline.Instance) *Bot {
-    b := &Bot{Config: config, Status: DISCONNECTED, Log: log.New(rl, "[bot] ", log.Flags())}
-    b.EventMgr = &eventmgr.EventManager{}
-    b.HookRaw("PING", b.onPing, PriHighest)
-    b.HookRaw("001", b.onWelcome, PriNorm)
+func NewBot(conf config.Config, logger *log.Logger) *Bot {
+    b := &Bot{
+        Config:   conf,
+        IrcConf:  conf.Irc,
+        Status:   DISCONNECTED,
+        Log:      logger,
+        EventMgr: new(eventmgr.EventManager),
+    }
 
+    b.setupDefaultHandlers()
     return b
 }
 
@@ -89,10 +84,10 @@ func (b *Bot) connect() error {
     var sock net.Conn
     var err error
 
-    if !b.Config.Ssl {
-        sock, err = net.Dial("tcp", b.Config.ServerHost+":"+b.Config.ServerPort)
+    if !b.Config.Irc.SSL {
+        sock, err = net.Dial("tcp", b.IrcConf.Host+":"+b.IrcConf.Port)
     } else {
-        sock, err = tls.Dial("tcp", b.Config.ServerHost+":"+b.Config.ServerPort, nil)
+        sock, err = tls.Dial("tcp", b.IrcConf.Host+":"+b.IrcConf.Port, nil)
     }
 
     if err != nil {
@@ -102,8 +97,8 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
-    userMsg := makeSimpleIRCLine("USER", b.Config.Ident, "*", "*", b.Config.Gecos)
-    nickMsg := makeSimpleIRCLine("NICK", b.Config.Nick)
+    userMsg := makeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
+    nickMsg := makeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
     if err := b.WriteLine(userMsg); err != nil {
         b.Status = ERRORED
@@ -184,4 +179,9 @@ func (b *Bot) onWelcome(lineIn ircmsg.IrcMessage) {
     // This should set a few things like max targets etc at some point.
     //lineIn := data["line"].(ircmsg.IrcMessage)
     b.Status = CONNECTED
+}
+
+func (b *Bot) setupDefaultHandlers() {
+    b.HookRaw("PING", b.onPing, PriHighest)
+    b.HookRaw("001", b.onWelcome, PriNorm)
 }
