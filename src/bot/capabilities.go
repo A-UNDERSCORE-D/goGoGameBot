@@ -108,7 +108,6 @@ func (cm *CapabilityManager) NegotiateCaps() {
                     c.enabled = true
                     if c.Callback != nil {
                         wg.Add(1)
-                        println("calling func")
                         go c.Callback(c, line, &wg)
                     }
                 } else {
