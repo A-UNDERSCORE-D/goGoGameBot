@@ -2,9 +2,10 @@ package bot
 
 import (
     "fmt"
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/util"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
+    "sync"
 )
 
 func onPing(lineIn ircmsg.IrcMessage, b *Bot) {
@@ -21,4 +22,9 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
 
 func onError(err error, b *Bot) {
     b.Log.Printf("[WARN] Error occured: %s", err)
+}
+
+func saslHandler(capability *Capability, line ircmsg.IrcMessage, group *sync.WaitGroup) {
+    defer group.Done()
+    println("CALLED")
 }
