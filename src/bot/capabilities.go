@@ -69,28 +69,24 @@ func (cm *CapabilityManager) NegotiateCaps() {
         return
     }
     wg := sync.WaitGroup{}
-    wg.Add(1)
-    // TODO(A_D): This is an ugly as hell way of doing this. there has to be a better way
-    firstRun := true
-    go func() {
-        // Allowing other things to run, then close up and send cap end
-        wg.Wait()
-        close(done)
-        cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
-    }()
 
     for line := range lineChan {
         switch line.Params[1] {
         case "LS":
             cm.addAvailableCapability(line)
-            if !firstRun {
-                wg.Add(1)
-            } else {
-                firstRun = false
-            }
+            wg.Add(1)
+
             if line.Params[2] == "*" {
                 continue // This is multiline, lets just append for now
             }
+
+            // we can setup cleanup things now. lets do that
+            go func() {
+                // Allow other things to run, then close up and send cap end
+                wg.Wait()
+                close(done)
+                cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
+            }()
 
             cm.bot.Log.Printf("Server offered caps: %v",
                 cm.filterCaps(func(capability *Capability) bool { return capability.available }),
@@ -131,7 +127,6 @@ func (cm *CapabilityManager) addAvailableCapability(line ircmsg.IrcMessage) {
         if c := cm.getCapByName(name); c != nil {
             c.available = true
             c.Params = params
-            cm.bot.Log.Printf("%#v", c)
         } else {
             cm.capabilities = append(
                 cm.capabilities,
