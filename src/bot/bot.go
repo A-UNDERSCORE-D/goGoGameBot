@@ -5,6 +5,7 @@ import (
     "crypto/tls"
     "errors"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
+    "github.com/A-UNDERSCORE-D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "log"
@@ -37,10 +38,6 @@ const (
 var (
     ErrNotConnected = errors.New("not connected to IRC")
 )
-
-func makeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
-    return ircmsg.MakeMessage(nil, "", command, args...)
-}
 
 type Bot struct {
     Config    config.Config         // Config for the IRC connection etc
@@ -91,8 +88,8 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
-    userMsg := makeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
-    nickMsg := makeSimpleIRCLine("NICK", b.IrcConf.Nick)
+    userMsg := util.MakeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
+    nickMsg := util.MakeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
     if err := b.WriteLine(userMsg); err != nil {
         b.Status = ERRORED
@@ -153,29 +150,21 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
     b.EventMgr.Dispatch("RAW_"+strings.ToUpper(line.Command), im)
 }
 
-func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage), priority int) {
+func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int) {
     b.EventMgr.Attach(
         "RAW_"+cmd,
         func(s string, info eventmgr.InfoMap) {
-            go f(info["line"].(ircmsg.IrcMessage))
+            go f(info["line"].(ircmsg.IrcMessage), b)
         },
         priority,
     )
 }
 
-func (b *Bot) onPing(lineIn ircmsg.IrcMessage) {
-    if err := b.WriteLine(makeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
-        b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"error": err})
-    }
-}
-
-func (b *Bot) onWelcome(lineIn ircmsg.IrcMessage) {
-    // This should set a few things like max targets etc at some point.
-    //lineIn := data["line"].(ircmsg.IrcMessage)
-    b.Status = CONNECTED
-}
-
 func (b *Bot) setupDefaultHandlers() {
-    b.HookRaw("PING", b.onPing, PriHighest)
-    b.HookRaw("001", b.onWelcome, PriNorm)
+    b.HookRaw("PING", onPing, PriHighest)
+    b.HookRaw("001", onWelcome, PriNorm)
+
+    b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
+        onError(infoMaps["error"].(error), b)
+    }, PriHighest)
 }
