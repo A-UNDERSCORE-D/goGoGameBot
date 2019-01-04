@@ -3,14 +3,13 @@ package process
 import (
     "bufio"
     "fmt"
-    "github.com/chzyer/readline"
     "log"
     "sync"
     "time"
 )
 
-func NewManager(readline *readline.Instance, processes ...*Process) *Manager {
-    return &Manager{Processes: processes, log: log.New(readline, "[MANAGER] ", log.Flags())}
+func NewManager(logger *log.Logger, processes ...*Process) *Manager {
+    return &Manager{Processes: processes, log: logger}
 }
 
 type Manager struct {
