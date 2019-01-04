@@ -23,6 +23,8 @@ func init() {
 }
 
 func main() {
+    defer rl.Close()
+
     conf, err := config.GetConfig("config.xml")
     if err != nil {
         panic(err)
