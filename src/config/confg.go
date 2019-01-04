@@ -21,6 +21,7 @@ type IRC struct {
     XMLName         xml.Name  `xml:"irc"`
     Nick            string    `xml:"nick"`
     Ident           string    `xml:"ident"`
+    Gecos           string    `xml:"gecos"`
     Host            string    `xml:"host,attr"`
     Port            string    `xml:"port,attr"`
     SSL             bool      `xml:"ssl,attr"`
