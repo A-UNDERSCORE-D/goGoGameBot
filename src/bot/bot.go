@@ -27,7 +27,6 @@ const (
 )
 
 const (
-    // TODO: These may be backwards. check.
     PriHighest = 16
     PriHigh    = 32
     PriNorm    = 48
