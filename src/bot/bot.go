@@ -12,6 +12,7 @@ import (
     "net"
     "strings"
     "sync"
+    "time"
 )
 
 const (
@@ -96,8 +97,9 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
-    b.capManager.requestCap("sasl")
+    b.capManager.requestCap(&Capability{Name: "sasl", Callback: saslHandler})
     b.capManager.NegotiateCaps()
+
     userMsg := util.MakeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
     nickMsg := util.MakeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
@@ -141,6 +143,7 @@ func (b *Bot) readLoop() {
         lineStr := scanner.Text()
 
         b.Log.Printf(">> %s", lineStr)
+        time.Sleep(time.Millisecond)
 
         line, err := ircmsg.ParseLine(lineStr)
         if err != nil {
@@ -202,7 +205,15 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
     b.Log.Printf("sending for command %s", upperCommand)
     for _, chanPair := range chans {
         // Just in case someone is sitting on this, that could be bad
-        go func() { chanPair.writeChan <- line }()
+        go func() {
+            defer func() {
+                err := recover()
+                if err != nil {
+                    b.Log.Printf("[WARN] sendToRawChans lambda recovered panic: %s", err)
+                }
+            }()
+            chanPair.writeChan <- line
+        }()
     }
 }
 
@@ -219,9 +230,11 @@ func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool)
     defer b.rawchansMutex.Unlock()
 
     go func() {
-        <-chanPair.doneChan
-        close(chanPair.doneChan)
-        //close(chanPair.writeChan) This could cause a panic. Leave it gone for now.
+        _, ok := <-chanPair.doneChan
+        if ok {
+            close(chanPair.doneChan)
+        }
+        close(chanPair.writeChan)
         b.rawchansMutex.Lock()
         defer b.rawchansMutex.Unlock()
         chanPairList := b.rawChans[command]
