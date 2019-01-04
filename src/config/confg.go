@@ -11,6 +11,7 @@ type IrcChan struct {
     Key  string `xml:",attr,omitempty"`
 }
 
+// TODO: add requirelogin bool
 type NSAuth struct {
     Nick     string `xml:"nick,attr"`
     Password string `xml:"password,attr"`

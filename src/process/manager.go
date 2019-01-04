@@ -8,6 +8,8 @@ import (
     "time"
 )
 
+// TODO: hook for lines on stdout to a func. documentation
+
 func NewManager(logger *log.Logger, processes ...*Process) *Manager {
     return &Manager{Processes: processes, log: logger}
 }
