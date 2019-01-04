@@ -29,7 +29,7 @@ func main() {
     }
     log.Print(conf)
 
-    b := bot.NewBot(*conf, log.New(rl, "[bot]", 0))
+    b := bot.NewBot(*conf, log.New(rl, "[bot] ", 0))
 
     ch := bot.NewCommandHandler(b, "~")
     ch.RegisterCommand("test", func(data bot.CommandData) error {
