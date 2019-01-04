@@ -85,7 +85,7 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int)
         }
 
         if err := f(data); err != nil {
-            infoMap["error"] = err
+            infoMap["Error"] = err
             go h.bot.EventMgr.Dispatch("ERR", infoMap)
         }
     }

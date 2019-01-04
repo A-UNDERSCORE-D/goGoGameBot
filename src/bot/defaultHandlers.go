@@ -9,7 +9,7 @@ import (
 
 func onPing(lineIn ircmsg.IrcMessage, b *Bot) {
     if err := b.WriteLine(util.MakeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
-        b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"error": fmt.Errorf("could not send pong: %s", err)})
+        b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": fmt.Errorf("could not send pong: %s", err)})
     }
 }
 
@@ -20,5 +20,5 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
 }
 
 func onError(err error, b *Bot) {
-    b.Log.Printf("[WARN] error occured: %s", err)
+    b.Log.Printf("[WARN] Error occured: %s", err)
 }

@@ -5,7 +5,7 @@ import (
     "crypto/tls"
     "errors"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
-    "github.com/A-UNDERSCORE-D/goGoGameBot/src/util"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "log"
@@ -39,15 +39,23 @@ var (
     ErrNotConnected = errors.New("not connected to IRC")
 )
 
+type RawChanPair struct {
+    writeChan chan ircmsg.IrcMessage
+    doneChan  chan bool
+}
+
 type Bot struct {
-    Config    config.Config         // Config for the IRC connection etc
-    IrcConf   config.IRC
-    sockMutex sync.Mutex
-    sock      net.Conn
-    Status    int                    // Current connection status
-    DoneChan  chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    Log       *log.Logger            // Logger setup to have a prefix etc, for easy logging
-    EventMgr  *eventmgr.EventManager // Main heavy lifter for the event system
+    Config        config.Config // Config for the IRC connection etc
+    IrcConf       config.IRC
+    sockMutex     sync.Mutex
+    sock          net.Conn
+    Status        int                    // Current connection status
+    DoneChan      chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    Log           *log.Logger            // Logger setup to have a prefix etc, for easy logging
+    EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
+    rawchansMutex sync.Mutex
+    rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
+    capManager    CapabilityManager
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
@@ -59,7 +67,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
         EventMgr: new(eventmgr.EventManager),
     }
 
-    b.setupDefaultHandlers()
+    b.Init()
     return b
 }
 
@@ -88,6 +96,8 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
+    b.capManager.requestCap("sasl")
+    b.capManager.NegotiateCaps()
     userMsg := util.MakeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
     nickMsg := util.MakeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
@@ -147,7 +157,11 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
     im := eventmgr.NewInfoMap()
     im["line"] = line
     im["bot"] = b
-    b.EventMgr.Dispatch("RAW_"+strings.ToUpper(line.Command), im)
+    upperCommand := strings.ToUpper(line.Command)
+    go b.EventMgr.Dispatch("RAW_"+upperCommand, im)
+    go b.EventMgr.Dispatch("RAW", im)
+    go b.sendToRawChans(upperCommand, line)
+
 }
 
 func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int) {
@@ -160,11 +174,74 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
     )
 }
 
-func (b *Bot) setupDefaultHandlers() {
+// Bot.Init sets up the default handlers and otherwise preps the bot to run
+func (b *Bot) Init() {
     b.HookRaw("PING", onPing, PriHighest)
     b.HookRaw("001", onWelcome, PriNorm)
 
     b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
-        onError(infoMaps["error"].(error), b)
+        onError(infoMaps["Error"].(error), b)
     }, PriHighest)
+    b.capManager = CapabilityManager{bot: b}
+}
+
+// Bot.Error dispatches an error event across the event manager with the given error
+func (b *Bot) Error(err error) {
+    b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": err})
+}
+
+func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
+    b.rawchansMutex.Lock()
+    defer b.rawchansMutex.Unlock()
+    chans, ok := b.rawChans[upperCommand]
+
+    if !ok {
+        return
+    }
+
+    b.Log.Printf("sending for command %s", upperCommand)
+    for _, chanPair := range chans {
+        // Just in case someone is sitting on this, that could be bad
+        go func() { chanPair.writeChan <- line }()
+    }
+}
+
+// Bot.GetRawChan returns a pair of channels, the first of which will receive ircmsg.IrcMessage as they come in
+// and the second of which will
+func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool) {
+    if b.rawChans == nil {
+        b.rawChans = make(map[string][]RawChanPair)
+    }
+
+    command = strings.ToUpper(command)
+    chanPair := RawChanPair{make(chan ircmsg.IrcMessage), make(chan bool)}
+    b.rawchansMutex.Lock()
+    defer b.rawchansMutex.Unlock()
+
+    go func() {
+        <-chanPair.doneChan
+        close(chanPair.doneChan)
+        //close(chanPair.writeChan) This could cause a panic. Leave it gone for now.
+        b.rawchansMutex.Lock()
+        defer b.rawchansMutex.Unlock()
+        chanPairList := b.rawChans[command]
+
+        for i, p := range chanPairList {
+            if p == chanPair {
+                chanPairList = append(chanPairList[:i], chanPairList[i+1:]...)
+                break
+            }
+        }
+    }()
+
+    b.rawChans[command] = append(b.rawChans[command], chanPair)
+
+    return chanPair.writeChan, chanPair.doneChan
+}
+
+func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
+    w, d := b.GetRawChan(command)
+    out := <-w
+    d <- true
+    return out
 }
