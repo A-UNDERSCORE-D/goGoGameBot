@@ -43,19 +43,14 @@ func makeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
 }
 
 type Bot struct {
-    // Config for the IRC connection etc
-    Config    config.Config
+    Config    config.Config         // Config for the IRC connection etc
     IrcConf   config.IRC
     sockMutex sync.Mutex
     sock      net.Conn
-    // Current connection status
-    Status int
-    // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    DoneChan chan bool
-    // Logger setup to have a prefix etc, for easy logging
-    Log *log.Logger
-    // Main heavy lifter for the event system
-    EventMgr *eventmgr.EventManager
+    Status    int                    // Current connection status
+    DoneChan  chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    Log       *log.Logger            // Logger setup to have a prefix etc, for easy logging
+    EventMgr  *eventmgr.EventManager // Main heavy lifter for the event system
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
