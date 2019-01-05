@@ -13,7 +13,6 @@ func main() {
     rl, _ := readline.New("> ")
     log.SetFlags(0)
     log.SetOutput(rl)
-    defer rl.Close()
 
     conf, err := config.GetConfig("config.xml")
     if err != nil {
@@ -21,23 +20,33 @@ func main() {
     }
 
     b := bot.NewBot(*conf, log.New(rl, "[bot] ", 0))
+    go runCLI(b, rl)
+
+    b.Run()
+    fmt.Println()
+}
+func runCLI(b *bot.Bot, rl *readline.Instance) {
+
+    lineChan := make(chan string)
     go func() {
         for {
             line, err := rl.Readline()
             if err != nil {
-                // We're at an EOF, quit out
+                close(lineChan)
+                rl.Close()
                 return
             }
-            splitLine := strings.Split(line, " ")
-
-            b.CmdHandler.FireCommand(bot.CommandData{
-                Command:   splitLine[0],
-                Args:      splitLine[1:],
-                IsFromIRC: false,
-            })
+            lineChan <- line
         }
     }()
 
-    b.Run()
-    fmt.Println("done")
+    for line := range lineChan {
+        splitLine := strings.Split(line, " ")
+
+        b.CmdHandler.FireCommand(bot.CommandData{
+            Command:   splitLine[0],
+            Args:      splitLine[1:],
+            IsFromIRC: false,
+        })
+    }
 }
