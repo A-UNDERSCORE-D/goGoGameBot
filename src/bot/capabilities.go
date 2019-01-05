@@ -116,6 +116,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
                     )
                 }
             }
+            cm.bot.Log.Printf("Server ACK-ed caps: %v", cm.filterCaps(func(c *Capability) bool {return c.enabled}))
             wg.Done()
 
         case "NAK":
@@ -144,6 +145,8 @@ func (cm *CapabilityManager) requestCaps() error {
     capsToReq := cm.filterCaps(func(capability *Capability) bool {
         return capability.requested && capability.available
     })
+
+    cm.bot.Log.Printf("requesting capabilities: %v", capsToReq)
 
     var caps []string
     for _, c := range capsToReq {
