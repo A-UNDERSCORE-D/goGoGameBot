@@ -12,7 +12,6 @@ import (
     "net"
     "strings"
     "sync"
-    "time"
 )
 
 const (
@@ -67,6 +66,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
         Status:   DISCONNECTED,
         Log:      logger,
         EventMgr: new(eventmgr.EventManager),
+        DoneChan: make(chan bool),
     }
 
     b.Init()
@@ -144,7 +144,6 @@ func (b *Bot) readLoop() {
         lineStr := scanner.Text()
 
         b.Log.Printf(">> %s", lineStr)
-        time.Sleep(time.Millisecond)
 
         line, err := ircmsg.ParseLine(lineStr)
         if err != nil {
