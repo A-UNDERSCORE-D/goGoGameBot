@@ -59,7 +59,7 @@ var defaultConfig Config = Config{
         Host:            "irc.snoonet.org",
         Port:            "6697",
         SSL:             true,
-        ConnectCommands: []string{"PRIVMSG noeatnosleep :goGoAnnoyance"},
+        ConnectCommands: []string{},
         JoinChans:       []IrcChan{{"#ferricyanide", ""}, {"#someOtherChan", ""}},
         NSAuth:          NSAuth{"goGoGameBot", "goGoSuperSecurePasswd", true},
     },
