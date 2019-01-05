@@ -29,24 +29,33 @@ type IRC struct {
     ConnectCommands []string  `xml:"connect_commands>command,omitempty"`
     JoinChans       []IrcChan `xml:"autojoin_channels>channel,omitempty"`
     NSAuth          NSAuth    `xml:"auth>nickserv"`
+    CommandPrefix   string    `xml:"command_prefix,attr"`
 }
 
 type Game struct {
     XMLName   xml.Name `xml:"game"`
-    Name      string   `xml:"name"`
-    AutoStart bool     `xml:"auto_start"`
+    Name      string   `xml:"name,attr"`
+    AutoStart bool     `xml:"auto_start,attr"`
+}
+
+type Permission struct {
+    XMLName xml.Name `xml:"permission"`
+    Mask    string   `xml:"mask,attr"`
 }
 
 type Config struct {
-    XMLName xml.Name `xml:"config"`
-    Irc     IRC      `xml:"irc"`
-    Games   []Game   `xml:"games>game"`
+    XMLName     xml.Name     `xml:"bot"`
+    Irc         IRC          `xml:"irc"`
+    Permissions []Permission `xml:"permissions>permission"`
+    Games       []Game       `xml:"games>game"`
 }
 
 var defaultConfig Config = Config{
     Irc: IRC{
+        CommandPrefix:   "~",
         Nick:            "goGoGameBot",
         Ident:           "GGGB",
+        Gecos:           "Go Game Manager",
         Host:            "irc.snoonet.org",
         Port:            "6697",
         SSL:             true,
@@ -54,7 +63,8 @@ var defaultConfig Config = Config{
         JoinChans:       []IrcChan{{"#ferricyanide", ""}, {"#someOtherChan", ""}},
         NSAuth:          NSAuth{"goGoGameBot", "goGoSuperSecurePasswd", true},
     },
-    Games: nil,
+    Permissions: []Permission{{Mask: "*!*@snoonet/staff/A_D"}},
+    Games:       nil,
 }
 
 func getXMLConf(filename string) (*Config, error) {

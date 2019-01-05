@@ -180,7 +180,7 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
 // Bot.Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
     b.capManager = CapabilityManager{bot: b}
-    b.CmdHandler = NewCommandHandler(b, "~")
+    b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
 
     b.HookRaw("PING", onPing, PriHighest)
     b.HookRaw("001", onWelcome, PriNorm)
