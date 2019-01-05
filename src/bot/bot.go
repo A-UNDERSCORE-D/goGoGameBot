@@ -97,7 +97,7 @@ func (b *Bot) connect() error {
     b.Status = CONNECTING
 
     go b.readLoop()
-    b.capManager.requestCap(&Capability{Name: "sasl", Callback: saslHandler})
+    b.capManager.requestCap(&Capability{Name: "sasl", Callback: b.saslHandler})
     b.capManager.NegotiateCaps()
 
     userMsg := util.MakeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
@@ -252,9 +252,36 @@ func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool)
     return chanPair.writeChan, chanPair.doneChan
 }
 
+
+// WaitForRaw waits for a single command and returns the line
 func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
     w, d := b.GetRawChan(command)
     out := <-w
-    d <- true
+    close(d)
     return out
+}
+
+// GetMultiRawChan condenses multiple raw channels into one, allowing you to wait for any number of raw commands on
+// a single channel
+func (b *Bot) GetMultiRawChan(commands... string) (<-chan ircmsg.IrcMessage, chan<- bool) {
+    doneChan := make(chan bool)
+    aggChan := make(chan ircmsg.IrcMessage)
+    var donechans []chan<- bool
+    for _, cmd := range commands {
+        l, d := b.GetRawChan(cmd)
+        donechans = append(donechans, d)
+        go func() {
+            for line := range l {
+                aggChan <- line
+            }
+        }()
+    }
+    go func() {
+        <- doneChan
+        for _, c := range donechans {
+            close(c)
+        }
+    }()
+
+    return aggChan, doneChan
 }
