@@ -18,6 +18,7 @@ type CommandData struct {
     IsFromIRC   bool
     cancelMutex sync.Mutex
     isCancelled bool
+    Bot         *Bot
 }
 
 func (d *CommandData) ArgCount() int {
@@ -52,4 +53,8 @@ func (d *CommandData) IsCancelled() bool {
     d.cancelMutex.Lock()
     defer d.cancelMutex.Unlock()
     return d.isCancelled
+}
+
+func (d *CommandData) ArgString() string {
+    return strings.Join(d.Args, " ")
 }

@@ -1,9 +1,9 @@
 package bot
 
 import (
-    "fmt"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
+    "log"
     "strings"
 )
 
@@ -49,22 +49,28 @@ func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
         args = []string{}
     }
 
-    im := eventmgr.NewInfoMap()
-
-    im["data"] = CommandData{
+    h.FireCommand(CommandData{
         Command:   cmd,
         Target:    target,
         Args:      args,
         Line:      &line,
         Source:    line.Prefix,
         IsFromIRC: true,
+    })
+}
+
+func (h *CommandHandler) FireCommand(data CommandData) {
+    if data.Bot == nil {
+        data.Bot = h.bot
     }
 
-    h.FireCommand(cmd, im)
+    im := eventmgr.NewInfoMap()
+    im["data"] = data
+    h.internalFireCommand(strings.ToUpper(data.Command), im)
 }
 
 // FireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
-func (h *CommandHandler) FireCommand(cmd string, im eventmgr.InfoMap) {
+func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
 
     go h.bot.EventMgr.Dispatch("CMD", im)
 
@@ -77,9 +83,8 @@ func (h *CommandHandler) FireCommand(cmd string, im eventmgr.InfoMap) {
 
 // RegisterCommand registers a callback with a command
 func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int) {
-    wrapped := func(event string, infoMap eventmgr.InfoMap){
+    wrapped := func(event string, infoMap eventmgr.InfoMap) {
         data := infoMap["data"].(CommandData)
-        fmt.Println("DATA")
         if data.IsCancelled() {
             return
         }
@@ -90,5 +95,19 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int)
         }
     }
 
-    h.bot.EventMgr.Attach("CMD_" + strings.ToUpper(cmd), wrapped, priority)
+    h.bot.EventMgr.Attach("CMD_"+strings.ToUpper(cmd), wrapped, priority)
+}
+
+func rawCommand(data CommandData) error {
+    if data.IsFromIRC {
+        return nil
+    }
+    if len(data.Args) < 1 {
+        log.Print("Cannot have an empty command")
+        return nil
+    }
+
+    toSend := strings.TrimRight(data.ArgString(), "\r\n") + "\r\n"
+    _, err := data.Bot.writeRaw([]byte(toSend))
+    return err
 }

@@ -57,6 +57,7 @@ type Bot struct {
     rawchansMutex sync.Mutex
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
     capManager    CapabilityManager
+    CmdHandler    *CommandHandler
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
@@ -179,13 +180,18 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
 
 // Bot.Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
+    b.capManager = CapabilityManager{bot: b}
+    b.CmdHandler = NewCommandHandler(b, "~")
+
     b.HookRaw("PING", onPing, PriHighest)
     b.HookRaw("001", onWelcome, PriNorm)
 
     b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
         onError(infoMaps["Error"].(error), b)
     }, PriHighest)
-    b.capManager = CapabilityManager{bot: b}
+
+
+    b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm)
 }
 
 // Bot.Error dispatches an error event across the event manager with the given error
