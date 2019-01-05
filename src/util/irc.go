@@ -4,6 +4,8 @@ import (
     "encoding/base64"
     "fmt"
     "github.com/goshuirc/irc-go/ircmsg"
+    "regexp"
+    "strings"
 )
 
 //noinspection ALL
@@ -27,4 +29,21 @@ func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
     return base64.StdEncoding.EncodeToString(
         []byte(fmt.Sprintf("%s\x00%s\x00%s\x00", nick, saslUsername, saslPasswd)),
     )
+}
+
+var charMap = map[rune]string{'?': ".", '*': ".*"}
+// GlobToRegexp converts a mask glob string to a regexp that will only allow the wildcards * and ? to have any special
+// meaning.
+func GlobToRegexp(mask string) string {
+    out := strings.Builder{}
+
+    for _, c := range mask {
+        toUse, ok := charMap[c]
+        if ok {
+            out.WriteString(toUse)
+        } else {
+            out.WriteString(regexp.QuoteMeta(string(c)))
+        }
+    }
+    return out.String()
 }
