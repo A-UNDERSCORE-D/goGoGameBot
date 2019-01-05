@@ -190,7 +190,7 @@ func (b *Bot) Init() {
     }, PriHighest)
 
 
-    b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm)
+    b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
 }
 
 // Bot.Error dispatches an error event across the event manager with the given error

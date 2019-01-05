@@ -44,7 +44,7 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
     for line := range lineChan {
         splitLine := strings.Split(line, " ")
 
-        b.CmdHandler.FireCommand(bot.CommandData{
+        b.CmdHandler.FireCommand(&bot.CommandData{
             Command:   splitLine[0],
             Args:      splitLine[1:],
             IsFromIRC: false,

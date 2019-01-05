@@ -1,13 +1,14 @@
 package bot
 
 import (
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
-    "log"
+    "regexp"
     "strings"
 )
 
-type HandleFunc func(data CommandData) error
+type HandleFunc func(data *CommandData) error
 
 // CommandHandler wraps the event manager on a Bot and uses it to build a command interface
 type CommandHandler struct {
@@ -49,7 +50,7 @@ func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
         args = []string{}
     }
 
-    h.FireCommand(CommandData{
+    h.FireCommand(&CommandData{
         Command:   cmd,
         Target:    target,
         Args:      args,
@@ -59,7 +60,7 @@ func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
     })
 }
 
-func (h *CommandHandler) FireCommand(data CommandData) {
+func (h *CommandHandler) FireCommand(data *CommandData) {
     if data.Bot == nil {
         data.Bot = h.bot
     }
@@ -82,9 +83,9 @@ func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
 }
 
 // RegisterCommand registers a callback with a command
-func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int) {
+func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int, requiresAdmin bool) {
     wrapped := func(event string, infoMap eventmgr.InfoMap) {
-        data := infoMap["data"].(CommandData)
+        data := infoMap["data"].(*CommandData)
         if data.IsCancelled() {
             return
         }
@@ -95,15 +96,47 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int)
         }
     }
 
-    h.bot.EventMgr.Attach("CMD_"+strings.ToUpper(cmd), wrapped, priority)
-}
+    hookName := "CMD_" + strings.ToUpper(cmd)
+    if requiresAdmin {
+        h.RegisterCommand(cmd, checkPermissions, -1, false)
+    }
 
-func rawCommand(data CommandData) error {
-    if data.IsFromIRC {
+    h.bot.EventMgr.Attach(hookName, wrapped, priority)
+}
+func checkPermissions(data *CommandData) error {
+    if !data.IsFromIRC {
         return nil
     }
+
+    ok := false
+    for _, perm := range data.Bot.Config.Permissions {
+        matcher := regexp.MustCompile(util.GlobToRegexp(perm.Mask))
+        if matcher.MatchString(data.Source) {
+            ok = true
+            break
+        }
+    }
+
+    if !ok {
+        data.SetCancelled(true)
+        target, _ := data.UserHost()
+        _ = data.Bot.WriteLine(
+            util.MakeSimpleIRCLine("NOTICE", target.Nick, "You are not permitted to use this command"),
+        )
+    }
+    return nil
+}
+
+func rawCommand(data *CommandData) error {
     if len(data.Args) < 1 {
-        log.Print("Cannot have an empty command")
+        if data.IsFromIRC {
+            target, _ := data.UserHost()
+            _ = data.Bot.WriteLine(
+                util.MakeSimpleIRCLine("NOTICE", target.Nick, "cannot have an empty command"),
+                )
+        } else {
+            data.Bot.Log.Println("Cannot have an empty command")
+        }
         return nil
     }
 
