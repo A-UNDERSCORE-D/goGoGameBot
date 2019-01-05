@@ -24,7 +24,56 @@ func onError(err error, b *Bot) {
     b.Log.Printf("[WARN] Error occured: %s", err)
 }
 
-func saslHandler(capability *Capability, line ircmsg.IrcMessage, group *sync.WaitGroup) {
+const (
+    auth          = "AUTHENTICATE"
+    errDuringSasl = "could not complete SASL auth: %q. Falling back to PRIVMSG based auth"
+    errSaslFailed = "sasl authentication failed. Falling back to PRIVMSG based auth (caused by %q)"
+)
+
+func (b *Bot) saslHandler(capability *Capability, _ ircmsg.IrcMessage, group *sync.WaitGroup) {
     defer group.Done()
-    println("CALLED")
+    //authChan, authDone := b.GetRawChan(auth)
+
+    aggChan, aggDone := b.GetMultiRawChan(
+        auth,
+        util.RPL_LOGGEDIN,
+        util.RPL_LOGGEDOUT,
+        util.RPL_NICKLOCKED,
+        util.RPL_SASLSUCCESS,
+        util.RPL_SASLFAIL,
+        util.RPL_SASLTOOLONG,
+        util.RPL_SASLABORTED,
+        util.RPL_SASLALREADY,
+        util.RPL_SASLMECHS,
+    )
+
+    defer close(aggDone)
+    // Request PLAIN authentication
+    if err := b.WriteLine(util.MakeSimpleIRCLine(auth, "PLAIN")); err != nil {
+        b.Error(fmt.Errorf(errDuringSasl, err))
+        return
+    }
+
+rangeLoop:
+    for line := range aggChan {
+        switch line.Command {
+        case auth:
+            if line.Params[0] == "+" {
+                authStr := util.GenerateSASLString(b.IrcConf.Nick, b.IrcConf.NSAuth.Nick, b.IrcConf.NSAuth.Password)
+                _ = b.WriteLine(util.MakeSimpleIRCLine(auth, authStr))
+            } else {
+                b.Error(fmt.Errorf(errDuringSasl, line.SourceLine))
+            }
+
+        case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
+            break rangeLoop
+
+        case util.RPL_NICKLOCKED, util.RPL_SASLFAIL, util.RPL_SASLTOOLONG, util.RPL_SASLABORTED, util.RPL_SASLALREADY, util.RPL_SASLMECHS:
+            b.Error(fmt.Errorf(errSaslFailed, line.SourceLine))
+            break rangeLoop
+
+        default:
+            break rangeLoop
+        }
+    }
 }
