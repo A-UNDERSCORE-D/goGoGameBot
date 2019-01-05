@@ -207,7 +207,6 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
         return
     }
 
-    b.Log.Printf("sending for command %s", upperCommand)
     for _, chanPair := range chans {
         // Just in case someone is sitting on this, that could be bad
         go func() {
@@ -289,4 +288,13 @@ func (b *Bot) GetMultiRawChan(commands... string) (<-chan ircmsg.IrcMessage, cha
     }()
 
     return aggChan, doneChan
+}
+
+func (b *Bot) Stop(quitMsg string) {
+    if b.Status == DISCONNECTED {
+        return
+    }
+    _ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
+    b.WaitForRaw("ERROR")
+    b.Status = DISCONNECTED
 }
