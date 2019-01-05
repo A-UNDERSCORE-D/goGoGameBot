@@ -32,8 +32,6 @@ const (
 
 func (b *Bot) saslHandler(capability *Capability, _ ircmsg.IrcMessage, group *sync.WaitGroup) {
     defer group.Done()
-    //authChan, authDone := b.GetRawChan(auth)
-
     aggChan, aggDone := b.GetMultiRawChan(
         auth,
         util.RPL_LOGGEDIN,
