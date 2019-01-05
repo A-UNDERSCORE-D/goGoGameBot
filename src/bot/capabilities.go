@@ -18,6 +18,10 @@ type Capability struct {
 }
 
 func (c *Capability) String() string {
+    if c.Params == "" {
+        return c.Name
+    }
+
     return fmt.Sprintf("%s: %s", c.Name, c.Params)
 }
 
