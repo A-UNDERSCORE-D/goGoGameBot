@@ -34,6 +34,7 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
             if err != nil {
                 close(lineChan)
                 rl.Close()
+                b.Stop("SIGINT")
                 return
             }
             lineChan <- line
