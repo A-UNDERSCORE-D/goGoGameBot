@@ -7,8 +7,8 @@ import (
 )
 
 type IrcChan struct {
-    Name string `xml:",attr"`
-    Key  string `xml:",attr,omitempty"`
+    Name string `xml:"name,attr"`
+    Key  string `xml:"key,attr,omitempty"`
 }
 
 // TODO: add requirelogin bool
@@ -20,22 +20,26 @@ type NSAuth struct {
 
 type IRC struct {
     XMLName         xml.Name  `xml:"irc"`
-    Nick            string    `xml:"nick"`
-    Ident           string    `xml:"ident"`
-    Gecos           string    `xml:"gecos"`
+    Nick            string    `xml:"nick,attr"`
+    Ident           string    `xml:"ident,attr"`
+    Gecos           string    `xml:"gecos,attr"`
     Host            string    `xml:"host,attr"`
     Port            string    `xml:"port,attr"`
     SSL             bool      `xml:"ssl,attr"`
+    CommandPrefix   string    `xml:"command_prefix,attr"`
     ConnectCommands []string  `xml:"connect_commands>command,omitempty"`
     JoinChans       []IrcChan `xml:"autojoin_channels>channel,omitempty"`
     NSAuth          NSAuth    `xml:"auth>nickserv"`
-    CommandPrefix   string    `xml:"command_prefix,attr"`
 }
 
 type Game struct {
-    XMLName   xml.Name `xml:"game"`
-    Name      string   `xml:"name,attr"`
-    AutoStart bool     `xml:"auto_start,attr"`
+    XMLName      xml.Name `xml:"game"`
+    Name         string   `xml:"name,attr"`
+    AutoStart    bool     `xml:"auto_start,attr"`
+    Path         string   `xml:"bin_path,attr"`
+    Args         string   `xml:"args,attr"`
+    Logchan      string   `xml:"log_chan,attr"`
+    AdminLogChan string   `xml:"admin_log_chan,attr"`
 }
 
 type Permission struct {
