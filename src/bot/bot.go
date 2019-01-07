@@ -55,7 +55,7 @@ type Bot struct {
     EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
     rawchansMutex sync.Mutex
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
-    capManager    CapabilityManager
+    capManager    *CapabilityManager
     CmdHandler    *CommandHandler
 }
 
@@ -179,7 +179,7 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
 
 // Bot.Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
-    b.capManager = CapabilityManager{bot: b}
+    b.capManager = &CapabilityManager{bot: b}
     b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
 
     b.HookRaw("PING", onPing, PriHighest)
@@ -256,7 +256,6 @@ func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool)
     return chanPair.writeChan, chanPair.doneChan
 }
 
-
 // WaitForRaw waits for a single command and returns the line
 func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
     w, d := b.GetRawChan(command)
@@ -267,7 +266,7 @@ func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
 
 // GetMultiRawChan condenses multiple raw channels into one, allowing you to wait for any number of raw commands on
 // a single channel
-func (b *Bot) GetMultiRawChan(commands... string) (<-chan ircmsg.IrcMessage, chan<- bool) {
+func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, chan<- bool) {
     doneChan := make(chan bool)
     aggChan := make(chan ircmsg.IrcMessage)
     var donechans []chan<- bool
@@ -281,13 +280,17 @@ func (b *Bot) GetMultiRawChan(commands... string) (<-chan ircmsg.IrcMessage, cha
         }()
     }
     go func() {
-        <- doneChan
+        <-doneChan
         for _, c := range donechans {
             close(c)
         }
     }()
 
     return aggChan, doneChan
+}
+
+func (b *Bot) SendToChan(target, msg string) {
+    _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, msg))
 }
 
 func (b *Bot) Stop(quitMsg string) {
