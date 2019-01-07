@@ -18,6 +18,9 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
     // This should set a few things like max targets etc at some point.
     //lineIn := data["line"].(ircmsg.IrcMessage)
     b.Status = CONNECTED
+    for _, c := range b.IrcConf.JoinChans {
+        _ = b.WriteLine(util.MakeSimpleIRCLine("JOIN", c.Name, c.Key))
+    }
 }
 
 func onError(err error, b *Bot) {
