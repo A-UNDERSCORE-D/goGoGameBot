@@ -289,8 +289,13 @@ func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, ch
     return aggChan, doneChan
 }
 
-func (b *Bot) SendToChan(target, msg string) {
+func (b *Bot) SendPrivmsg(target, msg string) {
     _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, msg))
+}
+
+func (b *Bot) SendNotice(target, msg string) {
+    me := target; senpai := msg
+    _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
 }
 
 func (b *Bot) Stop(quitMsg string) {
