@@ -5,7 +5,10 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/bot"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "github.com/chzyer/readline"
+    "golang.org/x/sys/unix"
     "log"
+    "os"
+    "os/signal"
     "strings"
 )
 
@@ -20,11 +23,18 @@ func main() {
     }
 
     b := bot.NewBot(*conf, log.New(rl, "[bot] ", 0))
+
+    sigChan := make(chan os.Signal, 1)
+    signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
+
+    go func() { sig := <-sigChan; b.Stop(fmt.Sprintf("Caught Signal: %s", sig)) }()
+
     go runCLI(b, rl)
 
     b.Run()
     fmt.Println()
 }
+
 func runCLI(b *bot.Bot, rl *readline.Instance) {
 
     lineChan := make(chan string)
