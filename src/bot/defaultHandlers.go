@@ -3,14 +3,13 @@ package bot
 import (
     "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
-    "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "sync"
 )
 
 func onPing(lineIn ircmsg.IrcMessage, b *Bot) {
     if err := b.WriteLine(util.MakeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
-        b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": fmt.Errorf("could not send pong: %s", err)})
+        b.Error(fmt.Errorf("could not send pong: %s", err))
     }
 }
 
@@ -77,4 +76,22 @@ rangeLoop:
             break rangeLoop
         }
     }
+}
+
+func (b *Bot) StartGame(data *CommandData) error {
+    if len(data.Args) < 1 {
+        if data.IsFromIRC {
+            b.SendNotice(data.Source, "startgame requires an argument")
+        } else {
+            b.Log.Printf("startgame requires an argument")
+        }
+    }
+
+    for _, g := range b.Games {
+        if g.Name == data.Args[0] {
+            go g.Run()
+            break
+        }
+    }
+    return nil
 }
