@@ -10,7 +10,7 @@ type Config struct {
     XMLName     xml.Name     `xml:"bot"`
     Irc         IRC          `xml:"irc"`
     Permissions []Permission `xml:"permissions>permission"`
-    Games       []Game       `xml:"games>game"`
+    Games       []Game       `xml:"game"`
 }
 
 var defaultConfig = Config{
@@ -22,12 +22,28 @@ var defaultConfig = Config{
         Host:            "irc.snoonet.org",
         Port:            "6697",
         SSL:             true,
-        ConnectCommands: []string{},
-        JoinChans:       []IrcChan{{"#ferricyanide", ""}, {"#someOtherChan", ""}},
+        ConnectCommands: []string{"PING :Teststuff"},
+        JoinChans:       []IrcChan{{Name: "#ferricyanide"}, {Name: "#someOtherChan"}},
         NSAuth:          NSAuth{"goGoGameBot", "goGoSuperSecurePasswd", true},
     },
     Permissions: []Permission{{Mask: "*!*@snoonet/staff/A_D"}},
-    Games:       nil,
+    Games:       []Game{
+        {
+            Name:         "echo",
+            AutoStart:    false,
+            Path:         "/bin/echo",
+            Args:         "test command is testy",
+            Logchan:      "#ferricyanide",
+            AdminLogChan: "#ferricyanide",
+            Regexps:      []GameRegexp{{
+                Name:      "test",
+                Priority:  0,
+                ShouldEat: true,
+                Regexp:    "(.*)",
+                Format:    "test",
+            }},
+        },
+    },
 }
 
 func getXMLConf(filename string) (*Config, error) {
