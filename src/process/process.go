@@ -2,7 +2,6 @@ package process
 
 import (
     "fmt"
-    "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
     "io"
     "log"
@@ -13,15 +12,7 @@ import (
     "time"
 )
 
-const (
-    NotStarted = iota
-    NotRunning
-    Running
-    Done
-    Errored
-)
-
-func NewProcess(name string, command string, args []string, readline *readline.Instance) (*Process, error) {
+func NewProcess(command string, args []string, logger *log.Logger) (*Process, error) {
     cmd := exec.Command(command, args...)
     stdin, err := cmd.StdinPipe()
     if err != nil {
@@ -39,21 +30,18 @@ func NewProcess(name string, command string, args []string, readline *readline.I
     }
 
     return &Process{
-        Name:       name,
-        Cmd:        cmd,
+        cmd:        cmd,
         Stdin:      stdin,
         Stdout:     stdout,
         Stderr:     stderr,
         StdinMutex: sync.Mutex{},
-        WriteChan:  make(chan string),
-        Status:     NotStarted,
         DoneChan:   make(chan bool, 1),
-        log:        log.New(readline, "["+name+"] ", log.Flags()),
+        log:        logger,
     }, nil
 }
 
-func NewProcessMustSucceed(name, command string, args []string, readline *readline.Instance) *Process {
-    p, err := NewProcess(name, command, args, readline)
+func NewProcessMustSucceed(command string, args []string, logger *log.Logger) *Process {
+    p, err := NewProcess(command, args, logger)
     if err != nil {
         panic(err)
     }
@@ -62,34 +50,30 @@ func NewProcessMustSucceed(name, command string, args []string, readline *readli
 
 // Process is a representation of a command to be run and access to its stdin/out/err
 type Process struct {
-    Name       string
-    Cmd        *exec.Cmd
+    cmd        *exec.Cmd
     Stderr     io.ReadCloser
     Stdout     io.ReadCloser
     Stdin      io.WriteCloser
     StdinMutex sync.Mutex
-    WriteChan  chan string
     DoneChan   chan bool
-    Status     int
-    Err        error
     log        *log.Logger
+    hasStarted bool
 }
 
 func (p *Process) Start() error {
     p.log.Print("Starting")
-    err := p.Cmd.Start()
-    if err != nil {
-        return fmt.Errorf("could not Start process %s: %v", p.Name, err)
+    if err := p.cmd.Start(); err != nil {
+        return fmt.Errorf("could not start process: %v", err)
     }
-    go p.watchWriteChan()
-    go p.waitOnProc()
-    p.Status = Running
-    p.log.Print("Started")
     return nil
 }
 
 func (p *Process) IsRunning() bool {
-    return p.Status == Running
+    return p.hasStarted && !p.cmd.ProcessState.Exited()
+}
+
+func (p *Process)GetProcStatus() string {
+    return p.cmd.ProcessState.String()
 }
 
 // writes data to stdin on this process, adding a newline if one does not exist
@@ -105,37 +89,13 @@ func (p *Process) Write(data string) (int, error) {
     return p.Stdin.Write([]byte(toWrite))
 }
 
-func (p *Process) waitOnProc() {
-    err := p.Cmd.Wait()
+func (p *Process) WaitForCompletion() error {
+    defer close(p.DoneChan)
+    err := p.cmd.Wait()
     if err != nil {
-        p.Status = Errored
-        p.Err = err
-        p.log.Printf("command returned an error: %v", err)
-    } else {
-        p.Status = Done
-        p.Err = nil
-        p.log.Print("command completed successfully")
+        return err
     }
-    close(p.DoneChan)
-    close(p.WriteChan)
-}
-
-func (p *Process) watchWriteChan() {
-loop:
-    for {
-        select {
-        case data, ok := <-p.WriteChan:
-            if !ok {
-                p.log.Print("WriteChan on Process closed")
-                break loop
-            }
-
-            _, err := p.Write(data)
-            if err != nil {
-                p.log.Printf("Could not Write %q to stdin: %v", data, err)
-            }
-        }
-    }
+    return nil
 }
 
 // sends the given signal to the underlying process
@@ -145,7 +105,7 @@ func (p *Process) SendSignal(sig os.Signal) error {
         return nil
     }
 
-    if err := p.Cmd.Process.Signal(sig); err != nil {
+    if err := p.cmd.Process.Signal(sig); err != nil {
         p.log.Printf("[WARN] could not send signal %s to process: %s", sig.String(), err)
         return err
     }
