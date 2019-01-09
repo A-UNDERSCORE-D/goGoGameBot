@@ -6,47 +6,6 @@ import (
     "os"
 )
 
-type IrcChan struct {
-    Name string `xml:"name,attr"`
-    Key  string `xml:"key,attr,omitempty"`
-}
-
-// TODO: add requirelogin bool
-type NSAuth struct {
-    Nick     string `xml:"nick,attr"`
-    Password string `xml:"password,attr"`
-    SASL     bool   `xml:"sasl,attr"`
-}
-
-type IRC struct {
-    XMLName         xml.Name  `xml:"irc"`
-    Nick            string    `xml:"nick,attr"`
-    Ident           string    `xml:"ident,attr"`
-    Gecos           string    `xml:"gecos,attr"`
-    Host            string    `xml:"host,attr"`
-    Port            string    `xml:"port,attr"`
-    SSL             bool      `xml:"ssl,attr"`
-    CommandPrefix   string    `xml:"command_prefix,attr"`
-    ConnectCommands []string  `xml:"connect_commands>command,omitempty"`
-    JoinChans       []IrcChan `xml:"autojoin_channels>channel,omitempty"`
-    NSAuth          NSAuth    `xml:"auth>nickserv"`
-}
-
-type Game struct {
-    XMLName      xml.Name `xml:"game"`
-    Name         string   `xml:"name,attr"`
-    AutoStart    bool     `xml:"auto_start,attr"`
-    Path         string   `xml:"bin_path,attr"`
-    Args         string   `xml:"args,attr"`
-    Logchan      string   `xml:"log_chan,attr"`
-    AdminLogChan string   `xml:"admin_log_chan,attr"`
-}
-
-type Permission struct {
-    XMLName xml.Name `xml:"permission"`
-    Mask    string   `xml:"mask,attr"`
-}
-
 type Config struct {
     XMLName     xml.Name     `xml:"bot"`
     Irc         IRC          `xml:"irc"`
@@ -54,7 +13,7 @@ type Config struct {
     Games       []Game       `xml:"games>game"`
 }
 
-var defaultConfig Config = Config{
+var defaultConfig = Config{
     Irc: IRC{
         CommandPrefix:   "~",
         Nick:            "goGoGameBot",
