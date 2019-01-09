@@ -11,6 +11,17 @@ type GameRegexp struct {
     Format    string   `xml:"format"`
 }
 
+func (g *GameRegexp) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+    type gameRegexp GameRegexp                       // Dont cause recursion when we use decode element later
+    out := gameRegexp{Priority: -1, ShouldEat: true} // Set some default values that are different from the zero value of their types
+    if err := d.DecodeElement(&out, &start); err != nil {
+        return err
+    }
+
+    *g = (GameRegexp)(out)
+    return nil
+}
+
 type Game struct {
     XMLName      xml.Name     `xml:"game"`
     Name         string       `xml:"name,attr"`
@@ -19,5 +30,7 @@ type Game struct {
     Args         string       `xml:"args,attr"`
     Logchan      string       `xml:"log_chan,attr"`
     AdminLogChan string       `xml:"admin_log_chan,attr"`
+    LogStdout    bool         `xml:"log_stdout,attr"`
+    LogStderr    bool         `xml:"log_stderr,attr"`
     Regexps      []GameRegexp `xml:"regexp"`
 }
