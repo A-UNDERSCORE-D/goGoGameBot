@@ -4,6 +4,7 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
+    "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
@@ -57,6 +58,7 @@ type Bot struct {
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
     capManager    *CapabilityManager
     CmdHandler    *CommandHandler
+    Games         []*Game
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
@@ -127,6 +129,7 @@ func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
     if b.Status == DISCONNECTED {
         return ErrNotConnected
     }
+
     lb, err := line.LineBytes()
     if err != nil {
         return err
@@ -138,6 +141,7 @@ func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
     }
     return nil
 }
+
 func (b *Bot) readLoop() {
     scanner := bufio.NewScanner(b.sock)
     for scanner.Scan() {
@@ -189,8 +193,17 @@ func (b *Bot) Init() {
         onError(infoMaps["Error"].(error), b)
     }, PriHighest)
 
-
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
+
+    for _, gameConf := range b.Config.Games {
+        g, err := NewGame(gameConf, b)
+        if err != nil {
+            b.Error(fmt.Errorf("could not create game %s: %s", gameConf.Name, err))
+            continue
+        }
+        b.Games = append(b.Games, g)
+    }
 }
 
 // Bot.Error dispatches an error event across the event manager with the given error
@@ -294,7 +307,8 @@ func (b *Bot) SendPrivmsg(target, msg string) {
 }
 
 func (b *Bot) SendNotice(target, msg string) {
-    me := target; senpai := msg
+    me := target
+    senpai := msg
     _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
 }
 
