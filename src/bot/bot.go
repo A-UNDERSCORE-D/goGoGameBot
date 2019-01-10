@@ -46,13 +46,13 @@ type RawChanPair struct {
 }
 
 type Bot struct {
-    Config        config.Config // Config for the IRC connection etc
-    IrcConf       config.IRC
-    sockMutex     sync.Mutex
-    sock          net.Conn
-    Status        int                    // Current connection status
-    DoneChan      chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    Log           *log.Logger            // Logger setup to have a prefix etc, for easy logging
+    Config    config.Config // Config for the IRC connection etc
+    IrcConf   config.IRC
+    sockMutex sync.Mutex
+    sock      net.Conn
+    Status    int       // Current connection status
+    DoneChan  chan bool // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    //Log           *log.Logger            // Logger setup to have a prefix etc, for easy logging
     EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
     rawchansMutex sync.Mutex
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
@@ -63,10 +63,10 @@ type Bot struct {
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
     b := &Bot{
-        Config:   conf,
-        IrcConf:  conf.Irc,
-        Status:   DISCONNECTED,
-        Log:      logger,
+        Config:  conf,
+        IrcConf: conf.Irc,
+        Status:  DISCONNECTED,
+        //Log:      logger,
         EventMgr: new(eventmgr.EventManager),
         DoneChan: make(chan bool),
     }
@@ -320,3 +320,28 @@ func (b *Bot) Stop(quitMsg string) {
     b.WaitForRaw("ERROR")
     b.Status = DISCONNECTED
 }
+
+func (b *Bot) internalLog(level string, args ...interface{}) {
+    log.Println("[BOT]", "["+level+"]", fmt.Sprint(args...))
+}
+
+func (b *Bot) internalLogf(level, format string, args ...interface{}) {
+    b.internalLog(level, fmt.Sprintf(format, args...))
+}
+
+func (b *Bot) Info(args ...interface{}) {
+    b.internalLog("INFO", args...)
+}
+
+func (b *Bot) Infof(format string, args ...interface{}) {
+    b.internalLogf("INFO", format, args...)
+}
+
+func (b *Bot) Warn(args ...interface{}) {
+    b.internalLog("WARN", args...)
+}
+
+func(b *Bot) Warnf(format string, args ...interface{}) {
+    b.internalLogf("WARN", format, args...)
+}
+
