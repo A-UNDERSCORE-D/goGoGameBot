@@ -2,9 +2,9 @@ package process
 
 import (
     "fmt"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "golang.org/x/sys/unix"
     "io"
-    "log"
     "os"
     "os/exec"
     "strings"
@@ -12,7 +12,7 @@ import (
     "time"
 )
 
-func NewProcess(command string, args []string, logger *log.Logger) (*Process, error) {
+func NewProcess(command string, args []string, logger *botLog.Logger) (*Process, error) {
     cmd := exec.Command(command, args...)
     stdin, err := cmd.StdinPipe()
     if err != nil {
@@ -40,7 +40,7 @@ func NewProcess(command string, args []string, logger *log.Logger) (*Process, er
     }, nil
 }
 
-func NewProcessMustSucceed(command string, args []string, logger *log.Logger) *Process {
+func NewProcessMustSucceed(command string, args []string, logger *botLog.Logger) *Process {
     p, err := NewProcess(command, args, logger)
     if err != nil {
         panic(err)
@@ -56,12 +56,12 @@ type Process struct {
     Stdin      io.WriteCloser
     StdinMutex sync.Mutex
     DoneChan   chan bool
-    log        *log.Logger
+    log        *botLog.Logger
     hasStarted bool
 }
 
 func (p *Process) Start() error {
-    p.log.Print("Starting")
+    p.log.Info("Starting")
     if err := p.cmd.Start(); err != nil {
         return fmt.Errorf("could not start process: %v", err)
     }
@@ -85,7 +85,7 @@ func (p *Process) Write(data string) (int, error) {
 
     p.StdinMutex.Lock()
     defer p.StdinMutex.Unlock()
-    p.log.Printf("[STDIN] %s", data)
+    p.log.Infof("[STDIN] %s", data)
     return p.Stdin.Write([]byte(toWrite))
 }
 
@@ -101,12 +101,12 @@ func (p *Process) WaitForCompletion() error {
 // sends the given signal to the underlying process
 func (p *Process) SendSignal(sig os.Signal) error {
     if !p.IsRunning() {
-        p.log.Printf("[WARN] attempt to send non-running process a signal")
+        p.log.Warn("attempt to send non-running process a signal")
         return nil
     }
 
     if err := p.cmd.Process.Signal(sig); err != nil {
-        p.log.Printf("[WARN] could not send signal %s to process: %s", sig.String(), err)
+        p.log.Warnf("could not send signal %s to process: %s", sig.String(), err)
         return err
     }
     return nil

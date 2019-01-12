@@ -92,7 +92,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
                 cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
             }()
 
-            cm.bot.Log.Printf("Server offered caps: %v",
+            cm.bot.Log.Infof("Server offered caps: %v",
                 cm.filterCaps(func(capability *Capability) bool { return capability.available }),
             )
 
@@ -111,12 +111,12 @@ func (cm *CapabilityManager) NegotiateCaps() {
                         go c.Callback(c, line, &wg)
                     }
                 } else {
-                    cm.bot.Log.Printf(
-                        "[WARN] Got an ACK for a cap we dont know about: %q with params %q", name, params,
+                    cm.bot.Log.Warnf(
+                        "Got an ACK for a cap we dont know about: %q with params %q", name, params,
                     )
                 }
             }
-            cm.bot.Log.Printf("Server ACK-ed caps: %v", cm.filterCaps(func(c *Capability) bool {return c.enabled}))
+            cm.bot.Log.Infof("Server ACK-ed caps: %v", cm.filterCaps(func(c *Capability) bool {return c.enabled}))
             wg.Done()
 
         case "NAK":
@@ -146,7 +146,7 @@ func (cm *CapabilityManager) requestCaps() error {
         return capability.requested && capability.available
     })
 
-    cm.bot.Log.Printf("requesting capabilities: %v", capsToReq)
+    cm.bot.Log.Infof("requesting capabilities: %v", capsToReq)
 
     var caps []string
     for _, c := range capsToReq {

@@ -7,9 +7,9 @@ import (
     "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
-    "log"
     "net"
     "strings"
     "sync"
@@ -50,9 +50,9 @@ type Bot struct {
     IrcConf   config.IRC
     sockMutex sync.Mutex
     sock      net.Conn
-    Status    int       // Current connection status
-    DoneChan  chan bool // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    //Log           *log.Logger            // Logger setup to have a prefix etc, for easy logging
+    Status    int                        // Current connection status
+    DoneChan  chan bool                  // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    Log           *botLog.Logger         // Logger setup to have a prefix etc, for easy logging
     EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
     rawchansMutex sync.Mutex
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
@@ -61,12 +61,12 @@ type Bot struct {
     Games         []*Game
 }
 
-func NewBot(conf config.Config, logger *log.Logger) *Bot {
+func NewBot(conf config.Config) *Bot {
     b := &Bot{
-        Config:  conf,
-        IrcConf: conf.Irc,
-        Status:  DISCONNECTED,
-        //Log:      logger,
+        Config:   conf,
+        IrcConf:  conf.Irc,
+        Status:   DISCONNECTED,
+        Log:      botLog.NewLogger("BOT", nil),
         EventMgr: new(eventmgr.EventManager),
         DoneChan: make(chan bool),
     }
@@ -121,7 +121,7 @@ func (b *Bot) connect() error {
 func (b *Bot) writeRaw(line []byte) (int, error) {
     b.sockMutex.Lock()
     defer b.sockMutex.Unlock()
-    b.Log.Printf("<< %s", string(line))
+    b.Log.Infof("<< %s", string(line))
     return b.sock.Write(line)
 }
 
@@ -137,7 +137,7 @@ func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
 
     count, err := b.writeRaw(lb)
     if len(lb) != count {
-        b.Log.Print("[WARN] Did not write all bytes for a message")
+        b.Log.Warn("Did not write all bytes for a message")
     }
     return nil
 }
@@ -147,11 +147,11 @@ func (b *Bot) readLoop() {
     for scanner.Scan() {
         lineStr := scanner.Text()
 
-        b.Log.Printf(">> %s", lineStr)
+        b.Log.Infof(">> %s", lineStr)
 
         line, err := ircmsg.ParseLine(lineStr)
         if err != nil {
-            b.Log.Printf("[WARN] Discarding invalid line %q: %s", lineStr, err)
+            b.Log.Infof("[WARN] Discarding invalid line %q: %s", lineStr, err)
             continue
         }
 
@@ -226,7 +226,7 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
             defer func() {
                 err := recover()
                 if err != nil {
-                    b.Log.Printf("[WARN] sendToRawChans lambda recovered panic: %s", err)
+                    b.Log.Warnf("[WARN] sendToRawChans lambda recovered panic: %s", err)
                 }
             }()
             chanPair.writeChan <- line
@@ -321,27 +321,4 @@ func (b *Bot) Stop(quitMsg string) {
     b.Status = DISCONNECTED
 }
 
-func (b *Bot) internalLog(level string, args ...interface{}) {
-    log.Println("[BOT]", "["+level+"]", fmt.Sprint(args...))
-}
-
-func (b *Bot) internalLogf(level, format string, args ...interface{}) {
-    b.internalLog(level, fmt.Sprintf(format, args...))
-}
-
-func (b *Bot) Info(args ...interface{}) {
-    b.internalLog("INFO", args...)
-}
-
-func (b *Bot) Infof(format string, args ...interface{}) {
-    b.internalLogf("INFO", format, args...)
-}
-
-func (b *Bot) Warn(args ...interface{}) {
-    b.internalLog("WARN", args...)
-}
-
-func(b *Bot) Warnf(format string, args ...interface{}) {
-    b.internalLogf("WARN", format, args...)
-}
 

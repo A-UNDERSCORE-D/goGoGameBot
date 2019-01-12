@@ -23,7 +23,7 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
 }
 
 func onError(err error, b *Bot) {
-    b.Log.Printf("[WARN] Error occured: %s", err)
+    b.Log.Warnf("Error occured: %s", err)
 }
 
 const (
@@ -83,7 +83,7 @@ func (b *Bot) StartGame(data *CommandData) error {
         if data.IsFromIRC {
             b.SendNotice(data.Source, "startgame requires an argument")
         } else {
-            b.Log.Printf("startgame requires an argument")
+            b.Log.Warn("startgame requires an argument")
         }
     }
 

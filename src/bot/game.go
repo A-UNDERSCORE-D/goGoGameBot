@@ -5,7 +5,7 @@ import (
     "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
-    "log"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "strings"
 )
 
@@ -14,24 +14,23 @@ type Game struct {
     Name       string
     process    *process.Process
     regexps    []*GameRegexp
-    log        *log.Logger
+    log        *botLog.Logger
     adminChan  string
     logChan    string
     DumpStderr bool
     DumpStdout bool
     bot        *Bot
-    logPrefix  string
 }
 
 func NewGame(conf config.Game, b *Bot) (*Game, error) {
     procL := *b.Log // Duplicate l for use elsewhere
-    procL.SetPrefix(fmt.Sprintf("[%s] [proc] ", conf.Name))
+    procL.SetPrefix(conf.Name)
     proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), &procL)
     if err != nil {
         return nil, err
     }
     gL := *b.Log
-    gL.SetPrefix("[" + conf.Name + "] ")
+    gL.SetPrefix(conf.Name)
 
     g := &Game{
         Name:       conf.Name,
@@ -42,7 +41,6 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
         DumpStderr: conf.LogStderr,
         DumpStdout: conf.LogStdout,
         logChan:    conf.Logchan,
-        logPrefix:  "[" + conf.Name + "] ",
     }
 
     var gr []*GameRegexp
@@ -96,13 +94,16 @@ func (g *Game) watchStd(stderr bool) {
 }
 
 func (g *Game) handleOutput(line string, stderr bool) {
+    pfx := "[STDOUT] "
+    if stderr {
+        pfx = "[STDERR] "
+    }
+
     if (stderr && g.DumpStderr) || (!stderr && g.DumpStdout) {
-        pfx := "[STDOUT] "
-        if stderr {
-            pfx = "[STDERR] "
-        }
         g.sendToLogChan(pfx + line)
     }
+
+    g.log.Info(pfx, line)
 
     for _, gRegexp := range g.regexps {
         shouldEat, res, err := gRegexp.CheckAndExecute(line, stderr)
@@ -111,7 +112,7 @@ func (g *Game) handleOutput(line string, stderr bool) {
             continue
         }
 
-        g.log.Println(res)
+        g.log.Info("res!", res)
 
         if shouldEat {
             break

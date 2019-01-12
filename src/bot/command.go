@@ -135,7 +135,7 @@ func rawCommand(data *CommandData) error {
                 util.MakeSimpleIRCLine("NOTICE", target.Nick, "cannot have an empty command"),
                 )
         } else {
-            data.Bot.Log.Println("Cannot have an empty command")
+            data.Bot.Log.Warn("Cannot have an empty command")
         }
         return nil
     }

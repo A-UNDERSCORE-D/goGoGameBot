@@ -4,6 +4,7 @@ import (
     "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/bot"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
     "log"
@@ -14,15 +15,14 @@ import (
 
 func main() {
     rl, _ := readline.New("> ")
-    log.SetFlags(0)
-    log.SetOutput(rl)
+    botLog.InitLogger(rl, log.Ltime/* | log.Lshortfile*/)
 
     conf, err := config.GetConfig("config.xml")
     if err != nil {
         panic(err)
     }
 
-    b := bot.NewBot(*conf, log.New(rl, "[bot] ", 0))
+    b := bot.NewBot(*conf)
 
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
