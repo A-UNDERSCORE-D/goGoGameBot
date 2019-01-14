@@ -91,6 +91,11 @@ func (l *Logger) writeOut(msg string, level int) {
 		outStr.WriteRune(' ')
 	}
 
+	outStr.WriteRune('[')
+	outStr.WriteString(levelToString(level))
+	outStr.WriteRune(']')
+	outStr.WriteRune(' ')
+
 	if l.prefix != "" {
 		outStr.WriteRune('[')
 		outStr.WriteString(l.prefix)
@@ -98,10 +103,6 @@ func (l *Logger) writeOut(msg string, level int) {
 		outStr.WriteRune(' ')
 	}
 
-	outStr.WriteRune('[')
-	outStr.WriteString(levelToString(level))
-	outStr.WriteRune(']')
-	outStr.WriteRune(' ')
 
 	outStr.WriteString(strings.TrimRight(msg, "\r\n"))
 	outStr.WriteRune('\n')
