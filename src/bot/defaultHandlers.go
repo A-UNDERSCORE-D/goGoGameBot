@@ -17,13 +17,18 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
     // This should set a few things like max targets etc at some point.
     //lineIn := data["line"].(ircmsg.IrcMessage)
     b.Status = CONNECTED
+    _ = b.WriteLine(util.MakeSimpleIRCLine("JOIN", b.IrcConf.AdminChan.Name, b.IrcConf.AdminChan.Key))
     for _, c := range b.IrcConf.JoinChans {
         _ = b.WriteLine(util.MakeSimpleIRCLine("JOIN", c.Name, c.Key))
     }
 }
 
 func onError(err error, b *Bot) {
-    b.Log.Warnf("Error occured: %s", err)
+    msg := fmt.Sprintf("Error occured: %s", err)
+    b.Log.Warnf(msg)
+    if b.Status == CONNECTED {
+        b.SendPrivmsg(b.Config.Irc.AdminChan.Name, "[ERROR] " + msg)
+    }
 }
 
 const (
@@ -81,10 +86,15 @@ rangeLoop:
 func (b *Bot) StartGame(data *CommandData) error {
     if len(data.Args) < 1 {
         if data.IsFromIRC {
-            b.SendNotice(data.Source, "startgame requires an argument")
+            userHost, err := data.UserHost()
+            if err != nil {
+                return err
+            }
+            b.SendNotice(userHost.Nick, "startgame requires an argument")
         } else {
             b.Log.Warn("startgame requires an argument")
         }
+        return nil
     }
 
     for _, g := range b.Games {
