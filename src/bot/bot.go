@@ -46,12 +46,12 @@ type RawChanPair struct {
 }
 
 type Bot struct {
-    Config    config.Config // Config for the IRC connection etc
-    IrcConf   config.IRC
-    sockMutex sync.Mutex
-    sock      net.Conn
-    Status    int                        // Current connection status
-    DoneChan  chan bool                  // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    Config        config.Config // Config for the IRC connection etc
+    IrcConf       config.IRC
+    sockMutex     sync.Mutex
+    sock          net.Conn
+    Status        int                    // Current connection status
+    DoneChan      chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
     Log           *botLog.Logger         // Logger setup to have a prefix etc, for easy logging
     EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
     rawchansMutex sync.Mutex
@@ -61,12 +61,12 @@ type Bot struct {
     Games         []*Game
 }
 
-func NewBot(conf config.Config) *Bot {
+func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
     b := &Bot{
         Config:   conf,
         IrcConf:  conf.Irc,
         Status:   DISCONNECTED,
-        Log:      botLog.NewLogger("BOT", nil),
+        Log:      logger,
         EventMgr: new(eventmgr.EventManager),
         DoneChan: make(chan bool),
     }
@@ -320,5 +320,3 @@ func (b *Bot) Stop(quitMsg string) {
     b.WaitForRaw("ERROR")
     b.Status = DISCONNECTED
 }
-
-

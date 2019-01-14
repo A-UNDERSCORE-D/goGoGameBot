@@ -7,7 +7,6 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
-    "log"
     "os"
     "os/signal"
     "strings"
@@ -15,14 +14,13 @@ import (
 
 func main() {
     rl, _ := readline.New("> ")
-    botLog.InitLogger(rl, log.Ltime/* | log.Lshortfile*/)
-
+    log := botLog.NewLogger(botLog.FTimestamp, rl, "MAIN", 0)
     conf, err := config.GetConfig("config.xml")
     if err != nil {
-        panic(err)
+        log.Panicf("could not read log file", err)
     }
 
-    b := bot.NewBot(*conf)
+    b := bot.NewBot(*conf, log.Clone().SetPrefix("BOT"))
 
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)

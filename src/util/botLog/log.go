@@ -1,60 +1,170 @@
 package botLog
 
 import (
-    "fmt"
-    "io"
-    "log"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+	"sync"
+	"time"
 )
-// TODO: Maybe switch this to direct output? I'd get a good chunk more control over how output happens etc. Would let me
-//       control levels etc more specifically. Will want calldepth stuff though.
-var internalCopy *log.Logger
 
-func InitLogger(writer io.Writer, flags int) {
-    internalCopy = log.New(writer, "", flags)
+const (
+	FTimestamp = 1 << iota
+	//FShowFile // Maybe some other time.
+)
+
+const (
+	TRACE = 10 * iota
+	DEBUG
+	INFO
+	WARN
+	ERROR
+	CRIT
+	PANIC
+)
+
+func levelToString(level int) string {
+	switch level {
+	case TRACE:
+		return "TRACE"
+	case DEBUG:
+		return "DEBUG"
+	case INFO:
+		return "INFO "
+	case WARN:
+		return "WARN "
+	case ERROR:
+		return "ERROR"
+	case CRIT:
+		return "CRIT "
+	case PANIC:
+		return "PANIC"
+	}
+	return "?????"
 }
 
 type Logger struct {
-    prefix string
-    logger *log.Logger
+	flags    int
+	output   io.Writer
+	prefix   string
+	wMutex   sync.Mutex
+	minLevel int
 }
 
-func NewLogger(prefix string, logger *log.Logger) *Logger {
-    l := logger
-    if l == nil {
-        l = internalCopy
-    }
+func (l *Logger) Flags() int {
+	return l.flags
+}
 
-    return &Logger{prefix: prefix, logger: l}
+func (l *Logger) SetFlags(flags int) *Logger {
+	l.flags = flags
+	return l
 }
 
 func (l *Logger) Prefix() string {
-    return l.prefix
+	return l.prefix
 }
 
-func (l *Logger) SetPrefix(prefix string) {
-    l.prefix = prefix
-}
-func (l *Logger) internalLog(level string, depth int, args ...interface{}) {
-    toPrint := fmt.Sprintf("[%s] [%s] %s", level, l.prefix, fmt.Sprint(args...))
-    _ = l.logger.Output(depth, toPrint)
+func (l *Logger) SetPrefix(prefix string) *Logger{
+	l.prefix = prefix
+	return l
 }
 
-func (l *Logger) internalLogf(level, format string, args ...interface{}) {
-    l.internalLog(level, 4, fmt.Sprintf(format, args...))
+func (l *Logger) MinLevel() int {
+	return l.minLevel
+}
+
+func NewLogger(flags int, output io.Writer, prefix string, minLevel int) *Logger {
+	return &Logger{flags: flags, output: output, prefix: prefix, minLevel: minLevel, wMutex: sync.Mutex{}}
+}
+
+func (l *Logger) writeOut(msg string, level int) {
+	if level < l.minLevel {
+		return
+	}
+
+	outStr := strings.Builder{}
+	if l.flags&FTimestamp != 0 {
+		outStr.WriteRune('[')
+		outStr.WriteString(time.Now().Format("15:04:05.000"))
+		outStr.WriteRune(']')
+		outStr.WriteRune(' ')
+	}
+
+	if l.prefix != "" {
+		outStr.WriteRune('[')
+		outStr.WriteString(l.prefix)
+		outStr.WriteRune(']')
+		outStr.WriteRune(' ')
+	}
+
+	outStr.WriteRune('[')
+	outStr.WriteString(levelToString(level))
+	outStr.WriteRune(']')
+	outStr.WriteRune(' ')
+
+	outStr.WriteString(strings.TrimRight(msg, "\r\n"))
+	outStr.WriteRune('\n')
+
+	l.wMutex.Lock()
+	defer l.wMutex.Unlock()
+	_, _ = l.output.Write([]byte(outStr.String()))
+}
+
+func (l *Logger) Trace(args ...interface{}) {
+	l.writeOut(fmt.Sprint(args...), TRACE)
+}
+
+func (l *Logger) Tracef(format string, args ...interface{}) {
+	l.writeOut(fmt.Sprintf(format, args...), TRACE)
+}
+
+func (l *Logger) Debug(format string, args ...interface{}) {
+	l.writeOut(fmt.Sprint(args...), DEBUG)
+}
+
+func (l *Logger) Debugf(format string, args ...interface{}) {
+	l.writeOut(fmt.Sprintf(format, args...), DEBUG)
 }
 
 func (l *Logger) Info(args ...interface{}) {
-    l.internalLog("INFO", 3, args...)
+	l.writeOut(fmt.Sprint(args...), INFO)
 }
 
 func (l *Logger) Infof(format string, args ...interface{}) {
-    l.internalLogf("INFO", format, args...)
+	l.writeOut(fmt.Sprintf(format, args...), INFO)
 }
 
 func (l *Logger) Warn(args ...interface{}) {
-    l.internalLog("WARN", 3, args...)
+	l.writeOut(fmt.Sprint(args...), WARN)
 }
 
 func (l *Logger) Warnf(format string, args ...interface{}) {
-    l.internalLogf("WARN", format, args...)
+	l.writeOut(fmt.Sprintf(format, args...), WARN)
+}
+
+func (l *Logger) Crit(args ...interface{}) {
+	l.writeOut(fmt.Sprint(args...), CRIT)
+	os.Exit(1)
+}
+
+func (l *Logger) Critf(format string, args ...interface{}) {
+	l.writeOut(fmt.Sprintf(format, args...), CRIT)
+	os.Exit(1)
+}
+
+func (l *Logger) Panic(args ...interface{}) {
+	msg := fmt.Sprint(args...)
+	l.writeOut(msg, PANIC)
+	panic(msg)
+}
+
+func (l *Logger) Panicf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	l.writeOut(msg, PANIC)
+	panic(msg)
+}
+
+func (l Logger) Clone() *Logger {
+	return &l
 }

@@ -23,20 +23,20 @@ type Game struct {
 }
 
 func NewGame(conf config.Game, b *Bot) (*Game, error) {
-    procL := *b.Log // Duplicate l for use elsewhere
+    procL := b.Log.Clone() // Duplicate l for use elsewhere
     procL.SetPrefix(conf.Name)
-    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), &procL)
+    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), procL)
     if err != nil {
         return nil, err
     }
-    gL := *b.Log
+    gL := b.Log.Clone()
     gL.SetPrefix(conf.Name)
 
     g := &Game{
         Name:       conf.Name,
         bot:        b,
         process:    proc,
-        log:        &gL,
+        log:        gL,
         adminChan:  conf.AdminLogChan,
         DumpStderr: conf.LogStderr,
         DumpStdout: conf.LogStdout,
