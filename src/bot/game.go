@@ -68,6 +68,9 @@ func (g *Game) Run() {
         g.bot.Error(err)
     }
     g.sendToLogChan("Process exited with " + g.process.GetProcStatus())
+    if err := g.process.Reset(); err != nil {
+        g.bot.Error(err)
+    }
 }
 
 func (g *Game) sendToLogChan(msg string) {

@@ -13,31 +13,17 @@ import (
 )
 
 func NewProcess(command string, args []string, logger *botLog.Logger) (*Process, error) {
-    cmd := exec.Command(command, args...)
-    stdin, err := cmd.StdinPipe()
-    if err != nil {
+
+    p := &Process{
+        originalCmd:  command,
+        originalArgs: args,
+        StdinMutex:   sync.Mutex{},
+        log:          logger,
+    }
+    if err := p.Reset(); err != nil{
         return nil, err
     }
-
-    stdout, err := cmd.StdoutPipe()
-    if err != nil {
-        return nil, err
-    }
-
-    stderr, err := cmd.StderrPipe()
-    if err != nil {
-        return nil, err
-    }
-
-    return &Process{
-        cmd:        cmd,
-        Stdin:      stdin,
-        Stdout:     stdout,
-        Stderr:     stderr,
-        StdinMutex: sync.Mutex{},
-        DoneChan:   make(chan bool, 1),
-        log:        logger,
-    }, nil
+    return p, nil
 }
 
 func NewProcessMustSucceed(command string, args []string, logger *botLog.Logger) *Process {
@@ -50,14 +36,45 @@ func NewProcessMustSucceed(command string, args []string, logger *botLog.Logger)
 
 // Process is a representation of a command to be run and access to its stdin/out/err
 type Process struct {
-    cmd        *exec.Cmd
-    Stderr     io.ReadCloser
-    Stdout     io.ReadCloser
-    Stdin      io.WriteCloser
-    StdinMutex sync.Mutex
-    DoneChan   chan bool
-    log        *botLog.Logger
-    hasStarted bool
+    cmd          *exec.Cmd
+    originalCmd  string
+    originalArgs []string
+    Stderr       io.ReadCloser
+    Stdout       io.ReadCloser
+    Stdin        io.WriteCloser
+    StdinMutex   sync.Mutex
+    DoneChan     chan bool
+    log          *botLog.Logger
+    hasStarted   bool
+}
+
+func (p *Process) setupCmd() error {
+    cmd := exec.Command(p.originalCmd, p.originalArgs...)
+    stdin, err := cmd.StdinPipe()
+    if err != nil {
+        return err
+    }
+
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        return err
+    }
+
+    stderr, err := cmd.StderrPipe()
+    if err != nil {
+        return err
+    }
+
+    p.cmd = cmd
+    p.Stdin = stdin
+    p.Stdout = stdout
+    p.Stderr = stderr
+    return nil
+}
+
+func (p *Process) Reset() error {
+    p.DoneChan = make(chan bool)
+    return p.setupCmd()
 }
 
 func (p *Process) Start() error {
@@ -72,7 +89,7 @@ func (p *Process) IsRunning() bool {
     return p.hasStarted && !p.cmd.ProcessState.Exited()
 }
 
-func (p *Process)GetProcStatus() string {
+func (p *Process) GetProcStatus() string {
     return p.cmd.ProcessState.String()
 }
 
