@@ -23,6 +23,7 @@ type IRC struct {
     Port            string    `xml:"port,attr"`
     SSL             bool      `xml:"ssl,attr"`
     CommandPrefix   string    `xml:"command_prefix,attr"`
+    AdminChan       IrcChan   `xml:"admin_chan"`
     ConnectCommands []string  `xml:"connect_commands>command,omitempty"`
     JoinChans       []IrcChan `xml:"autojoin_channels>channel,omitempty"`
     NSAuth          NSAuth    `xml:"auth>nickserv"`
