@@ -7,6 +7,7 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "strings"
+    "time"
 )
 
 // TODO: This needs a working directory etc on its process
@@ -29,6 +30,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
     if err != nil {
         return nil, err
     }
+
     gL := b.Log.Clone()
     gL.SetPrefix(conf.Name)
 
@@ -54,6 +56,8 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
         gr = append(gr, r)
     }
 
+    g.regexps = gr
+
     return g, nil
 }
 
@@ -71,6 +75,10 @@ func (g *Game) Run() {
     if err := g.process.Reset(); err != nil {
         g.bot.Error(err)
     }
+}
+
+func (g *Game) StopOrKill() error {
+    return g.process.StopOrKillTimeout(time.Second * 30)
 }
 
 func (g *Game) sendToLogChan(msg string) {
@@ -107,16 +115,13 @@ func (g *Game) handleOutput(line string, stderr bool) {
     }
 
     g.log.Info(pfx, line)
-
     for _, gRegexp := range g.regexps {
         shouldEat, res, err := gRegexp.CheckAndExecute(line, stderr)
         if err != nil {
             g.bot.Error(err)
             continue
         }
-
-        g.log.Info("res!", res)
-
+        g.log.Info(res)
         if shouldEat {
             break
         }
