@@ -220,10 +220,8 @@ func (b *Bot) reloadGames(conf []config.Game) {
             if err := oldGame.StopOrKill(); err != nil {
                 b.Error(err)
             }
-            b.Log.Tracef("Switching out game %q %p for %q %p", oldGame.Name, oldGame, newGame.Name, newGame)
             b.GamesMutex.Lock()
             b.Games[i] = newGame
-            b.Log.Tracef("in list: %p, set: %p, original %p", b.Games[i], )
             b.GamesMutex.Unlock()
 
         case -1:
