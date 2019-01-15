@@ -16,10 +16,10 @@ import (
 func NewProcess(command string, args []string, logger *botLog.Logger) (*Process, error) {
 
     p := &Process{
-        originalCmd:  command,
-        originalArgs: args,
-        StdinMutex:   sync.Mutex{},
-        log:          logger,
+        commandString: command,
+        argListString: args,
+        StdinMutex:    sync.Mutex{},
+        log:           logger,
     }
     if err := p.Reset(); err != nil{
         return nil, err
@@ -37,9 +37,10 @@ func NewProcessMustSucceed(command string, args []string, logger *botLog.Logger)
 
 // Process is a representation of a command to be run and access to its stdin/out/err
 type Process struct {
-    cmd          *exec.Cmd
-    originalCmd  string
-    originalArgs []string
+    cmd           *exec.Cmd
+    commandString string
+    argListString []string
+    commandMutex sync.Mutex
     Stderr       io.ReadCloser
     Stdout       io.ReadCloser
     Stdin        io.WriteCloser
@@ -47,10 +48,20 @@ type Process struct {
     DoneChan     chan bool
     log          *botLog.Logger
     hasStarted   bool
+    hasExited    bool
+}
+
+func (p *Process) UpdateCmd(command string, args []string) {
+    p.commandMutex.Lock()
+    defer p.commandMutex.Unlock()
+    p.commandString = command
+    p.argListString = args
 }
 
 func (p *Process) setupCmd() error {
-    cmd := exec.Command(p.originalCmd, p.originalArgs...)
+    p.commandMutex.Lock()
+    cmd := exec.Command(p.commandString, p.argListString...)
+    p.commandMutex.Unlock()
     stdin, err := cmd.StdinPipe()
     if err != nil {
         return err
@@ -75,6 +86,8 @@ func (p *Process) setupCmd() error {
 
 func (p *Process) Reset() error {
     p.DoneChan = make(chan bool)
+    p.hasStarted = false
+    p.hasExited = false
     return p.setupCmd()
 }
 
@@ -83,11 +96,12 @@ func (p *Process) Start() error {
     if err := p.cmd.Start(); err != nil {
         return fmt.Errorf("could not start process: %v", err)
     }
+    p.hasStarted = true
     return nil
 }
 
 func (p *Process) IsRunning() bool {
-    return p.hasStarted && !p.cmd.ProcessState.Exited()
+    return p.hasStarted && !p.hasExited
 }
 
 func (p *Process) GetProcStatus() string {
@@ -110,6 +124,7 @@ func (p *Process) Write(data string) (int, error) {
 func (p *Process) WaitForCompletion() error {
     defer close(p.DoneChan)
     err := p.cmd.Wait()
+    p.hasExited = true
     if err != nil {
         return err
     }
