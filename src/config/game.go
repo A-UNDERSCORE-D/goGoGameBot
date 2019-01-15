@@ -32,5 +32,5 @@ type Game struct {
     AdminLogChan string       `xml:"admin_log_chan,attr"`
     LogStdout    bool         `xml:"log_stdout,attr"`
     LogStderr    bool         `xml:"log_stderr,attr"`
-    Regexps      []GameRegexp `xml:"regexp"`
+    Regexps      []GameRegexp `xml:"game_regexp"`
 }
