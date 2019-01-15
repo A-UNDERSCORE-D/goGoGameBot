@@ -1,6 +1,7 @@
 package process
 
 import (
+    "errors"
     "fmt"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "golang.org/x/sys/unix"
@@ -118,8 +119,7 @@ func (p *Process) WaitForCompletion() error {
 // sends the given signal to the underlying process
 func (p *Process) SendSignal(sig os.Signal) error {
     if !p.IsRunning() {
-        p.log.Warn("attempt to send non-running process a signal")
-        return nil
+        return errors.New("attempt to send non-running process a signal")
     }
 
     if err := p.cmd.Process.Signal(sig); err != nil {
@@ -141,9 +141,13 @@ func (p *Process) Kill() error {
 
 // asks the process to stop and waits for the configured timeout, after which it kills the process
 func (p *Process) StopOrKillTimeout(timeout time.Duration) error {
+    if !p.IsRunning() {
+        return nil
+    }
+
     err := p.Stop()
     if err != nil {
-        return err
+            return err
     }
 
     select {
