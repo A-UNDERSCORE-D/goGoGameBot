@@ -7,6 +7,7 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "strings"
+    "sync"
     "time"
 )
 
@@ -15,6 +16,7 @@ type Game struct {
     Name       string
     process    *process.Process
     regexps    []*GameRegexp
+    regexpMutex sync.Mutex
     log        *botLog.Logger
     adminChan  string
     logChan    string
@@ -45,20 +47,26 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
         logChan:    conf.Logchan,
     }
 
-    var gr []*GameRegexp
+    g.UpdateRegexps(conf.Regexps)
 
-    for _, reConf := range conf.Regexps {
-        r, err := NewGameRegexp(g, reConf)
+    return g, nil
+}
+
+func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
+    var newRegexps []*GameRegexp
+
+    for _, reConf := range conf {
+        newRegexp, err := NewGameRegexp(g, reConf)
         if err != nil {
             g.bot.Error(fmt.Errorf("could not create gameRegexp %s for game %s: %s", reConf.Name, g.Name, err))
             continue
         }
-        gr = append(gr, r)
+        newRegexps = append(newRegexps, newRegexp)
+        g.log.Debugf("added gameRegexp %q to game %q", newRegexp.Name, g.Name)
     }
-
-    g.regexps = gr
-
-    return g, nil
+    g.regexpMutex.Lock()
+    defer g.regexpMutex.Unlock()
+    g.regexps = newRegexps
 }
 
 func (g *Game) Run() {
@@ -115,6 +123,9 @@ func (g *Game) handleOutput(line string, stderr bool) {
     }
 
     g.log.Info(pfx, line)
+    g.regexpMutex.Lock()
+    defer g.regexpMutex.Unlock()
+
     for _, gRegexp := range g.regexps {
         shouldEat, res, err := gRegexp.CheckAndExecute(line, stderr)
         if err != nil {
@@ -126,5 +137,4 @@ func (g *Game) handleOutput(line string, stderr bool) {
             break
         }
     }
-
 }
