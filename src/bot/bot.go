@@ -216,8 +216,8 @@ func (b *Bot) reloadGames(conf []config.Game) {
         oldGame, i := b.GetGameByName(newGame.Name)
         switch i {
         default:
-            b.Log.Debugf("updating game %s", oldGame.Name)
-            if err := oldGame.StopOrKill(); err != nil {
+            b.Log.Debugf("updating game %s: %p", oldGame.Name, oldGame)
+            if err := oldGame.StopOrKill(); err != nil { // this didnt work?
                 b.Error(err)
             }
             b.GamesMutex.Lock()
@@ -226,6 +226,7 @@ func (b *Bot) reloadGames(conf []config.Game) {
 
         case -1:
             b.GamesMutex.Lock()
+            b.Log.Debugf("adding new game %q", newGame.Name)
             b.Games = append(b.Games, newGame)
             b.GamesMutex.Unlock()
         }
