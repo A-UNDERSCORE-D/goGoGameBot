@@ -14,6 +14,11 @@ const (
 
 // TODO: Set up the template with funcs to send to channels etc. That way it can be used to send out to channels etc.
 //       string returned will probably be unused or logged to stdout
+
+// TODO: adding to the above. add a target channel that the message by default goes to, if unset it goes to the chat channel
+//       along with this it needs a silent bool to let the person configuring it do some... macro? programming in the middle
+//       of execution
+
 type GameRegexp struct {
     Name      string
     watcher   watchers.Watcher
