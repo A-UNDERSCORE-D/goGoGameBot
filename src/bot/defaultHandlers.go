@@ -2,6 +2,7 @@ package bot
 
 import (
     "fmt"
+    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/irc-go/ircmsg"
     "sync"
@@ -27,7 +28,7 @@ func onError(err error, b *Bot) {
     msg := fmt.Sprintf("Error occured: %s", err)
     b.Log.Warnf(msg)
     if b.Status == CONNECTED {
-        b.SendPrivmsg(b.Config.Irc.AdminChan.Name, "[ERROR] " + msg)
+        b.SendPrivmsg(b.Config.Irc.AdminChan.Name, "[ERROR] "+msg)
     }
 }
 
@@ -96,12 +97,16 @@ func (b *Bot) StartGame(data *CommandData) error {
         }
         return nil
     }
+    g, _ := b.GetGameByName(data.Args[0])
+    go g.Run()
+    return nil
+}
 
-    for _, g := range b.Games {
-        if g.Name == data.Args[0] {
-            go g.Run()
-            break
-        }
+func reloadGameCmd(data *CommandData) error {
+    conf, err := config.GetConfig("config.xml") // TODO: when flags are added this needs to read them.
+    if err != nil {
+        return err
     }
+    data.Bot.reloadGames(conf.Games)
     return nil
 }

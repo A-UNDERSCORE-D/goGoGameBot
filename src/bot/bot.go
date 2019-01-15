@@ -59,6 +59,7 @@ type Bot struct {
     capManager    *CapabilityManager
     CmdHandler    *CommandHandler
     Games         []*Game
+    GamesMutex    sync.Mutex
 }
 
 func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
@@ -195,15 +196,53 @@ func (b *Bot) Init() {
 
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
     b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
+    b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
+    b.reloadGames(b.Config.Games)
+}
 
-    for _, gameConf := range b.Config.Games {
+func (b *Bot) reloadGames(conf []config.Game) {
+    // TODO: having this just reload regexps etc would be nice. that way its similar to the original bot
+    var outGames []*Game
+    for _, gameConf := range conf {
         g, err := NewGame(gameConf, b)
         if err != nil {
             b.Error(fmt.Errorf("could not create game %s: %s", gameConf.Name, err))
             continue
         }
-        b.Games = append(b.Games, g)
+        outGames = append(outGames, g)
     }
+
+    for _, newGame := range outGames {
+        oldGame, i := b.GetGameByName(newGame.Name)
+        switch i {
+        default:
+            b.Log.Debugf("updating game %s", oldGame.Name)
+            if err := oldGame.StopOrKill(); err != nil {
+                b.Error(err)
+            }
+            b.Log.Tracef("Switching out game %q %p for %q %p", oldGame.Name, oldGame, newGame.Name, newGame)
+            b.GamesMutex.Lock()
+            b.Games[i] = newGame
+            b.Log.Tracef("in list: %p, set: %p, original %p", b.Games[i], )
+            b.GamesMutex.Unlock()
+
+        case -1:
+            b.GamesMutex.Lock()
+            b.Games = append(b.Games, newGame)
+            b.GamesMutex.Unlock()
+        }
+    }
+}
+
+func (b *Bot) GetGameByName(name string) (*Game, int) {
+    b.GamesMutex.Lock()
+    defer b.GamesMutex.Unlock()
+    for i, g := range b.Games {
+        if g.Name == name {
+            return g, i
+        }
+    }
+    return nil, -1
 }
 
 // Bot.Error dispatches an error event across the event manager with the given error
