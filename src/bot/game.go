@@ -6,6 +6,7 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "sort"
     "strings"
     "sync"
     "time"
@@ -25,16 +26,16 @@ type Game struct {
     bot        *Bot
 }
 
+
+// NewGame creates a game object for use in controlling a process
 func NewGame(conf config.Game, b *Bot) (*Game, error) {
-    procL := b.Log.Clone() // Duplicate l for use elsewhere
-    procL.SetPrefix(conf.Name)
+    procL := b.Log.Clone().SetPrefix(conf.Name) // Duplicate l for use elsewhere
     proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), procL)
     if err != nil {
         return nil, err
     }
 
-    gL := b.Log.Clone()
-    gL.SetPrefix(conf.Name)
+    gL := b.Log.Clone().SetPrefix(conf.Name)
 
     g := &Game{
         Name:       conf.Name,
@@ -52,6 +53,8 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
     return g, nil
 }
 
+// UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
+// runtime reloading of parts of the config
 func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
     var newRegexps []*GameRegexp
 
@@ -67,8 +70,10 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
     g.regexpMutex.Lock()
     defer g.regexpMutex.Unlock()
     g.regexps = newRegexps
+    sort.Sort()
 }
 
+// Run starts the game and blocks until it completes
 func (g *Game) Run() {
     if err := g.process.Start(); err != nil {
         g.bot.Error(err)
@@ -85,19 +90,33 @@ func (g *Game) Run() {
     }
 }
 
+// StopOrKill sends SIGINT to the running game, and after 30 seconds if the game has not closed on its own, it sends
+// SIGKILL
 func (g *Game) StopOrKill() error {
     return g.process.StopOrKillTimeout(time.Second * 30)
 }
 
+// StopOrKillWaitgroup is exactly the same as StopOrKill but it takes a waitgroup that is marked as done after the game
+// has exited
+func (g *Game) StopOrKillWaitgroup(wg *sync.WaitGroup) {
+    if err := g.process.StopOrKillTimeout(time.Second * 30); err != nil {
+        g.bot.Error(err)
+    }
+    wg.Done()
+}
+
+// sendToLogChan sends the given message to the configured log channel for the game
 func (g *Game) sendToLogChan(msg string) {
     g.bot.SendPrivmsg(g.logChan, fmt.Sprintf("[%s] %s", g.Name, msg))
 }
 
+// startStdWatches starts the read loops for stdout and stderr
 func (g *Game) startStdWatchers() {
     go g.watchStd(false)
     go g.watchStd(true)
 }
 
+// watchStd watches the indicated std file for data and calls handle on the line
 func (g *Game) watchStd(stderr bool) {
     var s *bufio.Scanner
     if stderr {
@@ -112,6 +131,7 @@ func (g *Game) watchStd(stderr bool) {
     }
 }
 
+// handleOutput handles logging of stdout/err lines and running GameRegexps against them
 func (g *Game) handleOutput(line string, stderr bool) {
     pfx := "[STDOUT] "
     if stderr {

@@ -19,6 +19,8 @@ const (
 //       along with this it needs a silent bool to let the person configuring it do some... macro? programming in the middle
 //       of execution
 
+// GameRegexp is a representation of a matcher for the stdout of a process, and a text/template to apply to that line
+// if it matches.
 type GameRegexp struct {
     Name      string
     watcher   watchers.Watcher
@@ -28,6 +30,7 @@ type GameRegexp struct {
     shouldEat bool
 }
 
+// NewGameRegexp creates a gameRegexp, compiling the relevant data structures as needed
 func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     w, err := watchers.NewRegexWatcher(c.Regexp)
     if err != nil {
@@ -53,6 +56,8 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     }, nil
 }
 
+// CheckAndExecute checks the given line against the stored regexp, if it matches the given template is run, and the
+// result is returned
 func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, error) {
     isMatched, match := g.watcher.MatchLine(line)
     if !isMatched {

@@ -35,6 +35,7 @@ func (d *CommandData) ArgEol() []string {
     return out
 }
 
+// UserHost returns a UserHost object for the source on the CommandData
 func (d *CommandData) UserHost() (ircutils.UserHost, error) {
     if d.IsFromIRC {
         return ircutils.ParseUserhost(d.Source), nil
@@ -43,18 +44,21 @@ func (d *CommandData) UserHost() (ircutils.UserHost, error) {
     return ircutils.UserHost{}, errors.New("cannot parse a non-bot source to a UserHost")
 }
 
+// SetCancelled sets the cancel status of the current command
 func (d *CommandData) SetCancelled(toSet bool) {
     d.cancelMutex.Lock()
     defer d.cancelMutex.Unlock()
     d.isCancelled = toSet
 }
 
+// IsCancelled returns that cancelled status of the current command
 func (d *CommandData) IsCancelled() bool {
     d.cancelMutex.Lock()
     defer d.cancelMutex.Unlock()
     return d.isCancelled
 }
 
+// ArgString returns the args of the current command as a string joined by a single space
 func (d *CommandData) ArgString() string {
     return strings.Join(d.Args, " ")
 }

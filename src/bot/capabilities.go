@@ -8,13 +8,15 @@ import (
     "sync"
 )
 
+// Capability represents an IRCv3 capability
 type Capability struct {
-    Name      string
-    Params    string
-    Callback  func(*Capability, ircmsg.IrcMessage, *sync.WaitGroup)
-    requested bool
-    available bool
-    enabled   bool
+    Name      string // The name of the capability
+    Params    string // The parameters passed back by the server after negotiation
+    requested bool   // Whether or not the capability was requested by the bot
+    available bool   // Whether or not the capability is available on the server
+    enabled   bool   // whether or not the capability has been requested and acknowledged by the server
+
+    Callback func(*Capability, ircmsg.IrcMessage, *sync.WaitGroup) // a callback to be called if the cap is accepted
 }
 
 func (c *Capability) String() string {
@@ -25,16 +27,19 @@ func (c *Capability) String() string {
     return fmt.Sprintf("%s: %s", c.Name, c.Params)
 }
 
+// CapabilityManager manages IRCv3 capabilities and can negotiate capabilities with an IRC server
 type CapabilityManager struct {
     capabilities []*Capability
     bot          *Bot
 }
 
+// requestCap adds a Capability to the request list
 func (cm *CapabilityManager) requestCap(capability *Capability) {
     capability.requested = true
     cm.capabilities = append(cm.capabilities, capability)
 }
 
+// getCapByName returns the Capability under the given name or a nil pointer if it does not exist
 func (cm *CapabilityManager) getCapByName(name string) *Capability {
     for _, ca := range cm.capabilities {
         if ca.Name == name {
@@ -44,6 +49,7 @@ func (cm *CapabilityManager) getCapByName(name string) *Capability {
     return nil
 }
 
+// hasCap returns whether or not the given cap name exists on the manager and if so, if it is marked as available
 func (cm *CapabilityManager) hasCap(requestedCap string) bool {
     if c := cm.getCapByName(requestedCap); c != nil {
         return c.available
@@ -51,6 +57,7 @@ func (cm *CapabilityManager) hasCap(requestedCap string) bool {
     return false
 }
 
+// filterCaps returns all Capabilities that match the given predicate
 func (cm *CapabilityManager) filterCaps(f func(*Capability) bool) []*Capability {
     var out []*Capability
     for _, c := range cm.capabilities {
@@ -61,8 +68,8 @@ func (cm *CapabilityManager) filterCaps(f func(*Capability) bool) []*Capability 
     return out
 }
 
+// NegotiateCaps runs a IRCv3.2 cap negotiation sequence with the connected IRC server
 func (cm *CapabilityManager) NegotiateCaps() {
-
     if len(cm.capabilities) < 1 {
         return
     }
@@ -116,7 +123,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
                     )
                 }
             }
-            cm.bot.Log.Infof("Server ACK-ed caps: %v", cm.filterCaps(func(c *Capability) bool {return c.enabled}))
+            cm.bot.Log.Infof("Server ACK-ed caps: %v", cm.filterCaps(func(c *Capability) bool { return c.enabled }))
             wg.Done()
 
         case "NAK":
@@ -126,8 +133,10 @@ func (cm *CapabilityManager) NegotiateCaps() {
     }
 }
 
+// addAvailableCapability marks a capability as available if it exists on the cap list, otherwise it adds the cap and
+// marks it as available but not requested
 func (cm *CapabilityManager) addAvailableCapability(line ircmsg.IrcMessage) {
-    for _, capStr := range strings.Split(line.Params[len(line.Params) - 1], " ") {
+    for _, capStr := range strings.Split(line.Params[len(line.Params)-1], " ") {
         name, params := parseCapStr(capStr)
         if c := cm.getCapByName(name); c != nil {
             c.available = true
@@ -141,6 +150,7 @@ func (cm *CapabilityManager) addAvailableCapability(line ircmsg.IrcMessage) {
     }
 }
 
+// requestCaps sends CAP REQ messages for all requested caps
 func (cm *CapabilityManager) requestCaps() error {
     capsToReq := cm.filterCaps(func(capability *Capability) bool {
         return capability.requested && capability.available
@@ -161,6 +171,7 @@ func (cm *CapabilityManager) requestCaps() error {
     return nil
 }
 
+// parseCapStr takes a cap string and splits it into the cap name and the arguments to that cap
 func parseCapStr(capStr string) (string, string) {
     split := strings.SplitN(capStr, "=", 1)
     if len(split) < 2 {

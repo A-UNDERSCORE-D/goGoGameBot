@@ -46,20 +46,20 @@ type RawChanPair struct {
 }
 
 type Bot struct {
-    Config        config.Config // Config for the IRC connection etc
-    IrcConf       config.IRC
-    sockMutex     sync.Mutex
-    sock          net.Conn
-    Status        int                    // Current connection status
-    DoneChan      chan bool              // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    Log           *botLog.Logger         // Logger setup to have a prefix etc, for easy logging
-    EventMgr      *eventmgr.EventManager // Main heavy lifter for the event system
-    rawchansMutex sync.Mutex
+    Config        config.Config            // Config for the IRC connection etc
+    IrcConf       config.IRC               // Easier access to the IRC section of the config
+    sockMutex     sync.Mutex               // Mutex for the IRC socket
+    sock          net.Conn                 // IRC socket
+    Status        int                      // Current connection status
+    DoneChan      chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+    Log           *botLog.Logger           // Logger setup to have a prefix etc, for easy logging
+    EventMgr      *eventmgr.EventManager   // Main heavy lifter for the event system
+    rawchansMutex sync.Mutex               // Mutex protecting the rawChans map
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
-    capManager    *CapabilityManager
-    CmdHandler    *CommandHandler
-    Games         []*Game
-    GamesMutex    sync.Mutex
+    capManager    *CapabilityManager       // Manager for IRCv3 capabilities
+    CmdHandler    *CommandHandler          // Handler for irc (or commandline) commands
+    Games         []*Game                  // Games loaded onto the bot
+    GamesMutex    sync.Mutex               // Mutex protecting the games slice
 }
 
 func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
@@ -76,6 +76,7 @@ func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
     return b
 }
 
+// Run starts the bot and lets it connect to IRC. It blocks until the IRC server connection is closed
 func (b *Bot) Run() error {
     if err := b.connect(); err != nil {
         return err
@@ -84,6 +85,7 @@ func (b *Bot) Run() error {
     return nil
 }
 
+// connect opens a socket to the IRC server specified and handles basic registration and SASL auth
 func (b *Bot) connect() error {
     var sock net.Conn
     var err error
@@ -119,6 +121,8 @@ func (b *Bot) connect() error {
     return nil
 }
 
+// WriteRaw writes bytes directly to the IRC server's socket, it also handles synchronisation and logging of outgoing
+// lines
 func (b *Bot) writeRaw(line []byte) (int, error) {
     b.sockMutex.Lock()
     defer b.sockMutex.Unlock()
@@ -126,6 +130,7 @@ func (b *Bot) writeRaw(line []byte) (int, error) {
     return b.sock.Write(line)
 }
 
+// WriteLine writes an ircmsg.IrcMessage to the connected IRC server
 func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
     if b.Status == DISCONNECTED {
         return ErrNotConnected
@@ -143,6 +148,7 @@ func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
     return nil
 }
 
+// readLoop is the main listener loop for lines coming from the socket
 func (b *Bot) readLoop() {
     scanner := bufio.NewScanner(b.sock)
     for scanner.Scan() {
@@ -161,6 +167,7 @@ func (b *Bot) readLoop() {
     close(b.DoneChan)
 }
 
+// HandleLine is the main handler for raw lines coming from IRC
 func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
     im := eventmgr.NewInfoMap()
     im["line"] = line
@@ -172,6 +179,7 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 
 }
 
+// HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
 func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int) {
     b.EventMgr.Attach(
         "RAW_"+cmd,
@@ -182,7 +190,7 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
     )
 }
 
-// Bot.Init sets up the default handlers and otherwise preps the bot to run
+// Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
     b.capManager = &CapabilityManager{bot: b}
     b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
@@ -200,6 +208,7 @@ func (b *Bot) Init() {
     b.reloadGames(b.Config.Games)
 }
 
+// reloadGames reloads the data on all games using the given config slice
 func (b *Bot) reloadGames(conf []config.Game) {
     // TODO: having this just reload regexps etc would be nice. that way its similar to the original bot
     var outGames []*Game
@@ -233,6 +242,8 @@ func (b *Bot) reloadGames(conf []config.Game) {
     }
 }
 
+// GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.
+// If no game was found, the pointer will be nil, and the index will be -1
 func (b *Bot) GetGameByName(name string) (*Game, int) {
     b.GamesMutex.Lock()
     defer b.GamesMutex.Unlock()
@@ -244,11 +255,12 @@ func (b *Bot) GetGameByName(name string) (*Game, int) {
     return nil, -1
 }
 
-// Bot.Error dispatches an error event across the event manager with the given error
+// Error dispatches an error event across the event manager with the given error
 func (b *Bot) Error(err error) {
     b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": err})
 }
 
+// sendToRawChans writes to all raw channels waiting on a given command
 func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
     b.rawchansMutex.Lock()
     defer b.rawchansMutex.Unlock()
@@ -340,20 +352,33 @@ func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, ch
     return aggChan, doneChan
 }
 
+// SendPrivmsg sends a standard IRC message to the target. The target can be either a channel or a nickname
 func (b *Bot) SendPrivmsg(target, msg string) {
     _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, msg))
 }
 
+// SendNotice sends a notice to the target. The target can be either a channel or a nickname
 func (b *Bot) SendNotice(target, msg string) {
     me := target
     senpai := msg
     _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
 }
 
+// Stop makes the bot quit out and stop all its games
 func (b *Bot) Stop(quitMsg string) {
+
+    wg := new(sync.WaitGroup)
+
+    for _, g := range b.Games {
+        wg.Add(1)
+        go g.StopOrKillWaitgroup(wg)
+    }
+    wg.Wait()
+
     if b.Status == DISCONNECTED {
         return
     }
+
     _ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
     b.WaitForRaw("ERROR")
     b.Status = DISCONNECTED

@@ -44,6 +44,7 @@ func levelToString(level int) string {
 	return "?????"
 }
 
+// Logger is a level based logging engine
 type Logger struct {
 	flags    int
 	output   io.Writer

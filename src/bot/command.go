@@ -60,6 +60,7 @@ func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
     })
 }
 
+// FireCommand preps data for a command to be fired and uses internalFireCommand to fire it
 func (h *CommandHandler) FireCommand(data *CommandData) {
     if data.Bot == nil {
         data.Bot = h.bot
@@ -70,7 +71,7 @@ func (h *CommandHandler) FireCommand(data *CommandData) {
     h.internalFireCommand(strings.ToUpper(data.Command), im)
 }
 
-// FireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
+// internalFireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
 func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
 
     go h.bot.EventMgr.Dispatch("CMD", im)
@@ -103,6 +104,9 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int,
 
     h.bot.EventMgr.Attach(hookName, wrapped, priority)
 }
+
+// checkPermissions does runs a glob based permission check on the incoming command, cancelling the command being fired
+// if the check fails
 func checkPermissions(data *CommandData) error {
     if !data.IsFromIRC {
         return nil
@@ -110,7 +114,7 @@ func checkPermissions(data *CommandData) error {
 
     ok := false
     for _, perm := range data.Bot.Config.Permissions {
-        matcher := regexp.MustCompile(util.GlobToRegexp(perm.Mask))
+        matcher := regexp.MustCompile(util.GlobToRegexp(perm.Mask)) // TODO: recompiling this every time is dumb. They should be compiled and stored
         if matcher.MatchString(data.Source) {
             ok = true
             break
@@ -127,6 +131,7 @@ func checkPermissions(data *CommandData) error {
     return nil
 }
 
+// rawCommand is a command handler that allows the user to send raw IRC lines from the bot
 func rawCommand(data *CommandData) error {
     if len(data.Args) < 1 {
         if data.IsFromIRC {

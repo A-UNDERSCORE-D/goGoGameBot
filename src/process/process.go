@@ -51,6 +51,8 @@ type Process struct {
     hasExited    bool
 }
 
+// UpdateCmd sets the command and arguments to be used when creating the exec.Cmd used internally.
+// It is safe for concurrent use
 func (p *Process) UpdateCmd(command string, args []string) {
     p.commandMutex.Lock()
     defer p.commandMutex.Unlock()
