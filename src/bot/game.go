@@ -6,6 +6,7 @@ import (
     "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
     "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "sort"
     "strings"
     "sync"
     "time"
@@ -14,10 +15,10 @@ import (
 // TODO: This needs a working directory etc on its process
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
 type Game struct {
-    Name        string
-    process     *process.Process
-    regexps     []*GameRegexp
+    Name    string
+    process *process.Process
     regexpMutex sync.Mutex
+    regexps     GameRegexpList
     log         *botLog.Logger
     adminChan   string
     logChan     string
@@ -55,7 +56,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
 // UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
 // runtime reloading of parts of the config
 func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
-    var newRegexps []*GameRegexp
+    var newRegexps GameRegexpList
 
     for _, reConf := range conf {
         newRegexp, err := NewGameRegexp(g, reConf)
@@ -69,6 +70,9 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
     g.regexpMutex.Lock()
     defer g.regexpMutex.Unlock()
     g.regexps = newRegexps
+    g.log.Debugf("pre-sorted regexp list:%#v", g.regexps)
+    sort.Sort(g.regexps)
+    g.log.Debugf("pst-sorted regexp list:%#v", g.regexps)
 }
 
 // Run starts the game and blocks until it completes

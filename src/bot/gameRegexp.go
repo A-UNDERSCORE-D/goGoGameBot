@@ -30,6 +30,20 @@ type GameRegexp struct {
     shouldEat bool
 }
 
+type GameRegexpList []*GameRegexp
+
+func (gl GameRegexpList) Len() int {
+    return len(gl)
+}
+
+func (gl GameRegexpList) Less(i, j int) bool {
+    return gl[i].Priority < gl[j].Priority
+}
+
+func (gl GameRegexpList) Swap(i, j int) {
+    gl[i], gl[j] = gl[j], gl[i]
+}
+
 // NewGameRegexp creates a gameRegexp, compiling the relevant data structures as needed
 func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     w, err := watchers.NewRegexWatcher(c.Regexp)
@@ -43,7 +57,7 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     }
 
     p := DEFAULTPRIORITY
-    if c.Priority != -1  {
+    if c.Priority != -1 {
         p = c.Priority
     }
 
@@ -70,4 +84,8 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, er
     }
 
     return g.shouldEat, out.String(), nil
+}
+
+func (g *GameRegexp) String() string {
+    return fmt.Sprintf("GameRegexp(%s)", g.Name)
 }
