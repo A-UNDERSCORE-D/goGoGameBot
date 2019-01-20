@@ -3,9 +3,10 @@ package bot
 import (
     "bufio"
     "fmt"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/process"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/process"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "github.com/pkg/errors"
     "sort"
     "strings"
     "sync"
@@ -112,6 +113,10 @@ func (g *Game) sendToLogChan(msg string) {
     g.bot.SendPrivmsg(g.logChan, fmt.Sprintf("[%s] %s", g.Name, msg))
 }
 
+func (g *Game) sendToAdminChan(msg string) {
+    g.bot.SendPrivmsg(g.adminChan, fmt.Sprintf("[%s] %s", g.Name, msg))
+}
+
 // startStdWatches starts the read loops for stdout and stderr
 func (g *Game) startStdWatchers() {
     go g.watchStd(false)
@@ -159,4 +164,28 @@ func (g *Game) handleOutput(line string, stderr bool) {
             break
         }
     }
+}
+
+
+// Start of template funcs
+
+func (g *Game) templSendToAdminChan(v ...interface{}) string {
+    msg := fmt.Sprint(v...)
+    g.sendToAdminChan(msg)
+    return msg
+}
+
+func (g *Game) templSendToLogChan(v ...interface{}) string {
+    msg := fmt.Sprint(v...)
+    g.sendToLogChan(msg)
+    return msg
+}
+
+func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
+    if c == "" {
+        return "", errors.New("cannot send to a nonexistant target")
+    }
+    msg := fmt.Sprint(v...)
+    g.bot.SendPrivmsg(c, msg)
+    return msg, nil
 }
