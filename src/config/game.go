@@ -14,6 +14,7 @@ type GameRegexp struct {
 func (g *GameRegexp) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
     type gameRegexp GameRegexp                       // Dont cause recursion when we use decode element later
     out := gameRegexp{Priority: -1, ShouldEat: true} // Set some default values that are different from the zero value of their types
+
     if err := d.DecodeElement(&out, &start); err != nil {
         return err
     }

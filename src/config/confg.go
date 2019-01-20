@@ -26,8 +26,10 @@ var defaultConfig = Config{
         JoinChans:       []IrcChan{{Name: "#ferricyanide"}, {Name: "#someOtherChan"}},
         NSAuth:          NSAuth{"goGoGameBot", "goGoSuperSecurePasswd", true},
     },
+
     Permissions: []Permission{{Mask: "*!*@snoonet/staff/A_D"}},
-    Games:       []Game{
+
+    Games: []Game{
         {
             Name:         "echo",
             AutoStart:    false,
@@ -35,7 +37,8 @@ var defaultConfig = Config{
             Args:         "test command is testy",
             Logchan:      "#ferricyanide",
             AdminLogChan: "#ferricyanide",
-            Regexps:      []GameRegexp{{
+
+            Regexps: []GameRegexp{{
                 Name:      "test",
                 Priority:  0,
                 ShouldEat: true,
@@ -51,6 +54,7 @@ func getXMLConf(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
+
     data, err := ioutil.ReadAll(f)
     f.Close()
     if err != nil {
@@ -97,6 +101,7 @@ func GetConfig(filename string) (*Config, error) {
             }
 
             return GetConfig(filename)
+
         } else {
             return nil, err
         }

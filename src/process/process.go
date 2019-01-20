@@ -21,7 +21,7 @@ func NewProcess(command string, args []string, logger *botLog.Logger) (*Process,
         StdinMutex:    sync.Mutex{},
         log:           logger,
     }
-    if err := p.Reset(); err != nil{
+    if err := p.Reset(); err != nil {
         return nil, err
     }
     return p, nil
@@ -40,15 +40,15 @@ type Process struct {
     cmd           *exec.Cmd
     commandString string
     argListString []string
-    commandMutex sync.Mutex
-    Stderr       io.ReadCloser
-    Stdout       io.ReadCloser
-    Stdin        io.WriteCloser
-    StdinMutex   sync.Mutex
-    DoneChan     chan bool
-    log          *botLog.Logger
-    hasStarted   bool
-    hasExited    bool
+    commandMutex  sync.Mutex
+    Stderr        io.ReadCloser
+    Stdout        io.ReadCloser
+    Stdin         io.WriteCloser
+    StdinMutex    sync.Mutex
+    DoneChan      chan bool
+    log           *botLog.Logger
+    hasStarted    bool
+    hasExited     bool
 }
 
 // UpdateCmd sets the command and arguments to be used when creating the exec.Cmd used internally.
@@ -98,6 +98,7 @@ func (p *Process) Start() error {
     if err := p.cmd.Start(); err != nil {
         return fmt.Errorf("could not start process: %v", err)
     }
+
     p.hasStarted = true
     return nil
 }
@@ -164,7 +165,7 @@ func (p *Process) StopOrKillTimeout(timeout time.Duration) error {
 
     err := p.Stop()
     if err != nil {
-            return err
+        return err
     }
 
     select {

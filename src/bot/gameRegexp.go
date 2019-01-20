@@ -83,6 +83,7 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, er
     if !isMatched {
         return false, "", nil
     }
+
     if stderr {
         match.OutputType = "STDERR"
     } else {
@@ -90,6 +91,7 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, er
     }
 
     out := new(strings.Builder)
+
     if err := g.template.Execute(out, match); err != nil {
         g.game.bot.Error(fmt.Errorf("could not run game template %q for %q: %s", g.game.Name, g.Name, err))
         return false, "", nil

@@ -5,6 +5,6 @@ type Watcher interface {
 }
 
 type MatchedLine struct {
-    Groups map[string]string
+    Groups     map[string]string
     OutputType string
 }
