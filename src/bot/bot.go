@@ -75,6 +75,7 @@ func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
     b.Init()
     return b
 }
+/***Start of funcs for upper level control***************************************************************************/
 
 // Run starts the bot and lets it connect to IRC. It blocks until the IRC server connection is closed
 func (b *Bot) Run() error {
@@ -83,6 +84,44 @@ func (b *Bot) Run() error {
     }
     <-b.DoneChan
     return nil
+}
+
+// Stop makes the bot quit out and stop all its games
+func (b *Bot) Stop(quitMsg string) {
+
+    wg := new(sync.WaitGroup)
+
+    for _, g := range b.Games {
+        wg.Add(1)
+        go g.StopOrKillWaitgroup(wg)
+    }
+    wg.Wait()
+
+    if b.Status == DISCONNECTED {
+        return
+    }
+
+    _ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
+    b.WaitForRaw("ERROR")
+    b.Status = DISCONNECTED
+}
+
+// Init sets up the default handlers and otherwise preps the bot to run
+func (b *Bot) Init() {
+    b.capManager = &CapabilityManager{bot: b}
+    b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
+
+    b.HookRaw("PING", onPing, PriHighest)
+    b.HookRaw("001", onWelcome, PriNorm)
+
+    b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
+        onError(infoMaps["Error"].(error), b)
+    }, PriHighest)
+
+    b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
+    b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
+    b.reloadGames(b.Config.Games)
 }
 
 // connect opens a socket to the IRC server specified and handles basic registration and SASL auth
@@ -121,6 +160,9 @@ func (b *Bot) connect() error {
     return nil
 }
 
+
+/***start of write- fucntions for accessing the socket*****************************************************************/
+
 // WriteRaw writes bytes directly to the IRC server's socket, it also handles synchronisation and logging of outgoing
 // lines
 func (b *Bot) writeRaw(line []byte) (int, error) {
@@ -147,6 +189,8 @@ func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
     }
     return nil
 }
+
+/***start of read oriented functions for accessing the socket**********************************************************/
 
 // readLoop is the main listener loop for lines coming from the socket
 func (b *Bot) readLoop() {
@@ -179,6 +223,16 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 
 }
 
+/***start of util functions********************************************************************************************/
+
+// Error dispatches an error event across the event manager with the given error
+func (b *Bot) Error(err error) {
+    b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": err})
+}
+
+/***start of hook oriented functions***********************************************************************************/
+
+
 // HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
 func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int) {
     b.EventMgr.Attach(
@@ -188,76 +242,6 @@ func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int)
         },
         priority,
     )
-}
-
-// Init sets up the default handlers and otherwise preps the bot to run
-func (b *Bot) Init() {
-    b.capManager = &CapabilityManager{bot: b}
-    b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
-
-    b.HookRaw("PING", onPing, PriHighest)
-    b.HookRaw("001", onWelcome, PriNorm)
-
-    b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
-        onError(infoMaps["Error"].(error), b)
-    }, PriHighest)
-
-    b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
-    b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
-    b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
-    b.reloadGames(b.Config.Games)
-}
-
-// reloadGames reloads the data on all games using the given config slice
-func (b *Bot) reloadGames(conf []config.Game) {
-    // TODO: having this just reload regexps etc would be nice. that way its similar to the original bot
-    var outGames []*Game
-    for _, gameConf := range conf {
-        g, err := NewGame(gameConf, b)
-        if err != nil {
-            b.Error(fmt.Errorf("could not create game %s: %s", gameConf.Name, err))
-            continue
-        }
-        outGames = append(outGames, g)
-    }
-
-    for _, newGame := range outGames {
-        oldGame, i := b.GetGameByName(newGame.Name)
-        switch i {
-        default:
-            b.Log.Debugf("updating game %s: %p", oldGame.Name, oldGame)
-            if err := oldGame.StopOrKill(); err != nil { // this didnt work?
-                b.Error(err)
-            }
-            b.GamesMutex.Lock()
-            b.Games[i] = newGame
-            b.GamesMutex.Unlock()
-
-        case -1:
-            b.GamesMutex.Lock()
-            b.Log.Debugf("adding new game %q", newGame.Name)
-            b.Games = append(b.Games, newGame)
-            b.GamesMutex.Unlock()
-        }
-    }
-}
-
-// GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.
-// If no game was found, the pointer will be nil, and the index will be -1
-func (b *Bot) GetGameByName(name string) (*Game, int) {
-    b.GamesMutex.Lock()
-    defer b.GamesMutex.Unlock()
-    for i, g := range b.Games {
-        if g.Name == name {
-            return g, i
-        }
-    }
-    return nil, -1
-}
-
-// Error dispatches an error event across the event manager with the given error
-func (b *Bot) Error(err error) {
-    b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": err})
 }
 
 // sendToRawChans writes to all raw channels waiting on a given command
@@ -352,6 +336,8 @@ func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, ch
     return aggChan, doneChan
 }
 
+/***start of send- style functions*************************************************************************************/
+
 // SendPrivmsg sends a standard IRC message to the target. The target can be either a channel or a nickname
 func (b *Bot) SendPrivmsg(target, msg string) {
     _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, msg))
@@ -364,22 +350,51 @@ func (b *Bot) SendNotice(target, msg string) {
     _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
 }
 
-// Stop makes the bot quit out and stop all its games
-func (b *Bot) Stop(quitMsg string) {
+/***start of game control functions***********************************************************************************/
 
-    wg := new(sync.WaitGroup)
-
-    for _, g := range b.Games {
-        wg.Add(1)
-        go g.StopOrKillWaitgroup(wg)
+// reloadGames reloads the data on all games using the given config slice
+func (b *Bot) reloadGames(conf []config.Game) {
+    // TODO: having this just reload regexps etc would be nice. that way its similar to the original bot
+    var outGames []*Game
+    for _, gameConf := range conf {
+        g, err := NewGame(gameConf, b)
+        if err != nil {
+            b.Error(fmt.Errorf("could not create game %s: %s", gameConf.Name, err))
+            continue
+        }
+        outGames = append(outGames, g)
     }
-    wg.Wait()
 
-    if b.Status == DISCONNECTED {
-        return
+    for _, newGame := range outGames {
+        oldGame, i := b.GetGameByName(newGame.Name)
+        switch i {
+        default:
+            b.Log.Debugf("updating game %s: %p", oldGame.Name, oldGame)
+            if err := oldGame.StopOrKill(); err != nil { // this didnt work?
+                b.Error(err)
+            }
+            b.GamesMutex.Lock()
+            b.Games[i] = newGame
+            b.GamesMutex.Unlock()
+
+        case -1:
+            b.GamesMutex.Lock()
+            b.Log.Debugf("adding new game %q", newGame.Name)
+            b.Games = append(b.Games, newGame)
+            b.GamesMutex.Unlock()
+        }
     }
+}
 
-    _ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
-    b.WaitForRaw("ERROR")
-    b.Status = DISCONNECTED
+// GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.
+// If no game was found, the pointer will be nil, and the index will be -1
+func (b *Bot) GetGameByName(name string) (*Game, int) {
+    b.GamesMutex.Lock()
+    defer b.GamesMutex.Unlock()
+    for i, g := range b.Games {
+        if g.Name == name {
+            return g, i
+        }
+    }
+    return nil, -1
 }
