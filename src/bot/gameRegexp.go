@@ -2,8 +2,8 @@ package bot
 
 import (
     "fmt"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/watchers"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/watchers"
     "strings"
     "text/template"
 )
@@ -51,7 +51,13 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
         return nil, err
     }
 
-    t, err := template.New(c.Name).Funcs(nil).Parse(c.Format)
+    funcs := template.FuncMap{
+        "logchan":   game.templSendToLogChan,
+        "adminchan": game.templSendToAdminChan,
+        "sendto":    game.templSendPrivmsg,
+    }
+
+    t, err := template.New(c.Name).Funcs(funcs).Parse(c.Format)
     if err != nil {
         return nil, err
     }
@@ -77,6 +83,12 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, er
     if !isMatched {
         return false, "", nil
     }
+    if stderr {
+        match.OutputType = "STDERR"
+    } else {
+        match.OutputType = "STDOUT"
+    }
+
     out := new(strings.Builder)
     if err := g.template.Execute(out, match); err != nil {
         g.game.bot.Error(fmt.Errorf("could not run game template %q for %q: %s", g.game.Name, g.Name, err))

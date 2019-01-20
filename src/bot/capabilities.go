@@ -2,7 +2,7 @@ package bot
 
 import (
     "fmt"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/util"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/irc-go/ircmsg"
     "strings"
     "sync"

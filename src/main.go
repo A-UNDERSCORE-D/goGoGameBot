@@ -2,9 +2,9 @@ package main
 
 import (
     "fmt"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/bot"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/bot"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
     "os"

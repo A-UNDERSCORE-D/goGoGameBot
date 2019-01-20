@@ -3,7 +3,7 @@ package process
 import (
     "errors"
     "fmt"
-    "git.fericyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "golang.org/x/sys/unix"
     "io"
     "os"
