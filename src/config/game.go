@@ -34,4 +34,7 @@ type Game struct {
     LogStdout    bool         `xml:"log_stdout,attr"`
     LogStderr    bool         `xml:"log_stderr,attr"`
     Regexps      []GameRegexp `xml:"game_regexp"`
+    BridgeChat   bool         `xml:"bridge_chat,attr"`
+    BridgeChans  []string     `xml:"bridge_chan"`
+    BridgeFmt    string       `xml:"bridge_format"`
 }

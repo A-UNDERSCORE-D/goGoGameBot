@@ -75,6 +75,7 @@ func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
     b.Init()
     return b
 }
+
 /***Start of funcs for upper level control***************************************************************************/
 
 // Run starts the bot and lets it connect to IRC. It blocks until the IRC server connection is closed
@@ -160,7 +161,6 @@ func (b *Bot) connect() error {
     return nil
 }
 
-
 /***start of write- fucntions for accessing the socket*****************************************************************/
 
 // WriteRaw writes bytes directly to the IRC server's socket, it also handles synchronisation and logging of outgoing
@@ -232,15 +232,28 @@ func (b *Bot) Error(err error) {
 
 /***start of hook oriented functions***********************************************************************************/
 
+type HookFunc func(ircmsg.IrcMessage, *Bot)
 
 // HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
-func (b *Bot) HookRaw(cmd string, f func(ircmsg.IrcMessage, *Bot), priority int) {
+func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
     b.EventMgr.Attach(
         "RAW_"+cmd,
         func(s string, info eventmgr.InfoMap) {
             go f(info["line"].(ircmsg.IrcMessage), b)
         },
         priority,
+    )
+}
+
+type PrivmsgFunc func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot)
+
+// HookPrivmsg hooks a callback to PRIVMSGs. The callback is launched in a goroutine.
+func (b *Bot) HookPrivmsg(f PrivmsgFunc) {
+    b.HookRaw("PRIVMSG",
+        func(line ircmsg.IrcMessage, bot *Bot) {
+            go f(line.Prefix, line.Params[0], line.Params[1], line, b)
+        },
+        DEFAULTPRIORITY,
     )
 }
 

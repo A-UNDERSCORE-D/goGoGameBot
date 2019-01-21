@@ -2,22 +2,26 @@ package bot
 
 import (
     "bufio"
+    "bytes"
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/process"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "github.com/goshuirc/irc-go/ircmsg"
+    "github.com/goshuirc/irc-go/ircutils"
     "github.com/pkg/errors"
     "sort"
     "strings"
     "sync"
+    "text/template"
     "time"
 )
 
 // TODO: This needs a working directory etc on its process
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
 type Game struct {
-    Name    string
-    process *process.Process
+    Name        string
+    process     *process.Process
     regexpMutex sync.Mutex
     regexps     GameRegexpList
     log         *botLog.Logger
@@ -26,31 +30,42 @@ type Game struct {
     DumpStderr  bool
     DumpStdout  bool
     bot         *Bot
+
+    /*chat stuff*/
+    bridgeChat  bool
+    bridgeChans []string
+    bridgeFmt   *template.Template
+
+    stdinChan chan []byte
 }
 
 // NewGame creates a game object for use in controlling a process
 func NewGame(conf config.Game, b *Bot) (*Game, error) {
-    procL := b.Log.Clone().SetPrefix(conf.Name) // Duplicate l for use elsewhere
-    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), procL)
+    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), b.Log.Clone().SetPrefix(conf.Name))
     if err != nil {
         return nil, err
     }
 
-    gL := b.Log.Clone().SetPrefix(conf.Name)
+    bridgeFmt, err := template.New(conf.Name+"_bridge_format").Parse(conf.BridgeFmt)
 
     g := &Game{
-        Name:       conf.Name,
-        bot:        b,
-        process:    proc,
-        log:        gL,
-        adminChan:  conf.AdminLogChan,
-        DumpStderr: conf.LogStderr,
-        DumpStdout: conf.LogStdout,
-        logChan:    conf.Logchan,
+        Name:        conf.Name,
+        bot:         b,
+        process:     proc,
+        log:         b.Log.Clone().SetPrefix(conf.Name),
+        adminChan:   conf.AdminLogChan,
+        DumpStderr:  conf.LogStderr,
+        DumpStdout:  conf.LogStdout,
+        logChan:     conf.Logchan,
+        bridgeFmt:   bridgeFmt,
+        bridgeChans: conf.BridgeChans,
+        bridgeChat:  conf.BridgeChat,
+        stdinChan:   make(chan []byte, 50),
     }
 
     g.UpdateRegexps(conf.Regexps)
-
+    g.bot.HookPrivmsg(g.onPrivmsg) // This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
+    go g.watchStdinChan()
     return g, nil
 }
 
@@ -166,7 +181,6 @@ func (g *Game) handleOutput(line string, stderr bool) {
     }
 }
 
-
 // Start of template funcs
 
 func (g *Game) templSendToAdminChan(v ...interface{}) string {
@@ -188,4 +202,53 @@ func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
     msg := fmt.Sprint(v...)
     g.bot.SendPrivmsg(c, msg)
     return msg, nil
+}
+
+/**********************************************************************************************************************/
+
+func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
+    if !g.bridgeChat || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
+        return
+    }
+
+    for _, c := range g.bridgeChans {
+        if c == "*" || c == target {
+            goto shouldForward
+        }
+    }
+    return
+
+    shouldForward:
+    uh := ircutils.ParseUserhost(source)
+    buf := new(bytes.Buffer)
+
+    err := g.bridgeFmt.Execute(buf, map[string]string{
+        "source_nick": uh.Nick,
+        "source_user": uh.User,
+        "source_host": uh.Host,
+        "msg": msg,
+        "target": target,
+    })
+    g.Write(buf.Bytes())
+    if err != nil {
+        bot.Error(err)
+    }
+}
+
+func (g *Game) watchStdinChan() {
+    for {
+        toSend := <- g.stdinChan
+        toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
+        if _, err := g.process.Stdin.Write(toSend); err != nil {
+            g.bot.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.Name, err))
+        }
+    }
+}
+
+func (g *Game) Write(p []byte) (n int, err error) {
+    if !g.process.IsRunning() {
+        return 0, errors.New("cannot write to a nonrunning game")
+    }
+    g.stdinChan <- p
+    return len(p), nil
 }

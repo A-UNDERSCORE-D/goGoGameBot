@@ -5,7 +5,8 @@ import (
     "io/ioutil"
     "os"
 )
-
+// TODO: include directives. even if only text replace. or I could do something with an Includer interface + a easy to add
+//       method that accepts an includer, or hell, special behaviour in unmarshalers, I already have that elsewhere for defaults anyway
 type Config struct {
     XMLName     xml.Name     `xml:"bot"`
     Irc         IRC          `xml:"irc"`
