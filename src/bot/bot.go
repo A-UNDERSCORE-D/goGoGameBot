@@ -4,7 +4,6 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
-    "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
@@ -366,37 +365,28 @@ func (b *Bot) SendNotice(target, msg string) {
 /***start of game control functions***********************************************************************************/
 
 // reloadGames reloads the data on all games using the given config slice
-func (b *Bot) reloadGames(conf []config.Game) {
-    // TODO: having this just reload regexps etc would be nice. that way its similar to the original bot
-    var outGames []*Game
+func (b *Bot) reloadGames(conf []config.Game) { // TODO: Removing games that no longer exist?
     for _, gameConf := range conf {
-        g, err := NewGame(gameConf, b)
-        if err != nil {
-            b.Error(fmt.Errorf("could not create game %s: %s", gameConf.Name, err))
-            continue
-        }
-        outGames = append(outGames, g)
-    }
-
-    for _, newGame := range outGames {
-        oldGame, i := b.GetGameByName(newGame.Name)
-        switch i {
-        default:
-            b.Log.Debugf("updating game %s: %p", oldGame.Name, oldGame)
-            if err := oldGame.StopOrKill(); err != nil { // this didnt work?
+        currentGame, idx := b.GetGameByName(gameConf.Name)
+        if idx == -1 {
+            g, err := NewGame(gameConf, b)
+            if err != nil {
                 b.Error(err)
+                continue
             }
-            b.GamesMutex.Lock()
-            b.Games[i] = newGame
-            b.GamesMutex.Unlock()
+            b.addGame(g)
 
-        case -1:
-            b.GamesMutex.Lock()
-            b.Log.Debugf("adding new game %q", newGame.Name)
-            b.Games = append(b.Games, newGame)
-            b.GamesMutex.Unlock()
+        } else {
+            currentGame.UpdateFromConf(gameConf)
         }
     }
+}
+
+func (b *Bot) addGame(game *Game) {
+    b.GamesMutex.Lock()
+    defer b.GamesMutex.Unlock()
+    b.Games = append(b.Games, game)
+
 }
 
 // GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.

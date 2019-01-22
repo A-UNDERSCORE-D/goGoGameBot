@@ -19,6 +19,8 @@ import (
 
 // TODO: This needs a working directory etc on its process
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
+
+// Game is a prepresentation
 type Game struct {
     Name        string
     process     *process.Process
@@ -45,28 +47,41 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
     if err != nil {
         return nil, err
     }
-
-    bridgeFmt, err := template.New(conf.Name+"_bridge_format").Parse(conf.BridgeFmt)
-
     g := &Game{
-        Name:        conf.Name,
-        bot:         b,
-        process:     proc,
-        log:         b.Log.Clone().SetPrefix(conf.Name),
-        adminChan:   conf.AdminLogChan,
-        DumpStderr:  conf.LogStderr,
-        DumpStdout:  conf.LogStdout,
-        logChan:     conf.Logchan,
-        bridgeFmt:   bridgeFmt,
-        bridgeChans: conf.BridgeChans,
-        bridgeChat:  conf.BridgeChat,
-        stdinChan:   make(chan []byte, 50),
+        Name:      conf.Name,
+        bot:       b,
+        process:   proc,
+        log:       b.Log.Clone().SetPrefix(conf.Name),
+        stdinChan: make(chan []byte, 50),
     }
 
-    g.UpdateRegexps(conf.Regexps)
-    g.bot.HookPrivmsg(g.onPrivmsg) // This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
+    g.UpdateFromConf(conf)
+    g.bot.HookPrivmsg(g.onPrivmsg) // TODO: This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
     go g.watchStdinChan()
     return g, nil
+}
+
+func (g *Game) UpdateFromConf(conf config.Game) {
+    bridgeFmt, err := template.New(conf.Name + "_bridge_format").Parse(conf.BridgeFmt)
+    if err != nil {
+        g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
+    } else {
+        g.bridgeFmt = bridgeFmt
+    }
+
+    g.adminChan = conf.AdminLogChan
+    g.DumpStderr = conf.LogStderr
+    g.DumpStdout = conf.LogStdout
+    g.logChan = conf.Logchan
+    g.bridgeChans = conf.BridgeChans
+    g.bridgeChat = conf.BridgeChat
+    g.UpdateRegexps(conf.Regexps)
+    g.process.UpdateCmd(conf.Path, strings.Split(conf.Args, " "))
+    if !g.process.IsRunning() {
+        if err := g.process.Reset(); err != nil {
+            g.bot.Error(err)
+        }
+    }
 }
 
 // UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
@@ -218,7 +233,7 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
     }
     return
 
-    shouldForward:
+shouldForward:
     uh := ircutils.ParseUserhost(source)
     buf := new(bytes.Buffer)
 
@@ -226,8 +241,8 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
         "source_nick": uh.Nick,
         "source_user": uh.User,
         "source_host": uh.Host,
-        "msg": msg,
-        "target": target,
+        "msg":         msg,
+        "target":      target,
     })
     g.Write(buf.Bytes())
     if err != nil {
@@ -237,7 +252,7 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 
 func (g *Game) watchStdinChan() {
     for {
-        toSend := <- g.stdinChan
+        toSend := <-g.stdinChan
         toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
         if _, err := g.process.Stdin.Write(toSend); err != nil {
             g.bot.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.Name, err))
