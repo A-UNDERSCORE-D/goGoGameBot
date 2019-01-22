@@ -56,7 +56,7 @@ func (b *Bot) saslHandler(capability *Capability, _ ircmsg.IrcMessage, group *sy
     defer close(aggDone)
     // Request PLAIN authentication
     if err := b.WriteLine(util.MakeSimpleIRCLine(auth, "PLAIN")); err != nil {
-        b.Error(fmt.Errorf(errDuringSasl, err))
+        b.Error(fmt.Errorf(errDuringSasl, err)) // TODO: This should setup a callback to run privmsg auth
         return
     }
 
