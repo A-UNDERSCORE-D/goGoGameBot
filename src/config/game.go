@@ -1,6 +1,8 @@
 package config
 
-import "encoding/xml"
+import (
+    "encoding/xml"
+)
 
 type GameRegexp struct {
     XMLName   xml.Name `xml:"game_regexp"`
@@ -24,17 +26,67 @@ func (g *GameRegexp) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 }
 
 type Game struct {
-    XMLName      xml.Name     `xml:"game"`
-    Name         string       `xml:"name,attr"`
-    AutoStart    bool         `xml:"auto_start,attr"`
-    Path         string       `xml:"bin_path,attr"`
-    Args         string       `xml:"args,attr"`
-    Logchan      string       `xml:"log_chan,attr"`
-    AdminLogChan string       `xml:"admin_log_chan,attr"`
-    LogStdout    bool         `xml:"log_stdout,attr"`
-    LogStderr    bool         `xml:"log_stderr,attr"`
-    Regexps      []GameRegexp `xml:"game_regexp"`
-    BridgeChat   bool         `xml:"bridge_chat,attr"`
-    BridgeChans  []string     `xml:"bridge_chan"`
-    BridgeFmt    string       `xml:"bridge_format"`
+    XMLName       xml.Name     `xml:"game"`
+    Include       string       `xml:"include,attr,omitempty"`
+    IncludeRegexp string       `xml:"include_regexp,attr,omitempty"`
+    Name          string       `xml:"name,attr"`
+    AutoStart     bool         `xml:"auto_start,attr"`
+    Path          string       `xml:"bin_path,attr"`
+    Args          string       `xml:"args,attr"`
+    Logchan       string       `xml:"log_chan,attr"`
+    AdminLogChan  string       `xml:"admin_log_chan,attr"`
+    LogStdout     bool         `xml:"log_stdout,attr"`
+    LogStderr     bool         `xml:"log_stderr,attr"`
+    Regexps       []GameRegexp `xml:"game_regexp"`
+    BridgeChat    bool         `xml:"bridge_chat,attr"`
+    BridgeChans   []string     `xml:"bridge_chan"`
+    BridgeFmt     string       `xml:"bridge_format"`
+}
+
+func (g *Game) doInclude() (*Game, error) {
+    if err := g.includeFromFile(); err != nil {
+        return nil, err
+    }
+    if err := g.doIncludeRegexps(); err != nil {
+        return nil, err
+    }
+    return g, nil
+}
+
+func (g *Game) includeFromFile() error { // TODO: It would be nice if this wouldnt overwrite anything that has been set
+    if g.Include == "" {                 //       But doing that isnt exactly simple. For now it just overwrites stuff set
+        return nil                       //       in the included file, ie, if you set something and its set in the included
+    }                                    //       file, the stuff in the included file wins
+
+    data, err := readAllFromFile(g.Include)
+    if err != nil {
+        return err
+    }
+
+    toSet := *g
+
+    if err := xml.Unmarshal(data, &toSet); err != nil {
+        return err
+    }
+    *g = toSet
+    return nil
+}
+
+func (g *Game) doIncludeRegexps() error {
+    if g.IncludeRegexp == "" {
+        return nil
+    }
+
+    data, err := readAllFromFile(g.IncludeRegexp)
+    if err != nil {
+        return err
+    }
+
+    var toAdd []GameRegexp
+    if err := xml.Unmarshal(data, &toAdd); err != nil {
+        return err
+    }
+
+    g.Regexps = append(g.Regexps, toAdd...)
+    return nil
 }

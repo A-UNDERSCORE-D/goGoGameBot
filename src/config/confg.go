@@ -5,8 +5,7 @@ import (
     "io/ioutil"
     "os"
 )
-// TODO: include directives. even if only text replace. or I could do something with an Includer interface + a easy to add
-//       method that accepts an includer, or hell, special behaviour in unmarshalers, I already have that elsewhere for defaults anyway
+
 type Config struct {
     XMLName     xml.Name     `xml:"bot"`
     Irc         IRC          `xml:"irc"`
@@ -50,8 +49,8 @@ var defaultConfig = Config{
     },
 }
 
-func getXMLConf(filename string) (*Config, error) {
-    f, err := os.Open(filename)
+func readAllFromFile(name string) ([]byte, error) {
+    f, err := os.Open(name)
     if err != nil {
         return nil, err
     }
@@ -61,13 +60,36 @@ func getXMLConf(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
+    return data, nil
+}
 
-    conf := new(Config)
+func (c *Config) runIncludes() error {
+    for i, g := range c.Games {
+        newG, err := g.doInclude()
+        if err != nil {
+            return err
+        }
+        c.Games[i] = *newG
+    }
+    return nil
+}
 
-    err = xml.Unmarshal(data, conf)
+func getXMLConf(filename string) (*Config, error) {
+    data, err := readAllFromFile(filename)
     if err != nil {
         return nil, err
     }
+
+    conf := new(Config)
+
+    if err = xml.Unmarshal(data, conf); err != nil {
+        return nil, err
+    }
+
+    if err = conf.runIncludes(); err != nil {
+        return nil, err
+    }
+
     return conf, nil
 }
 
