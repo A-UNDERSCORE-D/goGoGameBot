@@ -13,7 +13,7 @@ import (
     "time"
 )
 
-func NewProcess(command string, args []string, logger *botLog.Logger) (*Process, error) {
+func NewProcess(command string, args []string, workingDir string, logger *botLog.Logger) (*Process, error) {
 
     p := &Process{
         commandString: command,
@@ -27,19 +27,12 @@ func NewProcess(command string, args []string, logger *botLog.Logger) (*Process,
     return p, nil
 }
 
-func NewProcessMustSucceed(command string, args []string, logger *botLog.Logger) *Process {
-    p, err := NewProcess(command, args, logger)
-    if err != nil {
-        panic(err)
-    }
-    return p
-}
-
 // Process is a representation of a command to be run and access to its stdin/out/err
 type Process struct {
     cmd           *exec.Cmd
     commandString string
     argListString []string
+    workingDir    string
     commandMutex  sync.Mutex
     Stderr        io.ReadCloser
     Stdout        io.ReadCloser
@@ -53,16 +46,18 @@ type Process struct {
 
 // UpdateCmd sets the command and arguments to be used when creating the exec.Cmd used internally.
 // It is safe for concurrent use
-func (p *Process) UpdateCmd(command string, args []string) {
+func (p *Process) UpdateCmd(command string, args []string, workingDir string) {
     p.commandMutex.Lock()
     defer p.commandMutex.Unlock()
     p.commandString = command
     p.argListString = args
+    p.workingDir = workingDir
 }
 
 func (p *Process) setupCmd() error {
     p.commandMutex.Lock()
     cmd := exec.Command(p.commandString, p.argListString...)
+    cmd.Dir = p.workingDir
     p.commandMutex.Unlock()
     stdin, err := cmd.StdinPipe()
     if err != nil {

@@ -14,7 +14,6 @@ import (
 
 func main() {
     rl, _ := readline.New("> ")
-    defer rl.Close()
     log := botLog.NewLogger(botLog.FTimestamp, rl, "MAIN", 0)
     conf, err := config.GetConfig("config.xml")
     if err != nil {
@@ -31,6 +30,7 @@ func main() {
     go runCLI(b, rl)
 
     b.Run()
+    rl.Close()
     fmt.Println()
 }
 
@@ -42,7 +42,6 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
             line, err := rl.Readline()
             if err != nil {
                 close(lineChan)
-                rl.Close()
                 b.Stop("SIGINT")
                 return
             }

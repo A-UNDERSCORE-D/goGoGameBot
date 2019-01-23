@@ -3,13 +3,14 @@ package bot
 import (
     "bufio"
     "bytes"
+    "errors"
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/process"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "errors"
+    "path/filepath"
     "sort"
     "strings"
     "sync"
@@ -43,7 +44,17 @@ type Game struct {
 
 // NewGame creates a game object for use in controlling a process
 func NewGame(conf config.Game, b *Bot) (*Game, error) {
-    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), b.Log.Clone().SetPrefix(conf.Name))
+    gameLog := b.Log.Clone().SetPrefix(conf.Name)
+    if conf.WorkingDir == "" {
+        fp, err := filepath.Abs(conf.Path)
+        if err != nil {
+            return nil, err
+        }
+        conf.WorkingDir = filepath.Dir(fp)
+        gameLog.Infof("Unspecified working directory - inferred to %q", fp)
+    }
+
+    proc, err := process.NewProcess(conf.Path, strings.Split(conf.Args, " "), conf.WorkingDir, gameLog.Clone())
     if err != nil {
         return nil, err
     }
@@ -51,7 +62,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
         Name:      conf.Name,
         bot:       b,
         process:   proc,
-        log:       b.Log.Clone().SetPrefix(conf.Name),
+        log:       gameLog,
         stdinChan: make(chan []byte, 50),
     }
 
@@ -76,7 +87,7 @@ func (g *Game) UpdateFromConf(conf config.Game) {
     g.bridgeChans = conf.BridgeChans
     g.bridgeChat = conf.BridgeChat
     g.UpdateRegexps(conf.Regexps)
-    g.process.UpdateCmd(conf.Path, strings.Split(conf.Args, " "))
+    g.process.UpdateCmd(conf.Path, strings.Split(conf.Args, " "), conf.WorkingDir)
     if !g.process.IsRunning() {
         if err := g.process.Reset(); err != nil {
             g.bot.Error(err)
