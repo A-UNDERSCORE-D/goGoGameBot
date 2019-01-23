@@ -3,7 +3,7 @@ package bot
 import (
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "github.com/pkg/errors"
+    "errors"
     "strings"
     "sync"
 )
