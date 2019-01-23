@@ -18,6 +18,7 @@ func NewProcess(command string, args []string, workingDir string, logger *botLog
     p := &Process{
         commandString: command,
         argListString: args,
+        workingDir:  workingDir,
         StdinMutex:    sync.Mutex{},
         log:           logger,
     }
