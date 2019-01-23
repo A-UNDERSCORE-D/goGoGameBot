@@ -14,6 +14,7 @@ import (
 
 func main() {
     rl, _ := readline.New("> ")
+    defer rl.Close()
     log := botLog.NewLogger(botLog.FTimestamp, rl, "MAIN", 0)
     conf, err := config.GetConfig("config.xml")
     if err != nil {
