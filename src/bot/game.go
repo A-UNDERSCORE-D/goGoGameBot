@@ -9,7 +9,7 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "github.com/pkg/errors"
+    "errors"
     "sort"
     "strings"
     "sync"
