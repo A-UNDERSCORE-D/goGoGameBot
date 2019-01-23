@@ -10,6 +10,8 @@ type Config struct {
     XMLName     xml.Name     `xml:"bot"`
     Irc         IRC          `xml:"irc"`
     Permissions []Permission `xml:"permissions>permission"`
+    Ignores     []string     `xml:"ignore_mask"`
+    Strips      []string     `xml:"strip_mask"`
     Games       []Game       `xml:"game"`
 }
 

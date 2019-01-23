@@ -1,9 +1,10 @@
 package bot
 
 import (
+    "errors"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "errors"
     "strings"
     "sync"
 )
@@ -61,4 +62,20 @@ func (d *CommandData) IsCancelled() bool {
 // ArgString returns the args of the current command as a string joined by a single space
 func (d *CommandData) ArgString() string {
     return strings.Join(d.Args, " ")
+}
+
+// SourceIsIgnored checks whether or not the source field of the CommandData matches any masks on the bot's ignore list
+func (d *CommandData) SourceIsIgnored() bool {
+    if !d.IsFromIRC {
+        return false
+    }
+    return util.AnyMaskMatch(d.Source, d.Bot.Config.Ignores)
+}
+
+// SourceMatchesStrip checks whether or not the source field of the CommandData matches any masks on the bot's strip list
+func (d *CommandData) SourceMatchesStrip() bool {
+    if !d.IsFromIRC {
+        return false
+    }
+    return util.AnyMaskMatch(d.Source, d.Bot.Config.Strips)
 }

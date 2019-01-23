@@ -7,6 +7,7 @@ import (
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/process"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
@@ -18,7 +19,6 @@ import (
     "time"
 )
 
-// TODO: This needs a working directory etc on its process
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
 
 // Game is a prepresentation
@@ -246,6 +246,16 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 
 shouldForward:
     uh := ircutils.ParseUserhost(source)
+
+    if util.AnyMaskMatch(source, g.bot.Config.Strips) {
+        splitMsg := strings.SplitN(msg, " ", 1)
+        if len(splitMsg) != 2 {
+            msg = ""
+        } else {
+            msg = splitMsg[1]
+        }
+    }
+
     buf := new(bytes.Buffer)
 
     err := g.bridgeFmt.Execute(buf, map[string]string{

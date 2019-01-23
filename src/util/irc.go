@@ -57,3 +57,12 @@ func GlobToRegexp(mask string) *regexp.Regexp {
     regexpCache[mask] = re
     return re
 }
+
+func AnyMaskMatch(tocheck string, masks []string) bool {
+    for _, mask := range masks {
+        if GlobToRegexp(mask).MatchString(tocheck) {
+            return true
+        }
+    }
+    return false
+}

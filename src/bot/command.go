@@ -86,7 +86,7 @@ func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
 func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int, requiresAdmin bool) {
     wrapped := func(event string, infoMap eventmgr.InfoMap) {
         data := infoMap["data"].(*CommandData)
-        if data.IsCancelled() {
+        if data.SourceIsIgnored() || data.isCancelled {
             return
         }
 
@@ -137,7 +137,7 @@ func rawCommand(data *CommandData) error {
             target, _ := data.UserHost()
             _ = data.Bot.WriteLine(
                 util.MakeSimpleIRCLine("NOTICE", target.Nick, "cannot have an empty command"),
-                )
+            )
         } else {
             data.Bot.Log.Warn("Cannot have an empty command")
         }
