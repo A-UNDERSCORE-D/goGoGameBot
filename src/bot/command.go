@@ -4,7 +4,6 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
-    "regexp"
     "strings"
 )
 
@@ -114,7 +113,7 @@ func checkPermissions(data *CommandData) error {
 
     ok := false
     for _, perm := range data.Bot.Config.Permissions {
-        matcher := regexp.MustCompile(util.GlobToRegexp(perm.Mask)) // TODO: recompiling this every time is dumb. They should be compiled and stored
+        matcher := util.GlobToRegexp(perm.Mask)
         if matcher.MatchString(data.Source) {
             ok = true
             break
