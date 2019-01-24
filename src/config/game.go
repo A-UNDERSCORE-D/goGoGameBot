@@ -5,12 +5,13 @@ import (
 )
 
 type GameRegexp struct {
-    XMLName   xml.Name `xml:"game_regexp"`
-    Name      string   `xml:"name,attr"`
-    Priority  int      `xml:"priority,attr"`
-    ShouldEat bool     `xml:"should_eat,attr"`
-    Regexp    string   `xml:"regexp"`
-    Format    string   `xml:"format"`
+    XMLName    xml.Name `xml:"game_regexp"`
+    Name       string   `xml:"name,attr"`
+    Priority   int      `xml:"priority,attr"`
+    ShouldEat  bool     `xml:"should_eat,attr"`
+    Regexp     string   `xml:"regexp"`
+    Format     string   `xml:"format"`
+    SendToChan bool     `xml:"send_to_chan,attr"`
 }
 
 func (g *GameRegexp) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {

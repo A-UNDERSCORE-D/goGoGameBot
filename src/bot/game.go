@@ -195,12 +195,11 @@ func (g *Game) handleOutput(line string, stderr bool) {
     defer g.regexpMutex.Unlock()
 
     for _, gRegexp := range g.regexps {
-        shouldEat, res, err := gRegexp.CheckAndExecute(line, stderr)
+        shouldEat, err := gRegexp.CheckAndExecute(line, stderr)
         if err != nil {
             g.bot.Error(err)
             continue
         }
-        g.log.Info(res)
         if shouldEat {
             break
         }

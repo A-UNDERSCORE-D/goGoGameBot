@@ -10,6 +10,7 @@ import (
     "os"
     "os/signal"
     "strings"
+    "time"
 )
 
 func main() {
@@ -30,8 +31,12 @@ func main() {
     go runCLI(b, rl)
 
     b.Run()
+    go func(){
+        <-time.After(time.Second * 1)
+        fmt.Println("Hang on close detected. forcing an exit")
+        os.Exit(0)
+        }()
     rl.Close()
-    fmt.Println()
 }
 
 func runCLI(b *bot.Bot, rl *readline.Instance) {

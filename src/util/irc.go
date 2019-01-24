@@ -32,7 +32,7 @@ func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
 }
 
 var charMap = map[rune]string{'?': ".", '*': ".*"}
-var regexpCache map[string]*regexp.Regexp
+var regexpCache = make(map[string]*regexp.Regexp)
 
 // GlobToRegexp converts a mask glob string to a regexp that will only allow the wildcards * and ? to have any special
 // meaning.
@@ -65,4 +65,12 @@ func AnyMaskMatch(tocheck string, masks []string) bool {
         }
     }
     return false
+}
+
+func AddZwsp(s string) string {
+    if len(s) < 2 {
+        return s
+    }
+
+    return fmt.Sprintf("%c\u200b%s", s[0], s[1:])
 }

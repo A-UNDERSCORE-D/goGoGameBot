@@ -3,6 +3,7 @@ package bot
 import (
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/watchers"
     "strings"
     "text/template"
@@ -22,12 +23,13 @@ const (
 // GameRegexp is a representation of a matcher for the stdout of a process, and a text/template to apply to that line
 // if it matches.
 type GameRegexp struct {
-    Name      string
-    watcher   watchers.Watcher
-    template  *template.Template
-    Priority  int
-    game      *Game
-    shouldEat bool
+    Name             string
+    watcher          watchers.Watcher
+    template         *template.Template
+    Priority         int
+    game             *Game
+    shouldEat        bool
+    shouldSendToChan bool
 }
 
 type GameRegexpList []*GameRegexp
@@ -55,6 +57,7 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
         "logchan":   game.templSendToLogChan,
         "adminchan": game.templSendToAdminChan,
         "sendto":    game.templSendPrivmsg,
+        "zwsp": util.AddZwsp,
     }
 
     t, err := template.New(c.Name).Funcs(funcs).Parse(c.Format)
@@ -68,20 +71,22 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     }
 
     return &GameRegexp{
-        game:     game,
-        Name:     c.Name,
-        watcher:  w,
-        template: t,
-        Priority: p,
+        game:             game,
+        Name:             c.Name,
+        watcher:          w,
+        template:         t,
+        Priority:         p,
+        shouldSendToChan: c.SendToChan,
+        shouldEat:        c.ShouldEat,
     }, nil
 }
 
 // CheckAndExecute checks the given line against the stored regexp, if it matches the given template is run, and the
 // result is returned
-func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, error) {
+func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, error) {
     isMatched, match := g.watcher.MatchLine(line)
     if !isMatched {
-        return false, "", nil
+        return false, nil
     }
 
     if stderr {
@@ -94,10 +99,14 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, string, er
 
     if err := g.template.Execute(out, match); err != nil {
         g.game.bot.Error(fmt.Errorf("could not run game template %q for %q: %s", g.game.Name, g.Name, err))
-        return false, "", nil
+        return false, nil
     }
 
-    return g.shouldEat, out.String(), nil
+    if g.shouldSendToChan {
+        g.game.sendToLogChan(out.String())
+    }
+
+    return g.shouldEat, nil
 }
 
 func (g *GameRegexp) String() string {
