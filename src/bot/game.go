@@ -9,6 +9,7 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/process"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "github.com/goshuirc/irc-go/ircfmt"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
     "path/filepath"
@@ -258,11 +259,12 @@ shouldForward:
     buf := new(bytes.Buffer)
 
     err := g.bridgeFmt.Execute(buf, map[string]string{
-        "source_nick": uh.Nick,
-        "source_user": uh.User,
-        "source_host": uh.Host,
-        "msg":         msg,
-        "target":      target,
+        "source_nick":   uh.Nick,
+        "source_user":   uh.User,
+        "source_host":   uh.Host,
+        "msg":           ircfmt.Escape(msg),
+        "msg_unescaped": msg,
+        "target":        target,
     })
     g.Write(buf.Bytes())
     if err != nil {
