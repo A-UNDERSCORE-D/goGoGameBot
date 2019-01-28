@@ -276,7 +276,7 @@ func (g *Game) watchStdinChan() {
     for {
         toSend := <-g.stdinChan
         toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
-        if _, err := g.process.Stdin.Write(toSend); err != nil {
+        if _, err := g.process.Write(toSend); err != nil {
             g.bot.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.Name, err))
         }
     }

@@ -1,6 +1,7 @@
 package process
 
 import (
+    "bytes"
     "errors"
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
@@ -8,7 +9,6 @@ import (
     "io"
     "os"
     "os/exec"
-    "strings"
     "sync"
     "time"
 )
@@ -18,7 +18,7 @@ func NewProcess(command string, args []string, workingDir string, logger *botLog
     p := &Process{
         commandString: command,
         argListString: args,
-        workingDir:  workingDir,
+        workingDir:    workingDir,
         StdinMutex:    sync.Mutex{},
         log:           logger,
     }
@@ -108,16 +108,20 @@ func (p *Process) GetProcStatus() string {
 }
 
 // writes data to stdin on this process, adding a newline if one does not exist
-func (p *Process) Write(data string) (int, error) {
+func (p *Process) Write(data []byte) (int, error) {
     toWrite := data
-    if !strings.HasSuffix(toWrite, "\n") {
-        toWrite = toWrite + "\n"
+    if !bytes.HasSuffix(toWrite, []byte{'\n'}) {
+        toWrite = append(toWrite, '\n')
     }
 
     p.StdinMutex.Lock()
     defer p.StdinMutex.Unlock()
     p.log.Infof("[STDIN] %s", data)
-    return p.Stdin.Write([]byte(toWrite))
+    return p.Stdin.Write(toWrite)
+}
+
+func (p *Process) WriteString(toWrite string) (int, error) {
+    return p.Write([]byte(toWrite))
 }
 
 func (p *Process) WaitForCompletion() error {
