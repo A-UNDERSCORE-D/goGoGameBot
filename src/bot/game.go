@@ -266,7 +266,11 @@ shouldForward:
         "msg_unescaped": msg,
         "target":        target,
     })
-    g.Write(buf.Bytes())
+    if err != nil {
+        bot.Error(err)
+    }
+    _, err = g.Write(buf.Bytes())
+
     if err != nil {
         bot.Error(err)
     }
