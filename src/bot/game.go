@@ -75,7 +75,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
 }
 
 func (g *Game) UpdateFromConf(conf config.Game) {
-    bridgeFmt, err := template.New(conf.Name + "_bridge_format").Parse(conf.BridgeFmt)
+    bridgeFmt, err := template.New(conf.Name + "_bridge_format").Funcs(util.TemplateUtilFuncs).Parse(conf.BridgeFmt)
     if err != nil {
         g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
     } else {
@@ -238,6 +238,17 @@ func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
 
 /**********************************************************************************************************************/
 
+type dataForFmt struct {
+    SourceNick   string
+    SourceUser   string
+    SourceHost   string
+    MsgRaw       string
+    MsgEscaped   string
+    MsgMapped    string
+    Target       string
+    MatchesStrip bool
+}
+
 func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
     if !g.bridgeChat || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
         return
@@ -252,27 +263,19 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 
 shouldForward:
     uh := ircutils.ParseUserhost(source)
-
-    if util.AnyMaskMatch(source, g.bot.Config.Strips) {
-        splitMsg := strings.SplitN(msg, " ", 1)
-        if len(splitMsg) != 2 {
-            msg = ""
-        } else {
-            msg = splitMsg[1]
-        }
-    }
-
     buf := new(bytes.Buffer)
     escapedLine := ircfmt.Escape(msg)
-    err := g.bridgeFmt.Execute(buf, map[string]string{
-        "source_nick":   uh.Nick,
-        "source_user":   uh.User,
-        "source_host":   uh.Host,
-        "msg_stripped":  escapedLine,
-        "msg_mapped":    g.MapColours(msg),
-        "msg_unescaped": msg,
-        "target":        target,
+    err := g.bridgeFmt.Execute(buf, dataForFmt{
+        SourceNick:   uh.Nick,
+        SourceUser:   uh.User,
+        SourceHost:   uh.Host,
+        Target:       target,
+        MsgRaw:       msg,
+        MsgEscaped:   escapedLine,
+        MsgMapped:    g.MapColours(msg),
+        MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
     })
+
     if err != nil {
         bot.Error(err)
     }

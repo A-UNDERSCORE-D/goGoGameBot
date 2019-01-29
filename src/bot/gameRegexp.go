@@ -52,15 +52,14 @@ func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
     if err != nil {
         return nil, err
     }
-
     funcs := template.FuncMap{
         "logchan":   game.templSendToLogChan,
         "adminchan": game.templSendToAdminChan,
         "sendto":    game.templSendPrivmsg,
-        "zwsp": util.AddZwsp,
     }
+    game.log.Debug(funcs)
 
-    t, err := template.New(c.Name).Funcs(funcs).Parse(c.Format)
+    t, err := template.New(c.Name).Funcs(funcs).Funcs(util.TemplateUtilFuncs).Parse(c.Format)
     if err != nil {
         return nil, err
     }
