@@ -4,6 +4,7 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
+    "github.com/goshuirc/irc-go/ircutils"
     "strings"
 )
 
@@ -18,35 +19,36 @@ type CommandHandler struct {
 // NewCommandHandler creates a CommandHandler and attaches its primary listener to the event manager on the given bot
 func NewCommandHandler(b *Bot, prefixes string) *CommandHandler {
     h := &CommandHandler{bot: b, prefix: prefixes}
-    b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, PriNorm)
+    b.HookRaw("PRIVMSG", h.mainListener, PriNorm)
+    //b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, PriNorm)
     return h
 }
 
 // mainListener is the main PRIVMSG handler for the command handler. It dispatches events for commands after they have
 // been broken up into a CommandData
-func (h *CommandHandler) mainListener(event string, infoMap eventmgr.InfoMap) {
-    line := infoMap["line"].(ircmsg.IrcMessage)
-    msg := line.Params[1]
-    if len(msg) < 1 {
+func (h *CommandHandler) mainListener(line ircmsg.IrcMessage, b *Bot) {
+    splitMsg := util.CleanSplitOnSpace(line.Params[1])
+    if len(splitMsg) < 1 {
+        return // There's nothing there
+    }
+
+    var cmd string
+    var args []string
+
+    firstWord := strings.ToUpper(splitMsg[0])
+    if strings.HasPrefix(firstWord, h.prefix) {
+        cmd = firstWord[len(h.prefix):]
+        args = splitMsg[1:]
+    } else if strings.HasPrefix(firstWord, strings.ToUpper(b.IrcConf.Nick)) && len(firstWord)-len(b.IrcConf.Nick) < 2 && len(splitMsg) > 1 {
+        cmd = strings.ToUpper(splitMsg[1])
+        args = splitMsg[2:]
+    } else {
         return
     }
 
     target := line.Params[0]
-    sMsg := strings.Split(msg, " ")
-    cmd := strings.ToUpper(sMsg[0])
-
-    if !strings.HasPrefix(cmd, h.prefix) {
-        // Not a command we understand
-        return
-    }
-
-    cmd = cmd[1:]
-
-    var args []string
-    if len(sMsg) > 1 {
-        args = sMsg[1:]
-    } else {
-        args = []string{}
+    if target == strings.ToUpper(b.IrcConf.Nick) {
+        target = ircutils.ParseUserhost(line.Prefix).Nick
     }
 
     h.FireCommand(&CommandData{
