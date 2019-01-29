@@ -321,7 +321,7 @@ func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
 
 // GetMultiRawChan condenses multiple raw channels into one, allowing you to wait for any number of raw commands on
 // a single channel
-func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, chan<- bool) {
+func (b *Bot) GetMultiRawChan(commands ...string) (<-chan ircmsg.IrcMessage, chan<- bool) {
     doneChan := make(chan bool)
     aggChan := make(chan ircmsg.IrcMessage)
     var donechans []chan<- bool
@@ -348,14 +348,17 @@ func (b *Bot) GetMultiRawChan(commands ... string) (<-chan ircmsg.IrcMessage, ch
 
 // SendPrivmsg sends a standard IRC message to the target. The target can be either a channel or a nickname
 func (b *Bot) SendPrivmsg(target, msg string) {
-    _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, msg))
+    for _, v := range strings.Split(msg, "\n") {
+        _ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, v))
+    }
 }
 
 // SendNotice sends a notice to the target. The target can be either a channel or a nickname
 func (b *Bot) SendNotice(target, msg string) {
     me := target
-    senpai := msg
-    _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
+    for _, senpai := range strings.Split(msg, "\n") {
+        _ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
+    }
 }
 
 /***start of game control functions***********************************************************************************/
