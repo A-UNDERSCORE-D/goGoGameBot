@@ -43,6 +43,7 @@ type Game struct {
     BridgeChat    bool         `xml:"bridge_chat,attr"`
     BridgeChans   []string     `xml:"bridge_chan"`
     BridgeFmt     string       `xml:"bridge_format"`
+    ColourMap     ColourMap    `xml:"colour_map,omitempty"`
 }
 
 func (g *Game) doInclude() (*Game, error) {
@@ -91,4 +92,58 @@ func (g *Game) doIncludeRegexps() error {
 
     g.Regexps = append(g.Regexps, toAdd...)
     return nil
+}
+
+type ColourMap struct {
+    Bold          string `xml:"bold,omitempty"`
+    Italic        string `xml:"italic,omitempty"`
+    ReverseColour string `xml:"reverse_colour,omitempty"`
+    Strikethrough string `xml:"strikethrough,omitempty"`
+    Underline     string `xml:"underline,omitempty"`
+    Monospace     string `xml:"monospace,omitempty"`
+    Reset         string `xml:"reset,omitempty"`
+    White         string `xml:"white,omitempty"`
+    Black         string `xml:"black,omitempty"`
+    Blue          string `xml:"blue,omitempty"`
+    Green         string `xml:"green,omitempty"`
+    Red           string `xml:"red,omitempty"`
+    Brown         string `xml:"brown,omitempty"`
+    Magenta       string `xml:"magenta,omitempty"`
+    Orange        string `xml:"orange,omitempty"`
+    Yellow        string `xml:"yellow,omitempty"`
+    LightGreen    string `xml:"light_green,omitempty"`
+    Cyan          string `xml:"cyan,omitempty"`
+    LightCyan     string `xml:"light_cyan,omitempty"`
+    LightBlue     string `xml:"light_blue,omitempty"`
+    Pink          string `xml:"pink,omitempty"`
+    Grey          string `xml:"grey,omitempty"`
+    LightGrey     string `xml:"light_grey,omitempty"`
+}
+
+func (c *ColourMap) ToMap() map[string]string {
+    return map[string]string{
+        "bold":           c.Bold,
+        "italic":         c.Italic,
+        "reverse_colour": c.ReverseColour,
+        "strikethrough":  c.Strikethrough,
+        "underline":      c.Underline,
+        "monospace":      c.Monospace,
+        "reset":          c.Reset,
+        "white":          c.White,
+        "black":          c.Black,
+        "blue":           c.Blue,
+        "green":          c.Green,
+        "red":            c.Red,
+        "brown":          c.Brown,
+        "magenta":        c.Magenta,
+        "orange":         c.Orange,
+        "yellow":         c.Yellow,
+        "light_green":    c.LightGreen,
+        "cyan":           c.Cyan,
+        "light_cyan":     c.LightCyan,
+        "light_blue":     c.LightBlue,
+        "pink":           c.Pink,
+        "grey":           c.Grey,
+        "light_grey":     c.LightGrey,
+    }
 }

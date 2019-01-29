@@ -22,7 +22,7 @@ import (
 
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
 
-// Game is a prepresentation
+// Game is a representation of a game server
 type Game struct {
     Name        string
     process     *process.Process
@@ -39,6 +39,7 @@ type Game struct {
     bridgeChat  bool
     bridgeChans []string
     bridgeFmt   *template.Template
+    colourMap   *strings.Replacer
 
     stdinChan chan []byte
 }
@@ -87,6 +88,11 @@ func (g *Game) UpdateFromConf(conf config.Game) {
     g.logChan = conf.Logchan
     g.bridgeChans = conf.BridgeChans
     g.bridgeChat = conf.BridgeChat
+
+    g.colourMap, err = util.MakeColourMap(conf.ColourMap.ToMap())
+    if err != nil {
+        g.bot.Error(err)
+    }
     g.UpdateRegexps(conf.Regexps)
     g.process.UpdateCmd(conf.Path, strings.Split(conf.Args, " "), conf.WorkingDir)
     if !g.process.IsRunning() {
@@ -257,12 +263,13 @@ shouldForward:
     }
 
     buf := new(bytes.Buffer)
-
+    escapedLine := ircfmt.Escape(msg)
     err := g.bridgeFmt.Execute(buf, map[string]string{
         "source_nick":   uh.Nick,
         "source_user":   uh.User,
         "source_host":   uh.Host,
-        "msg":           ircfmt.Escape(msg),
+        "msg_stripped":  escapedLine,
+        "msg_mapped":    g.MapColours(msg),
         "msg_unescaped": msg,
         "target":        target,
     })
@@ -292,4 +299,14 @@ func (g *Game) Write(p []byte) (n int, err error) {
     }
     g.stdinChan <- p
     return len(p), nil
+}
+
+/***util functions*****************************************************************************************************/
+
+func (g *Game) MapColours(s string) string {
+    if g.colourMap == nil {
+        g.log.Warn("Colourmap is nil. returning stripped string instead")
+        return ircfmt.Strip(s)
+    }
+    return g.colourMap.Replace(ircfmt.Escape(s))
 }
