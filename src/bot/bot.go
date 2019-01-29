@@ -83,20 +83,15 @@ func (b *Bot) Run() error {
         return err
     }
     <-b.DoneChan
+    if b.Status != DISCONNECTED {
+        b.Status = DISCONNECTED
+    }
     return nil
 }
 
 // Stop makes the bot quit out and stop all its games
 func (b *Bot) Stop(quitMsg string) {
-
-    wg := new(sync.WaitGroup)
-
-    for _, g := range b.Games {
-        wg.Add(1)
-        go g.StopOrKillWaitgroup(wg)
-    }
-    wg.Wait()
-
+    b.StopAllGames()
     if b.Status == DISCONNECTED {
         return
     }
@@ -120,6 +115,7 @@ func (b *Bot) Init() {
 
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
     b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STOPGAME", b.StopGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
     b.reloadGames(b.Config.Games)
 }
@@ -400,4 +396,13 @@ func (b *Bot) GetGameByName(name string) (*Game, int) {
         }
     }
     return nil, -1
+}
+
+func (b *Bot) StopAllGames() {
+    wg := new(sync.WaitGroup)
+    for _, g := range b.Games {
+        wg.Add(1)
+        go g.StopOrKillWaitgroup(wg)
+    }
+    wg.Wait()
 }

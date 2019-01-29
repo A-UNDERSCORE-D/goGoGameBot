@@ -84,22 +84,41 @@ rangeLoop:
     }
 }
 
+func msgOrLog(data *CommandData, msg string) {
+    if data.IsFromIRC {
+        data.Bot.SendPrivmsg(data.Target, msg)
+    } else {
+        data.Bot.Log.Warn(msg)
+    }
+}
+
 func (b *Bot) StartGame(data *CommandData) error {
     if len(data.Args) < 1 {
-        if data.IsFromIRC {
-            userHost, err := data.UserHost()
-            if err != nil {
-                return err
-            }
-            b.SendNotice(userHost.Nick, "startgame requires an argument")
-        } else {
-            b.Log.Warn("startgame requires an argument")
-        }
+        msgOrLog(data, "startgame requires an argument")
         return nil
     }
-    g, _ := b.GetGameByName(data.Args[0])
+    gameName := data.Args[0]
+    g, _ := b.GetGameByName(gameName)
+    if g == nil {
+        msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
+        return nil
+    }
     go g.Run()
     return nil
+}
+
+func (b *Bot) StopGame(data *CommandData) error {
+    if len(data.Args) < 1 {
+        msgOrLog(data, "stopgame requires an argument")
+        return nil
+    }
+    gameName := data.Args[0]
+    g, _ := b.GetGameByName(gameName)
+    if g == nil {
+        msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
+        return nil
+    }
+    return g.StopOrKill()
 }
 
 func reloadGameCmd(data *CommandData) error {

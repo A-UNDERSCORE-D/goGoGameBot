@@ -31,6 +31,7 @@ func main() {
     go runCLI(b, rl)
 
     b.Run()
+    b.StopAllGames()
     go func(){
         <-time.After(time.Second * 1)
         fmt.Println("Hang on close detected. forcing an exit")
