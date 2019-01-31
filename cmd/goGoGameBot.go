@@ -18,7 +18,7 @@ func main() {
     l := log.New(log.FTimestamp, rl, "MAIN", 0)
     conf, err := config.GetConfig("config.xml")
     if err != nil {
-        l.Panicf("could not read l file %s", err)
+        l.Panicf("could not read config file: %s", err)
     }
 
     b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
