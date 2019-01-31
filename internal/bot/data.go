@@ -2,7 +2,7 @@ package bot
 
 import (
     "errors"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
     "strings"

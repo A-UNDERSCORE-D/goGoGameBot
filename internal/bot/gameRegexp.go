@@ -2,9 +2,9 @@ package bot
 
 import (
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/watchers"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/watchers"
     "strings"
     "text/template"
 )

@@ -1,4 +1,4 @@
-package botLog
+package log
 
 import (
     "fmt"
@@ -75,7 +75,7 @@ func (l *Logger) MinLevel() int {
     return l.minLevel
 }
 
-func NewLogger(flags int, output io.Writer, prefix string, minLevel int) *Logger {
+func New(flags int, output io.Writer, prefix string, minLevel int) *Logger {
     return &Logger{flags: flags, output: output, prefix: prefix, minLevel: minLevel, wMutex: sync.Mutex{}}
 }
 
@@ -120,7 +120,7 @@ func (l *Logger) Tracef(format string, args ...interface{}) {
     l.writeOut(fmt.Sprintf(format, args...), TRACE)
 }
 
-func (l *Logger) Debug(format string, args ...interface{}) {
+func (l *Logger) Debug(args ...interface{}) {
     l.writeOut(fmt.Sprint(args...), DEBUG)
 }
 

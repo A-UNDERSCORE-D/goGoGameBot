@@ -1,6 +1,8 @@
 package util
 
-import "text/template"
+import (
+    "text/template"
+)
 
 var TemplateUtilFuncs = template.FuncMap{
     "zwsp":    AddZwsp,

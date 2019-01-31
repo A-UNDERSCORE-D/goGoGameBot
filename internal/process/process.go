@@ -4,7 +4,7 @@ import (
     "bytes"
     "errors"
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
     "golang.org/x/sys/unix"
     "io"
     "os"
@@ -13,7 +13,7 @@ import (
     "time"
 )
 
-func NewProcess(command string, args []string, workingDir string, logger *botLog.Logger) (*Process, error) {
+func NewProcess(command string, args []string, workingDir string, logger *log.Logger) (*Process, error) {
 
     p := &Process{
         commandString: command,
@@ -40,7 +40,7 @@ type Process struct {
     Stdin         io.WriteCloser
     StdinMutex    sync.Mutex
     DoneChan      chan bool
-    log           *botLog.Logger
+    log           *log.Logger
     hasStarted    bool
     hasExited     bool
 }

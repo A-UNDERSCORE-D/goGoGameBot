@@ -4,9 +4,9 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "net"
@@ -51,7 +51,7 @@ type Bot struct {
     sock          net.Conn                 // IRC socket
     Status        int                      // Current connection status
     DoneChan      chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-    Log           *botLog.Logger           // Logger setup to have a prefix etc, for easy logging
+    Log           *log.Logger              // Logger setup to have a prefix etc, for easy logging
     EventMgr      *eventmgr.EventManager   // Main heavy lifter for the event system
     rawchansMutex sync.Mutex               // Mutex protecting the rawChans map
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
@@ -61,7 +61,7 @@ type Bot struct {
     GamesMutex    sync.Mutex               // Mutex protecting the games slice
 }
 
-func NewBot(conf config.Config, logger *botLog.Logger) *Bot {
+func NewBot(conf config.Config, logger *log.Logger) *Bot {
     b := &Bot{
         Config:   conf,
         IrcConf:  conf.Irc,

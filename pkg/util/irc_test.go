@@ -1,6 +1,7 @@
 package util
 
 import (
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg"
     "github.com/goshuirc/irc-go/ircmsg"
     "testing"
 )
@@ -8,7 +9,7 @@ import (
 var expectedLine = ircmsg.IrcMessage{Command: "TEST", Params: []string{"test", "args", "are", "very testy"}}
 
 func TestMakeSimpleIRCLine(t *testing.T) {
-    res := MakeSimpleIRCLine("TEST", "test", "args", "are", "very testy")
+    res := pkg.MakeSimpleIRCLine("TEST", "test", "args", "are", "very testy")
     if res.Command != expectedLine.Command || !strSliceEq(res.Params, expectedLine.Params) {
         t.Errorf("returned line %#v is not the expected %#v", res, expectedLine)
     }

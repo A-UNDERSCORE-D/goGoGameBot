@@ -2,9 +2,9 @@ package main
 
 import (
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/bot"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/src/util/botLog"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/bot"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
     "github.com/chzyer/readline"
     "golang.org/x/sys/unix"
     "os"
@@ -15,13 +15,13 @@ import (
 
 func main() {
     rl, _ := readline.New("> ")
-    log := botLog.NewLogger(botLog.FTimestamp, rl, "MAIN", 0)
+    l := log.New(log.FTimestamp, rl, "MAIN", 0)
     conf, err := config.GetConfig("config.xml")
     if err != nil {
-        log.Panicf("could not read log file", err)
+        l.Panicf("could not read l file %s", err)
     }
 
-    b := bot.NewBot(*conf, log.Clone().SetPrefix("BOT"))
+    b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
 
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
