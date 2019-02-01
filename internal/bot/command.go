@@ -1,8 +1,8 @@
 package bot
 
 import (
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
     "strings"
@@ -66,14 +66,11 @@ func (h *CommandHandler) FireCommand(data *CommandData) {
     if data.Bot == nil {
         data.Bot = h.bot
     }
-
-    im := eventmgr.NewInfoMap()
-    im["data"] = data
-    h.internalFireCommand(strings.ToUpper(data.Command), im)
+    h.internalFireCommand(strings.ToUpper(data.Command), event.ArgMap{"data": data})
 }
 
 // internalFireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
-func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
+func (h *CommandHandler) internalFireCommand(cmd string, im event.ArgMap) {
 
     go h.bot.EventMgr.Dispatch("CMD", im)
 
@@ -86,7 +83,7 @@ func (h *CommandHandler) internalFireCommand(cmd string, im eventmgr.InfoMap) {
 
 // RegisterCommand registers a callback with a command
 func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int, requiresAdmin bool) {
-    wrapped := func(event string, infoMap eventmgr.InfoMap) {
+    wrapped := func(event string, infoMap event.ArgMap) {
         data := infoMap["data"].(*CommandData)
         if data.SourceIsIgnored() || data.isCancelled {
             return

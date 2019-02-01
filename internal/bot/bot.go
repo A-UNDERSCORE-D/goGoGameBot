@@ -5,9 +5,9 @@ import (
     "crypto/tls"
     "errors"
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/eventmgr"
     "github.com/goshuirc/irc-go/ircmsg"
     "net"
     "strings"
@@ -52,7 +52,7 @@ type Bot struct {
     Status        int                      // Current connection status
     DoneChan      chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
     Log           *log.Logger              // Logger setup to have a prefix etc, for easy logging
-    EventMgr      *eventmgr.EventManager   // Main heavy lifter for the event system
+    EventMgr      *event.Manager           // Main heavy lifter for the event system
     rawchansMutex sync.Mutex               // Mutex protecting the rawChans map
     rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
     capManager    *CapabilityManager       // Manager for IRCv3 capabilities
@@ -67,7 +67,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
         IrcConf:  conf.Irc,
         Status:   DISCONNECTED,
         Log:      logger,
-        EventMgr: new(eventmgr.EventManager),
+        EventMgr: new(event.Manager),
         DoneChan: make(chan bool),
     }
 
@@ -109,8 +109,8 @@ func (b *Bot) Init() {
     b.HookRaw("PING", onPing, PriHighest)
     b.HookRaw("001", onWelcome, PriNorm)
 
-    b.EventMgr.Attach("ERR", func(s string, infoMaps eventmgr.InfoMap) {
-        onError(infoMaps["Error"].(error), b)
+    b.EventMgr.Attach("ERR", func(s string, m event.ArgMap) {
+        onError(m["Error"].(error), b)
     }, PriHighest)
 
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
@@ -208,7 +208,7 @@ func (b *Bot) readLoop() {
 
 // HandleLine is the main handler for raw lines coming from IRC
 func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
-    im := eventmgr.NewInfoMap()
+    im := event.ArgMap{}
     im["line"] = line
     im["bot"] = b
     upperCommand := strings.ToUpper(line.Command)
@@ -222,7 +222,7 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 
 // Error dispatches an error event across the event manager with the given error
 func (b *Bot) Error(err error) {
-    b.EventMgr.Dispatch("ERR", eventmgr.InfoMap{"Error": err})
+    b.EventMgr.Dispatch("ERR", event.ArgMap{"Error": err})
 }
 
 /***start of hook oriented functions***********************************************************************************/
@@ -233,7 +233,7 @@ type HookFunc func(ircmsg.IrcMessage, *Bot)
 func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
     b.EventMgr.Attach(
         "RAW_"+cmd,
-        func(s string, info eventmgr.InfoMap) {
+        func(s string, info event.ArgMap) {
             go f(info["line"].(ircmsg.IrcMessage), b)
         },
         priority,

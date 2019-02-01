@@ -70,6 +70,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
 
     g.UpdateFromConf(conf)
     g.bot.HookPrivmsg(g.onPrivmsg) // TODO: This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
+    //g.bot.CmdHandler.RegisterCommand(g.Name, g.commandHook, PriNorm,false)
     go g.watchStdinChan()
     return g, nil
 }
