@@ -14,8 +14,8 @@ type NSAuth struct {
     SASL     bool   `xml:"sasl,attr"`
 }
 
-type IRC struct {
-    XMLName         xml.Name  `xml:"irc"`
+type BotConfig struct {
+    XMLName         xml.Name  `xml:"bot_config"`
     Nick            string    `xml:"nick,attr"`
     Ident           string    `xml:"ident,attr"`
     Gecos           string    `xml:"gecos,attr"`

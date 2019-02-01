@@ -46,7 +46,7 @@ type RawChanPair struct {
 
 type Bot struct {
     Config        config.Config            // Config for the IRC connection etc
-    IrcConf       config.IRC               // Easier access to the IRC section of the config
+    IrcConf       config.BotConfig         // Easier access to the IRC section of the config
     sockMutex     sync.Mutex               // Mutex for the IRC socket
     sock          net.Conn                 // IRC socket
     Status        int                      // Current connection status
@@ -364,7 +364,7 @@ func (b *Bot) SendNotice(target, msg string) {
 /***start of game control functions***********************************************************************************/
 
 // reloadGames reloads the data on all games using the given config slice
-func (b *Bot) reloadGames(conf []config.Game) { // TODO: Removing games that no longer exist?
+func (b *Bot) reloadGames(conf []config.GameConfig) { // TODO: Removing games that no longer exist?
     for _, gameConf := range conf {
         currentGame, idx := b.GetGameByName(gameConf.Name)
         if idx == -1 {

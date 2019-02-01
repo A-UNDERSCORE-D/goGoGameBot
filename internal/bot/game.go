@@ -42,10 +42,12 @@ type Game struct {
     colourMap   *strings.Replacer
 
     stdinChan chan []byte
+
+    commandMap map[string]int64
 }
 
 // NewGame creates a game object for use in controlling a process
-func NewGame(conf config.Game, b *Bot) (*Game, error) {
+func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
     gameLog := b.Log.Clone().SetPrefix(conf.Name)
     if conf.WorkingDir == "" {
         fp, err := filepath.Abs(conf.Path)
@@ -75,7 +77,7 @@ func NewGame(conf config.Game, b *Bot) (*Game, error) {
     return g, nil
 }
 
-func (g *Game) UpdateFromConf(conf config.Game) {
+func (g *Game) UpdateFromConf(conf config.GameConfig) {
     bridgeFmt, err := template.New(conf.Name + "_bridge_format").Funcs(util.TemplateUtilFuncs).Parse(conf.BridgeFmt)
     if err != nil {
         g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
@@ -105,7 +107,7 @@ func (g *Game) UpdateFromConf(conf config.Game) {
 
 // UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
 // runtime reloading of parts of the config
-func (g *Game) UpdateRegexps(conf []config.GameRegexp) {
+func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
     var newRegexps GameRegexpList
 
     for _, reConf := range conf {

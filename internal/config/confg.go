@@ -8,15 +8,15 @@ import (
 
 type Config struct {
     XMLName     xml.Name     `xml:"bot"`
-    Irc         IRC          `xml:"irc"`
+    Irc         BotConfig    `xml:"bot_config"`
     Permissions []Permission `xml:"permissions>permission"`
     Ignores     []string     `xml:"ignore_mask"`
     Strips      []string     `xml:"strip_mask"`
-    Games       []Game       `xml:"game"`
+    Games       []GameConfig `xml:"game"`
 }
 
 var defaultConfig = Config{
-    Irc: IRC{
+    Irc: BotConfig{
         CommandPrefix:   "~",
         Nick:            "goGoGameBot",
         Ident:           "GGGB",
@@ -31,7 +31,7 @@ var defaultConfig = Config{
 
     Permissions: []Permission{{Mask: "*!*@snoonet/staff/A_D"}},
 
-    Games: []Game{
+    Games: []GameConfig{
         {
             Name:         "echo",
             AutoStart:    false,
@@ -40,7 +40,7 @@ var defaultConfig = Config{
             Logchan:      "#ferricyanide",
             AdminLogChan: "#ferricyanide",
 
-            Regexps: []GameRegexp{{
+            Regexps: []GameRegexpConfig{{
                 Name:      "test",
                 Priority:  0,
                 ShouldEat: true,

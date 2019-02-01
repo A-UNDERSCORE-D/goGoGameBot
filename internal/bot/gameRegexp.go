@@ -47,7 +47,7 @@ func (gl GameRegexpList) Swap(i, j int) {
 }
 
 // NewGameRegexp creates a gameRegexp, compiling the relevant data structures as needed
-func NewGameRegexp(game *Game, c config.GameRegexp) (*GameRegexp, error) {
+func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
     w, err := watchers.NewRegexWatcher(c.Regexp)
     if err != nil {
         return nil, err
