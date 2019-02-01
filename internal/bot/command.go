@@ -14,11 +14,12 @@ type HandleFunc func(data *CommandData) error
 type CommandHandler struct {
     bot    *Bot
     prefix string
+    commands map[string][]int64
 }
 
 // NewCommandHandler creates a CommandHandler and attaches its primary listener to the event manager on the given bot
 func NewCommandHandler(b *Bot, prefixes string) *CommandHandler {
-    h := &CommandHandler{bot: b, prefix: prefixes}
+    h := &CommandHandler{bot: b, prefix: prefixes, commands:make(map[string][]int64)}
     b.HookRaw("PRIVMSG", h.mainListener, PriNorm)
     //b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, PriNorm)
     return h
@@ -100,7 +101,22 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int,
         h.RegisterCommand(cmd, checkPermissions, -1, false)
     }
 
-    h.bot.EventMgr.Attach(hookName, wrapped, priority)
+    id := h.bot.EventMgr.Attach(hookName, wrapped, priority)
+    h.commands[hookName] = append(h.commands[hookName], id)
+}
+
+func (h *CommandHandler) UnregisterCommand(name string) {
+    IDs, ok := h.commands[strings.ToUpper(name)]
+    if !ok {
+        h.bot.Log.Warnf("Attempt to remove nonexistant command %q", name)
+        return
+    }
+    h.bot.Log.Infof("unregistering command %q", name)
+    for _, id := range IDs {
+        h.bot.EventMgr.Detach(id)
+    }
+
+    delete(h.commands, name)
 }
 
 // checkPermissions does runs a glob based permission check on the incoming command, cancelling the command being fired
