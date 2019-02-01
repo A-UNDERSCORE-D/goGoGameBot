@@ -43,7 +43,7 @@ type Game struct {
 
     stdinChan chan []byte
 
-    commandMap map[string]int64
+    commandList []string
 }
 
 // NewGame creates a game object for use in controlling a process
@@ -103,6 +103,58 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
             g.bot.Error(err)
         }
     }
+
+    g.UpdateCommands(conf.Commands)
+
+}
+
+func (g *Game) UpdateCommands(conf []config.GameCommandConfig) {
+    for _, c := range g.commandList {
+        g.bot.CmdHandler.UnregisterCommand(c)
+    }
+    for _, c := range conf {
+        g.RegisterCommand(c)
+    }
+}
+
+type gameCommandData struct {
+    IsFromIRC bool
+    Args []string
+    Source ircutils.UserHost
+}
+
+func (g *gameCommandData) ArgString() string {
+    return strings.Join(g.Args, " ")
+}
+
+func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
+    if conf.Name == "" {
+        g.bot.Error(errors.New("game: cannot create gamecommand with empty name"))
+        return
+    }
+    templ, err := template.New(conf.Name).Funcs(util.TemplateUtilFuncs).Parse(conf.StdinFormat)
+    if err != nil {
+        g.bot.Error(fmt.Errorf("game: could not create GameCommand template: %s", err))
+        return
+    }
+    resolvedName := fmt.Sprintf("%s_%s", g.Name, conf.Name)
+    g.log.Infof("registering command %q", resolvedName)
+    g.bot.CmdHandler.RegisterCommand(
+        resolvedName,
+        func(data *CommandData) error {
+            toSend := new(bytes.Buffer)
+            uh, _ := data.UserHost()
+            if err := templ.Execute(toSend, &gameCommandData{data.IsFromIRC, data.Args, uh}); err != nil {
+                return err
+            }
+
+            g.stdinChan <- toSend.Bytes()
+            return nil
+        },
+        PriNorm,
+        conf.RequiresAdmin,
+    )
+    g.commandList = append(g.commandList, resolvedName)
 }
 
 // UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
