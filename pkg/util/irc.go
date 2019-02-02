@@ -6,6 +6,7 @@ import (
     "github.com/goshuirc/irc-go/ircmsg"
     "regexp"
     "strings"
+    "sync"
 )
 
 //noinspection ALL
@@ -32,12 +33,15 @@ func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
 }
 
 var charMap = map[rune]string{'?': ".", '*': ".*"}
+var cacheMutex sync.Mutex
 var regexpCache = make(map[string]*regexp.Regexp)
 
 // GlobToRegexp converts a mask glob string to a regexp that will only allow the wildcards * and ? to have any special
 // meaning.
 func GlobToRegexp(mask string) *regexp.Regexp {
+    cacheMutex.Lock()
     re, ok := regexpCache[mask]
+    cacheMutex.Unlock()
     if ok {
        return re
     }
@@ -54,7 +58,9 @@ func GlobToRegexp(mask string) *regexp.Regexp {
     }
 
     re = regexp.MustCompile(out.String())
+    cacheMutex.Lock()
     regexpCache[mask] = re
+    cacheMutex.Unlock()
     return re
 }
 

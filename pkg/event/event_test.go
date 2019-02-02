@@ -24,7 +24,7 @@ func TestStuff(t *testing.T) {
 
     manager.Dispatch("test", ArgMap{"test": 0})
     manager.Detach(id)
-    fmt.Println(manager.Events)
+    fmt.Println(manager.events)
     fmt.Println()
     manager.Dispatch("test", ArgMap{"test": 1})
 }

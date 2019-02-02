@@ -41,6 +41,7 @@ type Process struct {
     StdinMutex    sync.Mutex
     DoneChan      chan bool
     log           *log.Logger
+    statusMutex   sync.Mutex
     hasStarted    bool
     hasExited     bool
 }
@@ -83,9 +84,11 @@ func (p *Process) setupCmd() error {
 }
 
 func (p *Process) Reset() error {
-    p.DoneChan = make(chan bool)
+    p.DoneChan = make(chan bool) // TODO: This causes a data race. In theory it's not an issue, but it'd be nice to fix it
+    p.statusMutex.Lock()
     p.hasStarted = false
     p.hasExited = false
+    p.statusMutex.Unlock()
     return p.setupCmd()
 }
 
@@ -95,11 +98,15 @@ func (p *Process) Start() error {
         return fmt.Errorf("could not start process: %v", err)
     }
 
+    p.statusMutex.Lock()
     p.hasStarted = true
+    p.statusMutex.Unlock()
     return nil
 }
 
 func (p *Process) IsRunning() bool {
+    p.statusMutex.Lock()
+    defer p.statusMutex.Unlock()
     return p.hasStarted && !p.hasExited
 }
 
@@ -127,7 +134,9 @@ func (p *Process) WriteString(toWrite string) (int, error) {
 func (p *Process) WaitForCompletion() error {
     defer close(p.DoneChan)
     err := p.cmd.Wait()
+    p.statusMutex.Lock()
     p.hasExited = true
+    p.statusMutex.Unlock()
     if err != nil {
         return err
     }

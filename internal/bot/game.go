@@ -90,7 +90,7 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
     g.DumpStdout = conf.LogStdout
     g.logChan = conf.Logchan
     g.bridgeChans = conf.BridgeChans
-    g.bridgeChat = conf.BridgeChat
+    g.bridgeChat = conf.BridgeChat // TODO: This causes a onetime race condition when reloading from IRC
 
     g.colourMap, err = util.MakeColourMap(conf.ColourMap.ToMap())
     if err != nil {

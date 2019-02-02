@@ -1,7 +1,10 @@
 package event
 
 import (
+    "fmt"
+    "runtime"
     "sort"
+    "sync"
     "time"
 )
 
@@ -32,23 +35,35 @@ type Handler struct {
 }
 
 type Manager struct {
-    Events Map
+    events Map
+    mutex  sync.Mutex
+}
+
+func (m *Manager) HasEvent(name string) bool {
+    m.mutex.Lock()
+    defer m.mutex.Unlock()
+    _, ok := m.events[name]
+    return ok
 }
 
 func (m *Manager) Attach(name string, f HandlerFunc, priority int) int64 {
-    if m.Events == nil {
-        m.Events = make(Map)
+    m.mutex.Lock()
+    defer m.mutex.Unlock()
+    if m.events == nil {
+        m.events = make(Map)
     }
     id := time.Now().UnixNano()
-    m.Events[name] = append(m.Events[name], Handler{f, priority, id})
-    sort.Sort(m.Events[name])
+    m.events[name] = append(m.events[name], Handler{f, priority, id})
+    sort.Sort(m.events[name])
     return id
 }
 
 func (m *Manager) Detach(id int64) bool {
+    m.mutex.Lock()
+    defer m.mutex.Unlock()
     var targetName string
     targetIdx := -1 // Dont mutate while iterating--fun things happen
-    for name, hl := range m.Events {
+    for name, hl := range m.events {
         for i, handler := range hl {
             if handler.Id == id {
                 targetName = name
@@ -59,7 +74,7 @@ func (m *Manager) Detach(id int64) bool {
     }
 
     if targetIdx != -1 {
-       m.Events[targetName] = append(m.Events[targetName][:targetIdx], m.Events[targetName][targetIdx+1:]...)
+       m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
        return true
     }
 
@@ -67,7 +82,14 @@ func (m *Manager) Detach(id int64) bool {
 }
 
 func (m *Manager) Dispatch(name string, argMap ArgMap) {
-    for _, h := range m.Events[name] {
+    m.mutex.Lock()
+    toIterate, ok := m.events[name]
+    m.mutex.Unlock()
+    if !ok {
+        return
+    }
+
+    for _, h := range toIterate {
         h.Func(name, argMap)
     }
 }

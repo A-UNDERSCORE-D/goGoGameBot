@@ -75,7 +75,7 @@ func (h *CommandHandler) internalFireCommand(cmd string, im event.ArgMap) {
 
     go h.bot.EventMgr.Dispatch("CMD", im)
 
-    if _, exists := h.bot.EventMgr.Events["CMD_"+cmd]; exists {
+    if h.bot.EventMgr.HasEvent("CMD_"+cmd) {
         go h.bot.EventMgr.Dispatch("CMD_"+cmd, im)
     } else {
         go h.bot.EventMgr.Dispatch("CMDNOTFOUND", im)
