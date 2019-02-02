@@ -137,7 +137,7 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
         g.bot.Error(fmt.Errorf("game: could not create GameCommand template: %s", err))
         return
     }
-    resolvedName := fmt.Sprintf("%s_%s", g.Name, conf.Name)
+    resolvedName := strings.ToUpper(fmt.Sprintf("%s_%s", g.Name, conf.Name))
     g.log.Infof("registering command %q", resolvedName)
     g.bot.CmdHandler.RegisterCommand(
         resolvedName,
@@ -181,6 +181,7 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 
 // Run starts the game and blocks until it completes
 func (g *Game) Run() {
+    g.sendToLogChan("starting")
     if err := g.process.Start(); err != nil {
         g.bot.Error(err)
         return
@@ -196,16 +197,22 @@ func (g *Game) Run() {
     }
 }
 
+func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
+    g.sendToLogChan("stopping")
+    return g.process.StopOrKillTimeout(timeout)
+}
+
 // StopOrKill sends SIGINT to the running game, and after 30 seconds if the game has not closed on its own, it sends
 // SIGKILL
 func (g *Game) StopOrKill() error {
-    return g.process.StopOrKillTimeout(time.Second * 30)
+
+    return g.StopOrKillTimeout(time.Second * 30)
 }
 
 // StopOrKillWaitgroup is exactly the same as StopOrKill but it takes a waitgroup that is marked as done after the game
 // has exited
 func (g *Game) StopOrKillWaitgroup(wg *sync.WaitGroup) {
-    if err := g.process.StopOrKillTimeout(time.Second * 30); err != nil {
+    if err := g.StopOrKillTimeout(time.Second * 30); err != nil {
         g.bot.Error(err)
     }
     wg.Done()
