@@ -101,6 +101,15 @@ func (b *Bot) Stop(quitMsg string) {
     b.Status = DISCONNECTED
 }
 
+func (b *Bot) stopCmd(data *CommandData) error {
+    if data.ArgString() == "" {
+        b.Stop("Quit requested")
+    } else {
+        b.Stop(data.ArgString())
+    }
+    return nil
+}
+
 // Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
     b.capManager = &CapabilityManager{bot: b}
@@ -117,6 +126,7 @@ func (b *Bot) Init() {
     b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("STOPGAME", b.StopGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
     b.reloadGames(b.Config.Games)
 }
 
