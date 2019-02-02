@@ -32,11 +32,11 @@ func main() {
 
     b.Run()
     b.StopAllGames()
-    go func(){
+    go func() {
         <-time.After(time.Second * 1)
         fmt.Println("Hang on close detected. forcing an exit")
         os.Exit(0)
-        }()
+    }()
     rl.Close()
 }
 

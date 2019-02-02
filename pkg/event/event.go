@@ -1,8 +1,6 @@
 package event
 
 import (
-    "fmt"
-    "runtime"
     "sort"
     "sync"
     "time"
@@ -74,8 +72,8 @@ func (m *Manager) Detach(id int64) bool {
     }
 
     if targetIdx != -1 {
-       m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
-       return true
+        m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
+        return true
     }
 
     return false
