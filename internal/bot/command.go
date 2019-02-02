@@ -106,7 +106,7 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int,
 }
 
 func (h *CommandHandler) UnregisterCommand(name string) {
-    IDs, ok := h.commands[strings.ToUpper(name)]
+    IDs, ok := h.commands["CMD_"+strings.ToUpper(name)]
     if !ok {
         h.bot.Log.Warnf("Attempt to remove nonexistant command %q", name)
         return
