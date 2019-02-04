@@ -3,8 +3,10 @@ package bot
 import (
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "github.com/goshuirc/irc-go/ircmsg"
+    "strings"
     "sync"
 )
 
@@ -24,9 +26,14 @@ func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
     }
 }
 
-func onError(err error, b *Bot) {
+func onError(maps event.ArgMap, b *Bot) {
+    err := maps["Error"].(error)
+    trace := string(maps["trace"].([]byte))
     msg := fmt.Sprintf("Error occured: %s", err)
-    b.Log.Warnf(msg)
+    b.Log.Warn(msg)
+    for _, l := range strings.Split(trace, "\n") {
+        b.Log.Warn(l)
+    }
     if b.Status == CONNECTED {
         b.SendPrivmsg(b.Config.Irc.AdminChan.Name, "[ERROR] "+msg)
     }

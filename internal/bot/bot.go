@@ -10,6 +10,7 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "github.com/goshuirc/irc-go/ircmsg"
     "net"
+    "runtime/debug"
     "strings"
     "sync"
 )
@@ -118,8 +119,8 @@ func (b *Bot) Init() {
     b.HookRaw("PING", onPing, PriHighest)
     b.HookRaw("001", onWelcome, PriNorm)
 
-    b.EventMgr.Attach("ERR", func(s string, m event.ArgMap) {
-        onError(m["Error"].(error), b)
+    b.EventMgr.Attach("ERR", func(s string, maps event.ArgMap) {
+        onError(maps, b)
     }, PriHighest)
 
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
@@ -232,7 +233,7 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 
 // Error dispatches an error event across the event manager with the given error
 func (b *Bot) Error(err error) {
-    b.EventMgr.Dispatch("ERR", event.ArgMap{"Error": err})
+    b.EventMgr.Dispatch("ERR", event.ArgMap{"Error": err, "trace": debug.Stack()})
 }
 
 /***start of hook oriented functions***********************************************************************************/
