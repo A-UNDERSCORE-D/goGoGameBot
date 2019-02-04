@@ -44,6 +44,8 @@ type Game struct {
     stdinChan chan []byte
 
     commandList []string
+
+    killedByUs bool
 }
 
 // NewGame creates a game object for use in controlling a process
@@ -181,6 +183,7 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 // Run starts the game and blocks until it completes
 func (g *Game) Run() {
     g.sendToLogChan("starting")
+    g.killedByUs = false
     if err := g.process.Start(); err != nil {
         g.bot.Error(err)
         return
@@ -188,8 +191,12 @@ func (g *Game) Run() {
     g.startStdWatchers()
 
     if err := g.process.WaitForCompletion(); err != nil {
-        g.bot.Error(err)
+        if g.killedByUs {
+            return
+        }
+        g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
     }
+
     g.sendToLogChan("Process exited with " + g.process.GetProcStatus())
     if err := g.process.Reset(); err != nil {
         g.bot.Error(err)
