@@ -38,7 +38,7 @@ type Game struct {
     /*chat stuff*/
     bridgeChat  bool
     bridgeChans []string
-    bridgeFmt   *template.Template
+    bridgeFmt   util.Format
     colourMap   *strings.Replacer
 
     stdinChan chan []byte
@@ -78,11 +78,10 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 }
 
 func (g *Game) UpdateFromConf(conf config.GameConfig) {
-    bridgeFmt, err := template.New(conf.Name + "_bridge_format").Funcs(util.TemplateUtilFuncs).Parse(conf.BridgeFmt)
+    g.bridgeFmt = conf.BridgeFmt
+    err := g.bridgeFmt.Compile(g.Name + "_bridge_format", nil)
     if err != nil {
         g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
-    } else {
-        g.bridgeFmt = bridgeFmt
     }
 
     g.adminChan = conf.AdminLogChan
@@ -198,14 +197,17 @@ func (g *Game) Run() {
 }
 
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
+    if !g.process.IsRunning() {
+        return nil
+    }
     g.sendToLogChan("stopping")
+    g.killedByUs = true
     return g.process.StopOrKillTimeout(timeout)
 }
 
 // StopOrKill sends SIGINT to the running game, and after 30 seconds if the game has not closed on its own, it sends
 // SIGKILL
 func (g *Game) StopOrKill() error {
-
     return g.StopOrKillTimeout(time.Second * 30)
 }
 
@@ -325,9 +327,8 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 
 shouldForward:
     uh := ircutils.ParseUserhost(source)
-    buf := new(bytes.Buffer)
     escapedLine := ircfmt.Escape(msg)
-    err := g.bridgeFmt.Execute(buf, dataForFmt{
+    res, err := g.bridgeFmt.Execute(dataForFmt{
         SourceNick:   uh.Nick,
         SourceUser:   uh.User,
         SourceHost:   uh.Host,
@@ -340,8 +341,9 @@ shouldForward:
 
     if err != nil {
         bot.Error(err)
+        return
     }
-    _, err = g.Write(buf.Bytes())
+    _, err = g.WriteString(res)
 
     if err != nil {
         bot.Error(err)
@@ -374,4 +376,8 @@ func (g *Game) MapColours(s string) string {
         return ircfmt.Strip(s)
     }
     return g.colourMap.Replace(ircfmt.Escape(s))
+}
+
+func (g *Game) WriteString(s string) (n int, err error) {
+    return g.Write([]byte(s))
 }

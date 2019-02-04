@@ -5,7 +5,6 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/watchers"
-    "strings"
     "text/template"
 )
 
@@ -25,7 +24,7 @@ const (
 type GameRegexp struct {
     Name             string
     watcher          watchers.Watcher
-    template         *template.Template
+    template         util.Format
     Priority         int
     game             *Game
     shouldEat        bool
@@ -59,7 +58,7 @@ func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
     }
     game.log.Debug(funcs)
 
-    t, err := template.New(c.Name).Funcs(funcs).Funcs(util.TemplateUtilFuncs).Parse(c.Format)
+    err = c.Format.Compile(c.Name, funcs)
     if err != nil {
         return nil, err
     }
@@ -73,7 +72,7 @@ func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
         game:             game,
         Name:             c.Name,
         watcher:          w,
-        template:         t,
+        template:         c.Format,
         Priority:         p,
         shouldSendToChan: c.SendToChan,
         shouldEat:        c.ShouldEat,
@@ -94,15 +93,14 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, error) {
         match.OutputType = "STDOUT"
     }
 
-    out := new(strings.Builder)
-
-    if err := g.template.Execute(out, match); err != nil {
+    out, err := g.template.Execute(match)
+    if err != nil {
         g.game.bot.Error(fmt.Errorf("could not run game template %q for %q: %s", g.game.Name, g.Name, err))
         return false, nil
     }
 
     if g.shouldSendToChan {
-        g.game.sendToLogChan(out.String())
+        g.game.sendToLogChan(out)
     }
 
     return g.shouldEat, nil

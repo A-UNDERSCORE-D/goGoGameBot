@@ -2,16 +2,17 @@ package config
 
 import (
     "encoding/xml"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 type GameRegexpConfig struct {
-    XMLName    xml.Name `xml:"game_regexp"`
-    Name       string   `xml:"name,attr"`
-    Priority   int      `xml:"priority,attr"`
-    ShouldEat  bool     `xml:"should_eat,attr"`
-    Regexp     string   `xml:"regexp"`
-    Format     string   `xml:"format"`
-    SendToChan bool     `xml:"send_to_chan,attr"`
+    XMLName    xml.Name    `xml:"game_regexp"`
+    Name       string      `xml:"name,attr"`
+    Priority   int         `xml:"priority,attr"`
+    ShouldEat  bool        `xml:"should_eat,attr"`
+    Regexp     string      `xml:"regexp"`
+    Format     util.Format `xml:"format"`
+    SendToChan bool        `xml:"send_to_chan,attr"`
 }
 
 func (g *GameRegexpConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -49,7 +50,7 @@ type GameConfig struct {
     Regexps       []GameRegexpConfig  `xml:"game_regexp"`
     BridgeChat    bool                `xml:"bridge_chat,attr"`
     BridgeChans   []string            `xml:"bridge_chan"`
-    BridgeFmt     string              `xml:"bridge_format"`
+    BridgeFmt     util.Format         `xml:"bridge_format"`
     ColourMap     ColourMap           `xml:"colour_map,omitempty"`
     Commands      []GameCommandConfig `xml:"command"`
 }
