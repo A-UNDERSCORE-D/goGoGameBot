@@ -1,6 +1,7 @@
 package bot
 
 import (
+    "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "github.com/goshuirc/irc-go/ircmsg"
@@ -91,32 +92,34 @@ func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int,
         }
 
         if err := f(data); err != nil {
-            infoMap["Error"] = err
-            go h.bot.EventMgr.Dispatch("ERR", infoMap)
+            h.bot.Error(err)
         }
     }
 
-    hookName := "CMD_" + strings.ToUpper(cmd)
+    resolvedName := "CMD_" + strings.ToUpper(cmd)
     if requiresAdmin {
         h.RegisterCommand(cmd, checkPermissions, -1, false)
     }
 
-    id := h.bot.EventMgr.Attach(hookName, wrapped, priority)
-    h.commands[hookName] = append(h.commands[hookName], id)
+    id := h.bot.EventMgr.Attach(resolvedName, wrapped, priority)
+    h.commands[resolvedName] = append(h.commands[resolvedName], id)
 }
 
 func (h *CommandHandler) UnregisterCommand(name string) {
-    IDs, ok := h.commands["CMD_"+strings.ToUpper(name)]
+    resolvedName := "CMD_"+strings.ToUpper(name)
+    IDs, ok := h.commands[resolvedName]
     if !ok {
         h.bot.Log.Warnf("Attempt to remove nonexistant command %q", name)
         return
     }
     h.bot.Log.Infof("unregistering command %q", name)
     for _, id := range IDs {
-        h.bot.EventMgr.Detach(id)
+        if !h.bot.EventMgr.Detach(id) {
+            h.bot.Error(fmt.Errorf("could not unregister command %q with id %d", name, id))
+        }
     }
 
-    delete(h.commands, name)
+    delete(h.commands, resolvedName)
 }
 
 // checkPermissions does runs a glob based permission check on the incoming command, cancelling the command being fired
