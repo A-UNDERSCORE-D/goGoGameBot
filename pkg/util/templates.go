@@ -14,7 +14,7 @@ var TemplateUtilFuncs = template.FuncMap{
 }
 
 type Format struct {
-    FormatString        string             `xml:",innerxml"`
+    FormatString        string             `xml:",chardata"`
     StripNewlines       bool               `xml:"strip_newlines,attr"`
     StripWhitespace     int                `xml:"strip_whitespace,attr"`
     CompiledFormat      *template.Template `xml:"-"`
