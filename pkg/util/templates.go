@@ -16,13 +16,30 @@ var TemplateUtilFuncs = template.FuncMap{
 type Format struct {
     FormatString        string             `xml:",chardata"`
     StripNewlines       bool               `xml:"strip_newlines,attr"`
-    StripWhitespace     int                `xml:"strip_whitespace,attr"`
+    StripWhitespace     bool               `xml:"strip_whitespace,attr"`
     CompiledFormat      *template.Template `xml:"-"`
     compiled            bool
     whitespaceToReplace string
 }
 
+var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "")
+
+func (f *Format) doFmtStringCleanup() {
+    if f.StripWhitespace {
+        var toSet []string
+        for _, l := range strings.Split(f.FormatString, "\n") {
+            toSet = append(toSet, strings.Trim(l, " "))
+        }
+        f.FormatString = strings.Join(toSet, "\n")
+    }
+
+    if f.StripNewlines {
+        f.FormatString = newlinesReplacer.Replace(f.FormatString)
+    }
+}
+
 func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
+    f.doFmtStringCleanup()
     toSet := template.New(name)
     toSet.Funcs(TemplateUtilFuncs)
     for _, entry := range funcMaps {
@@ -34,11 +51,8 @@ func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
     }
     f.CompiledFormat = res
     f.compiled = true
-    f.whitespaceToReplace = strings.Repeat(" ", f.StripWhitespace)
     return nil
 }
-
-var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "")
 
 func (f *Format) Execute(data interface{}) (string, error) {
     if !f.compiled {
@@ -49,12 +63,5 @@ func (f *Format) Execute(data interface{}) (string, error) {
     if err != nil {
         return "", err
     }
-    out := buf.String()
-    if f.StripNewlines {
-        out = newlinesReplacer.Replace(out)
-    }
-    if f.StripWhitespace != 0 {
-        out = strings.Replace(out, f.whitespaceToReplace, "", -1)
-    }
-    return out, nil
+    return buf.String(), nil
 }
