@@ -175,9 +175,7 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
     g.regexpMutex.Lock()
     defer g.regexpMutex.Unlock()
     g.regexps = newRegexps
-    g.log.Debugf("pre-sorted regexp list:%#v", g.regexps)
     sort.Sort(g.regexps)
-    g.log.Debugf("pst-sorted regexp list:%#v", g.regexps)
 }
 
 // Run starts the game and blocks until it completes
