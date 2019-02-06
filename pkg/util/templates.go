@@ -2,7 +2,7 @@ package util
 
 import (
     "bytes"
-    "github.com/pkg/errors"
+    "errors"
     "strings"
     "text/template"
 )
