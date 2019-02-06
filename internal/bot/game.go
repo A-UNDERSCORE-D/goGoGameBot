@@ -111,8 +111,9 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
 
 func (g *Game) UpdateCommands(conf []config.GameCommandConfig) {
     for _, c := range g.commandList {
-        g.bot.CmdHandler.UnregisterCommand(c)
+        g.UnregisterCommand(c)
     }
+    g.commandList = make([]string, 0)
     for _, c := range conf {
         g.RegisterCommand(c)
     }
@@ -126,6 +127,24 @@ type gameCommandData struct {
 
 func (g *gameCommandData) ArgString() string {
     return strings.Join(g.Args, " ")
+}
+
+func (g *Game) UnregisterCommand(name string) {
+    targetIdx := -1
+    for i, n := range g.commandList {
+        if n == name {
+            targetIdx = i
+            break
+        }
+    }
+
+    if targetIdx == -1 {
+        g.log.Warnf("attempt to remove unknown command %q", name)
+        return
+    }
+
+    g.bot.CmdHandler.UnregisterCommand(name)
+    g.commandList = append(g.commandList[:targetIdx], g.commandList[targetIdx+1:]...)
 }
 
 func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
