@@ -61,12 +61,13 @@ func (m *Manager) Detach(id int64) bool {
     defer m.mutex.Unlock()
     var targetName string
     targetIdx := -1 // Dont mutate while iterating--fun things happen
+    loop:
     for name, hl := range m.events {
         for i, handler := range hl {
             if handler.Id == id {
                 targetName = name
                 targetIdx = i
-                break
+                break loop
             }
         }
     }
