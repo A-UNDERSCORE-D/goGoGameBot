@@ -352,7 +352,7 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 shouldForward:
     uh := ircutils.ParseUserhost(source)
     escapedLine := ircfmt.Escape(msg)
-    res, err := g.bridgeFmt.Execute(dataForFmt{
+    err := g.SendBridgedLine(dataForFmt{
         SourceNick:   uh.Nick,
         SourceUser:   uh.User,
         SourceHost:   uh.Host,
@@ -367,11 +367,17 @@ shouldForward:
         bot.Error(err)
         return
     }
-    _, err = g.WriteString(res)
+}
 
+func (g *Game) SendBridgedLine(d dataForFmt) error {
+    res, err := g.bridgeFmt.Execute(d)
     if err != nil {
-        bot.Error(err)
+        return err
     }
+    if _, err := g.WriteString(res); err != nil {
+        return err
+    }
+    return nil
 }
 
 func (g *Game) watchStdinChan() {
