@@ -22,7 +22,7 @@ type Format struct {
     whitespaceToReplace string
 }
 
-var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "")
+var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "", "\t", "")
 
 func (f *Format) doFmtStringCleanup() {
     if f.StripWhitespace {
