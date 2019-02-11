@@ -3,6 +3,7 @@ package bot
 import (
     "errors"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "github.com/goshuirc/irc-go/ircfmt"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
     "strings"
@@ -78,4 +79,20 @@ func (d *CommandData) SourceMatchesStrip() bool {
         return false
     }
     return util.AnyMaskMatch(d.Source, d.Bot.Config.Strips)
+}
+
+func (d *CommandData) Reply(msg string) {
+    if !d.IsFromIRC {
+        d.Bot.Log.Infof(msg)
+        return
+    }
+    target := d.Target
+    if !strings.HasPrefix(d.Target, "#") {
+        // We got PMed, return the PM
+        t, _ := d.UserHost()
+        target = t.Nick
+    }
+
+    d.Bot.SendPrivmsg(target, ircfmt.Unescape(msg))
+
 }
