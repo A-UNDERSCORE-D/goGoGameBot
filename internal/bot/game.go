@@ -76,6 +76,10 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
     g.bot.HookPrivmsg(g.onPrivmsg) // TODO: This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
     //g.bot.CmdHandler.RegisterCommand(g.Name, g.commandHook, PriNorm,false)
     go g.watchStdinChan()
+    g.bot.CmdHandler.RegisterCommand(fmt.Sprintf("%s_status", g.Name), func(data *CommandData) error {
+        data.Reply(g.process.GetStatus())
+        return nil
+    }, PriNorm, false)
     return g, nil
 }
 
@@ -214,7 +218,7 @@ func (g *Game) Run() {
         g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
     }
 
-    g.sendToLogChan("Process exited with " + g.process.GetProcStatus())
+    g.sendToLogChan("Process exited with " + g.process.GetReturnStatus())
     if err := g.process.Reset(); err != nil {
         g.bot.Error(err)
     }
