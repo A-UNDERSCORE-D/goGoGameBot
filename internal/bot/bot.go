@@ -4,6 +4,7 @@ import (
     "bufio"
     "crypto/tls"
     "errors"
+    "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -128,6 +129,15 @@ func (b *Bot) Init() {
     b.CmdHandler.RegisterCommand("STOPGAME", b.StopGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
     b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
+    b.CmdHandler.RegisterCommand("STATUS", func(data *CommandData) error {
+        data.Reply("Main stats: " + util.GetHostStats())
+        data.Bot.GamesMutex.Lock()
+        defer data.Bot.GamesMutex.Unlock()
+        for _, g := range data.Bot.Games {
+            data.Reply(fmt.Sprintf("[%s] %s", g.Name, g.process.GetStatus()))
+        }
+        return nil
+    }, PriNorm, true)
     b.reloadGames(b.Config.Games)
 }
 
