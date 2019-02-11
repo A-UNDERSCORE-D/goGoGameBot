@@ -5,10 +5,13 @@ import (
     "errors"
     "fmt"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+    "github.com/dustin/go-humanize"
+    "github.com/shirou/gopsutil/process"
     "golang.org/x/sys/unix"
     "io"
     "os"
     "os/exec"
+    "strings"
     "sync"
     "time"
 )
@@ -110,8 +113,38 @@ func (p *Process) IsRunning() bool {
     return p.hasStarted && !p.hasExited
 }
 
-func (p *Process) GetProcStatus() string {
+func (p *Process) GetReturnStatus() string {
     return p.cmd.ProcessState.String()
+}
+
+func (p *Process) GetStatus() string {
+    out := strings.Builder{}
+    if !p.IsRunning() {
+        out.WriteString("$c[red] Not running$r")
+        return out.String()
+    }
+    ps, err := process.NewProcess(int32(p.cmd.Process.Pid))
+    if err != nil {
+        return fmt.Sprintf("$b$c[light red]ERROR:$b %s", err)
+    }
+    out.WriteString("$c[light green]$bRunning$r: ")
+    out.WriteString("CPU usage: ")
+    perc, err := ps.CPUPercent()
+    if err != nil {
+        out.WriteString("Error ")
+    } else {
+        out.WriteString(fmt.Sprintf("%.2f%% ", perc))
+    }
+    out.WriteString("Memory Usage: ")
+    if m, err := ps.MemoryInfo(); err != nil {
+        out.WriteString("Error: %s ")
+    } else {
+        out.WriteString(humanize.IBytes(m.RSS))
+    }
+    if m, err := ps.MemoryPercent(); err == nil {
+        out.WriteString(fmt.Sprintf(" (%.2f%%)", m))
+    }
+    return out.String()
 }
 
 // writes data to stdin on this process, adding a newline if one does not exist
