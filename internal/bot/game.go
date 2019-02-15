@@ -20,6 +20,7 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
 
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
@@ -87,7 +88,7 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 
 func (g *Game) UpdateFromConf(conf config.GameConfig) {
     g.bridgeFmt = conf.BridgeFmt
-    err := g.bridgeFmt.Compile(g.Name + "_bridge_format", nil)
+    err := g.bridgeFmt.Compile(g.Name+"_bridge_format", nil)
     if err != nil {
         g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
     }
@@ -127,8 +128,8 @@ func (g *Game) UpdateCommands(conf []config.GameCommandConfig) {
 
 type gameCommandData struct {
     IsFromIRC bool
-    Args []string
-    Source ircutils.UserHost
+    Args      []string
+    Source    ircutils.UserHost
 }
 
 func (g *gameCommandData) ArgString() string {
@@ -341,6 +342,7 @@ type dataForFmt struct {
     MsgMapped    string
     Target       string
     MatchesStrip bool
+    IsAction     bool
 }
 
 func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
@@ -357,6 +359,14 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
 
 shouldForward:
     uh := ircutils.ParseUserhost(source)
+    isAction := false
+    if out, err := ctcp.Parse(msg); err == nil {
+        if out.Command != "ACTION" {
+            return
+        }
+        msg = out.Arg
+        isAction = true
+    }
     escapedLine := ircfmt.Escape(msg)
     err := g.SendBridgedLine(dataForFmt{
         SourceNick:   uh.Nick,
@@ -367,6 +377,7 @@ shouldForward:
         MsgEscaped:   escapedLine,
         MsgMapped:    g.MapColours(msg),
         MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
+        IsAction:     isAction,
     })
 
     if err != nil {
