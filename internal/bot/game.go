@@ -367,14 +367,13 @@ shouldForward:
         msg = out.Arg
         isAction = true
     }
-    escapedLine := ircfmt.Escape(msg)
     err := g.SendBridgedLine(dataForFmt{
         SourceNick:   uh.Nick,
         SourceUser:   uh.User,
         SourceHost:   uh.Host,
         Target:       target,
         MsgRaw:       msg,
-        MsgEscaped:   escapedLine,
+        MsgEscaped:   ircfmt.Escape(msg),
         MsgMapped:    g.MapColours(msg),
         MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
         IsAction:     isAction,
