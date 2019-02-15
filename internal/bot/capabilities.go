@@ -98,7 +98,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
                 // Allow other things to run, then close up and send cap end
                 wg.Wait()
                 close(done)
-                cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
+                _ = cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
             }()
 
             cm.bot.Log.Infof("Server offered caps: %v",

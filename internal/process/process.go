@@ -131,11 +131,11 @@ func (p *Process) GetStatus() string {
     }
     out.WriteString("$c[light green]$bRunning$r: ")
     out.WriteString("CPU usage: ")
-    perc, err := ps.CPUPercent()
+    cpuPercentage, err := ps.CPUPercent()
     if err != nil {
         out.WriteString("Error ")
     } else {
-        out.WriteString(fmt.Sprintf("%.2f%% ", perc))
+        out.WriteString(fmt.Sprintf("%.2f%% ", cpuPercentage))
     }
     out.WriteString("Memory Usage: ")
     if m, err := ps.MemoryInfo(); err != nil {

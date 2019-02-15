@@ -44,7 +44,7 @@ type GameConfig struct {
     Path          string              `xml:"bin_path,attr"`
     WorkingDir    string              `xml:"working_dir,attr"`
     Args          string              `xml:"args,attr"`
-    Logchan       string              `xml:"log_chan,attr"`
+    LogChan       string              `xml:"log_chan,attr"`
     AdminLogChan  string              `xml:"admin_log_chan,attr"`
     LogStdout     bool                `xml:"log_stdout,attr"`
     LogStderr     bool                `xml:"log_stderr,attr"`
@@ -66,10 +66,14 @@ func (g *GameConfig) doInclude() (*GameConfig, error) {
     return g, nil
 }
 
-func (g *GameConfig) includeFromFile() error {  // TODO: It would be nice if this wouldnt overwrite anything that has been set
-    if g.Include == "" {                        //       But doing that isnt exactly simple. For now it just overwrites stuff set
-        return nil                              //       in the included file, ie, if you set something and its set in the included
-    }                                           //       file, the stuff in the included file wins
+// TODO: It would be nice if this wouldn't overwrite anything that has been set
+//       But doing that isn't exactly simple. For now it just overwrites stuff set
+//       in the included file, ie, if you set something and its set in the included
+//       file, the stuff in the included file wins
+func (g *GameConfig) includeFromFile() error {
+    if g.Include == "" {
+        return nil
+    }
 
     data, err := readAllFromFile(g.Include)
     if err != nil {

@@ -181,7 +181,7 @@ func (b *Bot) connect() error {
     return nil
 }
 
-/***start of write- fucntions for accessing the socket*****************************************************************/
+/***start of write- functions for accessing the socket*****************************************************************/
 
 // WriteRaw writes bytes directly to the IRC server's socket, it also handles synchronisation and logging of outgoing
 // lines
@@ -267,7 +267,7 @@ func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
 
 type PrivmsgFunc func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot)
 
-// HookPrivmsg hooks a callback to PRIVMSGs. The callback is launched in a goroutine.
+// HookPrivmsg hooks a callback to all PRIVMSG lines. The callback is launched in a goroutine.
 func (b *Bot) HookPrivmsg(f PrivmsgFunc) {
     b.HookRaw("PRIVMSG",
         func(line ircmsg.IrcMessage, bot *Bot) {

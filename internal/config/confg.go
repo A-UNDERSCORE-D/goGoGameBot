@@ -39,7 +39,7 @@ var defaultConfig = Config{
             AutoStart:    false,
             Path:         "/bin/echo",
             Args:         "test command is testy",
-            Logchan:      "#ferricyanide",
+            LogChan:      "#ferricyanide",
             AdminLogChan: "#ferricyanide",
 
             Regexps: []GameRegexpConfig{{
@@ -60,7 +60,7 @@ func readAllFromFile(name string) ([]byte, error) {
     }
 
     data, err := ioutil.ReadAll(f)
-    f.Close()
+    _ = f.Close()
     if err != nil {
         return nil, err
     }

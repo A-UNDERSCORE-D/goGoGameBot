@@ -48,11 +48,3 @@ func TestParse(t *testing.T) {
         }
     }
 }
-
-var actionTests = map[string]string{
-    "\x01ACTION test message\x01":   "test message",
-    "\x01ACTION\x01":                "",
-    "\x01ACTION               \x01": "              ",
-    "test message":                  "test message",
-    "\x01TEST test":                 "\x01TEST test",
-}

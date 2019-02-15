@@ -9,7 +9,7 @@ import (
 
 func BenchmarkLogger_Info(b *testing.B) {
     l := Logger{
-        flags:    pkg.FTimestamp,
+        flags:    FTimestamp,
         output:   ioutil.Discard,
         prefix:   "test",
         wMutex:   sync.Mutex{},

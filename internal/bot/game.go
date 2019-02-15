@@ -96,7 +96,7 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
     g.adminChan = conf.AdminLogChan
     g.DumpStderr = conf.LogStderr
     g.DumpStdout = conf.LogStdout
-    g.logChan = conf.Logchan
+    g.logChan = conf.LogChan
     g.bridgeChans = conf.BridgeChans
     g.bridgeChat = conf.BridgeChat // TODO: This causes a onetime race condition when reloading from IRC
 
@@ -184,7 +184,7 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
     g.commandList = append(g.commandList, resolvedName)
 }
 
-// UpdateRegeps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
+// UpdateRegexps takes a config and updates all the available GameRegexps on its game object. This exists to facilitate
 // runtime reloading of parts of the config
 func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
     var newRegexps GameRegexpList
@@ -324,7 +324,7 @@ func (g *Game) templSendToLogChan(v ...interface{}) string {
 
 func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
     if c == "" {
-        return "", errors.New("cannot send to a nonexistant target")
+        return "", errors.New("cannot send to a nonexistent target")
     }
     msg := fmt.Sprint(v...)
     g.bot.SendPrivmsg(c, msg)
@@ -408,7 +408,7 @@ func (g *Game) watchStdinChan() {
 
 func (g *Game) Write(p []byte) (n int, err error) {
     if !g.process.IsRunning() {
-        return 0, errors.New("cannot write to a nonrunning game")
+        return 0, errors.New("cannot write to a non-running game")
     }
     g.stdinChan <- p
     return len(p), nil
@@ -418,7 +418,7 @@ func (g *Game) Write(p []byte) (n int, err error) {
 
 func (g *Game) MapColours(s string) string {
     if g.colourMap == nil {
-        g.log.Warn("Colourmap is nil. returning stripped string instead")
+        g.log.Warn("Colour map is nil. returning stripped string instead")
         return ircfmt.Strip(s)
     }
     return g.colourMap.Replace(ircfmt.Escape(s))

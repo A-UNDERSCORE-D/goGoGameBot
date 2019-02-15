@@ -65,9 +65,9 @@ func GlobToRegexp(mask string) *regexp.Regexp {
     return re
 }
 
-func AnyMaskMatch(tocheck string, masks []string) bool {
+func AnyMaskMatch(toCheck string, masks []string) bool {
     for _, mask := range masks {
-        if GlobToRegexp(mask).MatchString(tocheck) {
+        if GlobToRegexp(mask).MatchString(toCheck) {
             return true
         }
     }
