@@ -83,6 +83,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 
 // Run starts the bot and lets it connect to IRC. It blocks until the IRC server connection is closed
 func (b *Bot) Run() error {
+    b.Log.Infof("Connecting to %s on port %s with ssl: %t", b.IrcConf.Host, b.IrcConf.Port, b.IrcConf.SSL)
     if err := b.connect(); err != nil {
         return err
     }
@@ -95,6 +96,7 @@ func (b *Bot) Run() error {
 
 // Stop makes the bot quit out and stop all its games
 func (b *Bot) Stop(quitMsg string) {
+    b.Log.Info("stop requested: ", quitMsg)
     b.StopAllGames()
     if b.Status == DISCONNECTED {
         return

@@ -15,6 +15,15 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
+const asciiArt = `
+  ____  ____  ____ ____
+ / ___|/ ___|/ ___| __ )
+| |  _| |  _| |  _|  _ \
+| |_| | |_| | |_| | |_) |
+ \____|\____|\____|____/
+`
+const version = "0.1.0"
+
 func main() {
     rl, _ := readline.New("> ")
     l := log.New(log.FTimestamp, rl, "MAIN", 0)
@@ -22,6 +31,12 @@ func main() {
     if err != nil {
         l.Panicf("could not read config file: %s", err)
     }
+
+    for _, line := range strings.Split(asciiArt, "\n") {
+        l.Info(line)
+    }
+    l.Info("goGoGameBot version %s loading....", version)
+
 
     b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
 
@@ -31,15 +46,16 @@ func main() {
     go func() { sig := <-sigChan; b.Stop(fmt.Sprintf("Caught Signal: %s", sig)) }()
 
     go runCLI(b, rl)
-
-    b.Run()
+    if err := b.Run(); err != nil {
+        l.Warnf("Got an error from bot on exit: %s", err)
+    }
     b.StopAllGames()
     go func() {
         <-time.After(time.Second * 1)
         fmt.Println("Hang on close detected. forcing an exit")
         os.Exit(0)
     }()
-    rl.Close()
+    _ = rl.Close()
 }
 
 func runCLI(b *bot.Bot, rl *readline.Instance) {
