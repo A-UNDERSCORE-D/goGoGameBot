@@ -1,9 +1,11 @@
 package util
 
 import (
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg"
-    "github.com/goshuirc/irc-go/ircmsg"
     "testing"
+
+    "github.com/goshuirc/irc-go/ircmsg"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg"
 )
 
 var expectedLine = ircmsg.IrcMessage{Command: "TEST", Params: []string{"test", "args", "are", "very testy"}}

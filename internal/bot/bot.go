@@ -5,15 +5,17 @@ import (
     "crypto/tls"
     "errors"
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/irc-go/ircmsg"
     "net"
     "runtime/debug"
     "strings"
     "sync"
+
+    "github.com/goshuirc/irc-go/ircmsg"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 const (

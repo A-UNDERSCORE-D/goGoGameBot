@@ -2,12 +2,14 @@ package bot
 
 import (
     "fmt"
+    "strings"
+    "sync"
+
+    "github.com/goshuirc/irc-go/ircmsg"
+
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/irc-go/ircmsg"
-    "strings"
-    "sync"
 )
 
 func onPing(lineIn ircmsg.IrcMessage, b *Bot) {

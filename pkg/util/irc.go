@@ -3,10 +3,11 @@ package util
 import (
     "encoding/base64"
     "fmt"
-    "github.com/goshuirc/irc-go/ircmsg"
     "regexp"
     "strings"
     "sync"
+
+    "github.com/goshuirc/irc-go/ircmsg"
 )
 
 //noinspection ALL

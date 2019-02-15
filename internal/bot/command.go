@@ -2,11 +2,13 @@ package bot
 
 import (
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "strings"
+
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "strings"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 type HandleFunc func(data *CommandData) error

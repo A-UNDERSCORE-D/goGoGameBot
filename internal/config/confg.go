@@ -2,9 +2,10 @@ package config
 
 import (
     "encoding/xml"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "io/ioutil"
     "os"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 type Config struct {
@@ -16,7 +17,7 @@ type Config struct {
     Games       []GameConfig `xml:"game"`
 }
 
-var defaultConfig Config = Config{
+var defaultConfig = Config{
     Irc: BotConfig{
         CommandPrefix:   "~",
         Nick:            "goGoGameBot",

@@ -4,16 +4,18 @@ import (
     "bytes"
     "errors"
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-    "github.com/dustin/go-humanize"
-    "github.com/shirou/gopsutil/process"
-    "golang.org/x/sys/unix"
     "io"
     "os"
     "os/exec"
     "strings"
     "sync"
     "time"
+
+    "github.com/dustin/go-humanize"
+    "github.com/shirou/gopsutil/process"
+    "golang.org/x/sys/unix"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
 func NewProcess(command string, args []string, workingDir string, logger *log.Logger) (*Process, error) {

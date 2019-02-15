@@ -2,11 +2,12 @@ package util
 
 import (
     "fmt"
+    "strings"
+    "time"
+
     "github.com/dustin/go-humanize"
     "github.com/shirou/gopsutil/cpu"
     "github.com/shirou/gopsutil/mem"
-    "strings"
-    "time"
 )
 
 func GetHostStats() string {

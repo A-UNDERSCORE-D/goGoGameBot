@@ -2,12 +2,14 @@ package bot
 
 import (
     "errors"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "strings"
+    "sync"
+
     "github.com/goshuirc/irc-go/ircfmt"
     "github.com/goshuirc/irc-go/ircmsg"
     "github.com/goshuirc/irc-go/ircutils"
-    "strings"
-    "sync"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 // CommandData holds all the data for a command currently being fired
@@ -30,7 +32,7 @@ func (d *CommandData) ArgCount() int {
 // CommandData.ArgEol returns a list of the
 func (d *CommandData) ArgEol() []string {
     var out []string
-    for i, _ := range d.Args {
+    for i := range d.Args {
         out = append(out, strings.Join(d.Args[:i], " "))
     }
 

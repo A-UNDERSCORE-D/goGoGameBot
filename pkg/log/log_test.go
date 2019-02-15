@@ -1,7 +1,6 @@
 package log
 
 import (
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg"
     "io/ioutil"
     "log"
     "sync"
@@ -9,7 +8,7 @@ import (
 )
 
 func BenchmarkLogger_Info(b *testing.B) {
-    l := pkg.Logger{
+    l := Logger{
         flags:    pkg.FTimestamp,
         output:   ioutil.Discard,
         prefix:   "test",

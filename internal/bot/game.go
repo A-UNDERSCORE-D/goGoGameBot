@@ -5,19 +5,21 @@ import (
     "bytes"
     "errors"
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/irc-go/ircfmt"
-    "github.com/goshuirc/irc-go/ircmsg"
-    "github.com/goshuirc/irc-go/ircutils"
     "path/filepath"
     "sort"
     "strings"
     "sync"
     "text/template"
     "time"
+
+    "github.com/goshuirc/irc-go/ircfmt"
+    "github.com/goshuirc/irc-go/ircmsg"
+    "github.com/goshuirc/irc-go/ircutils"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp

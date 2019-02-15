@@ -2,10 +2,12 @@ package bot
 
 import (
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-    "github.com/goshuirc/irc-go/ircmsg"
     "strings"
     "sync"
+
+    "github.com/goshuirc/irc-go/ircmsg"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 // Capability represents an IRCv3 capability

@@ -2,15 +2,17 @@ package main
 
 import (
     "fmt"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/bot"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-    "github.com/chzyer/readline"
-    "golang.org/x/sys/unix"
     "os"
     "os/signal"
     "strings"
     "time"
+
+    "github.com/chzyer/readline"
+    "golang.org/x/sys/unix"
+
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/bot"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
 func main() {

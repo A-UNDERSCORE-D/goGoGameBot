@@ -2,10 +2,11 @@ package bot
 
 import (
     "fmt"
+    "text/template"
+
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/watchers"
-    "text/template"
 )
 
 const (

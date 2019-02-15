@@ -2,6 +2,7 @@ package config
 
 import (
     "encoding/xml"
+
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
