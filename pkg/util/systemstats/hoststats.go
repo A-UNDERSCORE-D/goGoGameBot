@@ -1,7 +1,8 @@
-package util
+package systemstats
 
 import (
     "fmt"
+    "runtime"
     "strings"
     "time"
 
@@ -10,7 +11,7 @@ import (
     "github.com/shirou/gopsutil/mem"
 )
 
-func GetHostStats() string {
+func getSystemUsageStats() string {
     out := strings.Builder{}
     out.WriteString("CPU Load: ")
     if h, err := cpu.Percent(time.Millisecond * 50, false); err != nil {
@@ -25,4 +26,19 @@ func GetHostStats() string {
         out.WriteString(fmt.Sprintf("%s/%s (%.2f%%)", humanize.IBytes(m.Used), humanize.IBytes(m.Total), m.UsedPercent))
     }
     return out.String()
+}
+
+func getBotUsageStats() string {
+    out := strings.Builder{}
+    memstats := new(runtime.MemStats)
+    runtime.ReadMemStats(memstats)
+    out.WriteString(fmt.Sprintf(
+        "Memory Usage: %s",
+        humanize.IBytes(memstats.Sys),
+        ))
+    return out.String()
+}
+
+func GetStats() string {
+    return fmt.Sprintf("Bot: %s System: %s", getBotUsageStats(), getSystemUsageStats())
 }

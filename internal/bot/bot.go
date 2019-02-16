@@ -10,6 +10,7 @@ import (
     "strings"
     "sync"
 
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
     "github.com/goshuirc/irc-go/ircmsg"
 
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
@@ -140,7 +141,7 @@ func (b *Bot) Init() {
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
     b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
     b.CmdHandler.RegisterCommand("STATUS", func(data *CommandData) error {
-        data.Reply("Main stats: " + util.GetHostStats())
+        data.Reply("Main stats: " + systemstats.GetStats())
         data.Bot.GamesMutex.Lock()
         defer data.Bot.GamesMutex.Unlock()
         for _, g := range data.Bot.Games {

@@ -122,12 +122,12 @@ func (p *Process) GetReturnStatus() string {
 func (p *Process) GetStatus() string {
     out := strings.Builder{}
     if !p.IsRunning() {
-        out.WriteString("$c[red] Not running$r")
+        out.WriteString("$c[red]$b Not running$r")
         return out.String()
     }
     ps, err := process.NewProcess(int32(p.cmd.Process.Pid))
     if err != nil {
-        return fmt.Sprintf("$b$c[light red]ERROR:$b %s", err)
+        return fmt.Sprintf("$b$c[red]ERROR:$b %s", err)
     }
     out.WriteString("$c[light green]$bRunning$r: ")
     out.WriteString("CPU usage: ")
