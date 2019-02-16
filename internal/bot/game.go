@@ -36,6 +36,7 @@ type Game struct {
     logChan     string
     DumpStderr  bool
     DumpStdout  bool
+    AutoStart   bool
     bot         *Bot
 
     /*chat stuff*/
@@ -73,6 +74,7 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
         process:   proc,
         log:       gameLog,
         stdinChan: make(chan []byte, 50),
+        AutoStart: conf.AutoStart,
     }
 
     g.UpdateFromConf(conf)
