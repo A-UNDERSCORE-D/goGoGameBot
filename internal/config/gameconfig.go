@@ -48,8 +48,8 @@ type GameConfig struct {
     AdminLogChan  string              `xml:"admin_log_chan,attr"`
     LogStdout     bool                `xml:"log_stdout,attr"`
     LogStderr     bool                `xml:"log_stderr,attr"`
-    Regexps       []GameRegexpConfig  `xml:"game_regexp"`
     BridgeChat    bool                `xml:"bridge_chat,attr"`
+    Regexps       []GameRegexpConfig  `xml:"game_regexp"`
     BridgeChans   []string            `xml:"bridge_chan"`
     BridgeFmt     util.Format         `xml:"bridge_format"`
     ColourMap     ColourMap           `xml:"colour_map,omitempty"`
