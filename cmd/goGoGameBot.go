@@ -8,6 +8,7 @@ import (
     "time"
 
     "github.com/chzyer/readline"
+    "github.com/spf13/pflag"
     "golang.org/x/sys/unix"
 
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/bot"
@@ -15,29 +16,39 @@ import (
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
-const asciiArt = `
+const (
+    asciiArt = `
   ____  ____  ____ ____
  / ___|/ ___|/ ___| __ )
 | |  _| |  _| |  _|  _ \
 | |_| | |_| | |_| | |_) |
  \____|\____|\____|____/
 `
-const version = "0.1.0"
+    version = "0.1.1"
+)
+
+var (
+    configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
+)
 
 func main() {
+    pflag.Parse()
     rl, _ := readline.New("> ")
     l := log.New(log.FTimestamp, rl, "MAIN", 0)
-    conf, err := config.GetConfig("config.xml")
-    if err != nil {
-        l.Panicf("could not read config file: %s", err)
-    }
 
     for _, line := range strings.Split(asciiArt, "\n") {
         l.Info(line)
     }
     l.Info("goGoGameBot version %s loading....", version)
 
-
+    conf, err := config.GetConfig(*configFile)
+    if err != nil {
+        if err == config.ErrConfNotExist {
+            l.Infof("Config file %s not found. Placing a default config there. Please set the configuration to your liking and restart gggb", *configFile)
+            return
+        }
+        l.Panicf("could not read config file: %s", err)
+    }
     b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
 
     sigChan := make(chan os.Signal, 1)
