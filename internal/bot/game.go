@@ -9,7 +9,6 @@ import (
     "sort"
     "strings"
     "sync"
-    "text/template"
     "time"
 
     "github.com/goshuirc/irc-go/ircfmt"
@@ -161,7 +160,7 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
         g.bot.Error(errors.New("game: cannot create gamecommand with empty name"))
         return
     }
-    templ, err := template.New(conf.Name).Funcs(util.TemplateUtilFuncs).Parse(conf.StdinFormat)
+    err := conf.StdinFormat.Compile(conf.Name)
     if err != nil {
         g.bot.Error(fmt.Errorf("game: could not create GameCommand template: %s", err))
         return
@@ -171,13 +170,12 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
     g.bot.CmdHandler.RegisterCommand(
         resolvedName,
         func(data *CommandData) error {
-            toSend := new(bytes.Buffer)
             uh, _ := data.UserHost()
-            if err := templ.Execute(toSend, &gameCommandData{data.IsFromIRC, data.Args, uh}); err != nil {
+            toSend, err := conf.StdinFormat.ExecuteBytes(&gameCommandData{data.IsFromIRC, data.Args, uh})
+            if err != nil {
                 return err
             }
-
-            g.stdinChan <- toSend.Bytes()
+            g.stdinChan <- toSend
             return nil
         },
         PriNorm,
