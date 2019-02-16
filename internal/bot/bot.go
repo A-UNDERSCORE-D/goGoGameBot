@@ -87,6 +87,12 @@ func (b *Bot) Run() error {
     if err := b.connect(); err != nil {
         return err
     }
+    b.WaitForRaw("001")
+    for _, g := range b.Games {
+        if g.AutoStart {
+            b.startGame(g)
+        }
+    }
     <-b.DoneChan
     if b.Status != DISCONNECTED {
         b.Status = DISCONNECTED
@@ -129,8 +135,8 @@ func (b *Bot) Init() {
     }, PriHighest)
 
     b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
-    b.CmdHandler.RegisterCommand("STARTGAME", b.StartGame, PriNorm, true)
-    b.CmdHandler.RegisterCommand("STOPGAME", b.StopGame, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STARTGAME", StartGameCmd, PriNorm, true)
+    b.CmdHandler.RegisterCommand("STOPGAME", StopGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
     b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
     b.CmdHandler.RegisterCommand("STATUS", func(data *CommandData) error {
@@ -411,6 +417,13 @@ func (b *Bot) addGame(game *Game) {
     defer b.GamesMutex.Unlock()
     b.Games = append(b.Games, game)
 
+}
+
+func (b *Bot) startGame(game *Game) {
+    if game.bot != b {
+        b.Log.Warnf("attempt to start game %q (%p) for bot %[2]v (%[2]p) on bot %[3]v (%[3]p)", game.Name, game, b, game.bot)
+    }
+    go game.Run()
 }
 
 // GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.
