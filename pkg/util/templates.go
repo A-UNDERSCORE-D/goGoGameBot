@@ -53,14 +53,19 @@ func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
     return nil
 }
 
-func (f *Format) Execute(data interface{}) (string, error) {
+func (f *Format) ExecuteBytes(data interface{}) ([]byte, error) {
     if !f.compiled {
-        return "", errors.New("util.Format: cannot execute an uncompiled Format")
+        return nil, errors.New("util.Format: cannot execute an uncompiled Format")
     }
     buf := new(bytes.Buffer)
     err := f.CompiledFormat.Execute(buf, data)
     if err != nil {
-        return "", err
+        return nil, err
     }
-    return buf.String(), nil
+    return buf.Bytes(), nil
+}
+
+func (f *Format) Execute(data interface{}) (string, error) {
+    b, err := f.ExecuteBytes(data)
+    return string(b), err
 }
