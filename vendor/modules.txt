@@ -20,6 +20,8 @@ github.com/shirou/gopsutil/internal/common
 github.com/shirou/gopsutil/net
 # github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4
 github.com/shirou/w32
+# github.com/spf13/pflag v1.0.3
+github.com/spf13/pflag
 # golang.org/x/sys v0.0.0-20190214214411-e77772198cdc
 golang.org/x/sys/unix
 golang.org/x/sys/windows
