@@ -101,28 +101,28 @@ func msgOrLog(data *CommandData, msg string) {
     }
 }
 
-func (b *Bot) StartGame(data *CommandData) error {
+func StartGameCmd(data *CommandData) error {
     if len(data.Args) < 1 {
         msgOrLog(data, "startgame requires an argument")
         return nil
     }
     gameName := data.Args[0]
-    g, _ := b.GetGameByName(gameName)
+    g, _ := data.Bot.GetGameByName(gameName)
     if g == nil {
         msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
         return nil
     }
-    go g.Run()
+    data.Bot.startGame(g)
     return nil
 }
 
-func (b *Bot) StopGame(data *CommandData) error {
+func StopGame(data *CommandData) error {
     if len(data.Args) < 1 {
         msgOrLog(data, "stopgame requires an argument")
         return nil
     }
     gameName := data.Args[0]
-    g, _ := b.GetGameByName(gameName)
+    g, _ := data.Bot.GetGameByName(gameName)
     if g == nil {
         msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
         return nil
