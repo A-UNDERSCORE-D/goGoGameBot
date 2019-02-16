@@ -2,6 +2,7 @@ package config
 
 import (
     "encoding/xml"
+    "errors"
     "io/ioutil"
     "os"
 
@@ -115,7 +116,7 @@ func writeDefaultConfig(filename string) error {
 
     return nil
 }
-
+var ErrConfNotExist = errors.New("config file not found. Adding a default config")
 // GetConfig parses the config found at the given path and returns it, if it does not exist it places the default config
 // at that location, parses it, and returns that. If any other read error occurs while parsing, it is returned
 func GetConfig(filename string) (*Config, error) {
@@ -127,7 +128,7 @@ func GetConfig(filename string) (*Config, error) {
                 return nil, err
             }
 
-            return GetConfig(filename)
+            return nil, ErrConfNotExist
 
         } else {
             return nil, err
