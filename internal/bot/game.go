@@ -340,6 +340,7 @@ type dataForFmt struct {
     MsgRaw       string
     MsgEscaped   string
     MsgMapped    string
+    MsgStripped  string
     Target       string
     MatchesStrip bool
     IsAction     bool
@@ -375,6 +376,7 @@ shouldForward:
         MsgRaw:       msg,
         MsgEscaped:   ircfmt.Escape(msg),
         MsgMapped:    g.MapColours(msg),
+        MsgStripped:  ircfmt.Strip(msg),
         MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
         IsAction:     isAction,
     })
