@@ -19,7 +19,6 @@ type Format struct {
     StripWhitespace     bool               `xml:"strip_whitespace,attr"`
     CompiledFormat      *template.Template `xml:"-"`
     compiled            bool
-    whitespaceToReplace string
 }
 
 var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "", "\t", "")
