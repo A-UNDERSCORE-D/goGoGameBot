@@ -10,6 +10,8 @@
 </command>
 ```
 With format being the "standard" formatter with all its available tools and settings.
+
+- Added a colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
 # 0.1.1
 - Added auto-start to games
 - Made starting with a nonexistent config create the default one and print a message mentioning this
