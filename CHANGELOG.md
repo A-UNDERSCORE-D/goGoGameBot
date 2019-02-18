@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
+
 ### Changed
 - Changed behaviour of config files when it comes to game commands.
  ```xml
