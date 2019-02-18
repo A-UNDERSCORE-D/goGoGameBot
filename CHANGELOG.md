@@ -32,6 +32,8 @@ With format being the "standard" formatter with all its available tools and sett
 - Added a few info logs in various places
 
 ## [0.0.0] - 2019-01-01
+### Added
+- Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
 [0.1.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot
