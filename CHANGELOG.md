@@ -26,6 +26,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Added bot memory usage to status command
 ### Changed
 - Made starting with a nonexistent config create the default one and print a message mentioning this
+
 ## [0.1.0] - 2019-02-14
 ### Added
 - Added gggb version
