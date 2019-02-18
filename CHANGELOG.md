@@ -1,4 +1,12 @@
-# 0.2.0
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+### Added
+- Added a colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
+### Changed
 - Changed behaviour of config files when it comes to game commands.
  ```xml
  <command name="raw" requires_admin="true" stdin_format="{{.ArgString}}"/>
@@ -9,13 +17,23 @@
 <format>{{.ArgString}}</format>
 </command>
 ```
-With format being the "standard" formatter with all its available tools and settings.
+With format being the "standard" formatter with all its available tools and settings. 
+- Changed CHANGELOG type
 
-- Added a colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
-# 0.1.1
+## [0.1.1] - 2019-02-13
+### Added
 - Added auto-start to games
-- Made starting with a nonexistent config create the default one and print a message mentioning this
 - Added bot memory usage to status command
-# 0.1.0
+### Changed
+- Made starting with a nonexistent config create the default one and print a message mentioning this
+## [0.1.0] - 2019-02-14
+### Added
 - Added gggb version
 - Added a few info logs in various places
+
+## [0.0.0] - 2019-01-01
+
+[Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.1.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.1.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.0.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot
