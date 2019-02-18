@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed behaviour of config files when it comes to game commands.
+
  ```xml
  <command name="raw" requires_admin="true" stdin_format="{{.ArgString}}"/>
  ```
@@ -18,13 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <format>{{.ArgString}}</format>
 </command>
 ```
-With format being the "standard" formatter with all its available tools and settings. 
+With format being the "standard" formatter with all its available tools and settings.
+ 
 - Changed CHANGELOG type
 
 ## [0.1.1] - 2019-02-13
 ### Added
 - Added auto-start to games
 - Added bot memory usage to status command
+
 ### Changed
 - Made starting with a nonexistent config create the default one and print a message mentioning this
 
