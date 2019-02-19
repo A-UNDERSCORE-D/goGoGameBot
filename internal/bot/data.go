@@ -85,7 +85,7 @@ func (d *CommandData) SourceMatchesStrip() bool {
 
 func (d *CommandData) Reply(msg string) {
     if !d.IsFromIRC {
-        d.Bot.Log.Infof(msg)
+        d.Bot.Log.Info(msg)
         return
     }
     target := d.Target

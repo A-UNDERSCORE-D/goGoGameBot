@@ -23,6 +23,9 @@ With format being the "standard" formatter with all its available tools and sett
  
 - Changed CHANGELOG type
 
+### Fixed
+- Status command when used in a terminal no longer has missing format string warnings
+
 ## [0.1.1] - 2019-02-13
 ### Added
 - Added auto-start to games

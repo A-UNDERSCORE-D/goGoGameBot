@@ -14,7 +14,7 @@ import (
 func getSystemUsageStats() string {
     out := strings.Builder{}
     out.WriteString("CPU Load: ")
-    if h, err := cpu.Percent(time.Millisecond * 50, false); err != nil {
+    if h, err := cpu.Percent(time.Millisecond*50, false); err != nil {
         out.WriteString("Error ")
     } else {
         out.WriteString(fmt.Sprintf("%.2f%% ", h[0]))
@@ -35,7 +35,7 @@ func getBotUsageStats() string {
     out.WriteString(fmt.Sprintf(
         "Memory Usage: %s",
         humanize.IBytes(memstats.Sys),
-        ))
+    ))
     return out.String()
 }
 
