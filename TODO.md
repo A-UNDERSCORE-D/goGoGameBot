@@ -1,10 +1,10 @@
 # Missing features
 - [ ] Automated backups--Feature creep?
 - [ ] Automated restarts--Feature creep?
-- [ ] Inter-game communication, so that games can talk between each-other while IRC is down
+- [ ] Inter-game communication, so that games can talk between each-other while IRC is down and in general
 - [ ] Make failed sasl auth actually do passwd based nickserv auth
 - [ ] Join / Part / Connect / Quit notices for bridged channels
-
+- [ ] Message after a reload stating that something happened
 
 # Other stuff
 - [ ] Config documentation--separate markdown file
