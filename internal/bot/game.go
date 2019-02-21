@@ -346,29 +346,9 @@ type dataForFmt struct {
     IsAction     bool
 }
 
-func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
-    if !g.bridgeChat || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
-        return
-    }
-
-    for _, c := range g.bridgeChans {
-        if c == "*" || c == target {
-            goto shouldForward
-        }
-    }
-    return
-
-shouldForward:
+func (g *Game) makeDataForFormat(source string, target , msg string, isAction bool) dataForFmt {
     uh := ircutils.ParseUserhost(source)
-    isAction := false
-    if out, err := ctcp.Parse(msg); err == nil {
-        if out.Command != "ACTION" {
-            return
-        }
-        msg = out.Arg
-        isAction = true
-    }
-    err := g.SendBridgedLine(dataForFmt{
+    return dataForFmt{
         SourceNick:   uh.Nick,
         SourceUser:   uh.User,
         SourceHost:   uh.Host,
@@ -379,7 +359,37 @@ shouldForward:
         MsgStripped:  ircfmt.Strip(msg),
         MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
         IsAction:     isAction,
-    })
+    }
+}
+
+func (g *Game) shouldBridge(target string) bool {
+    if !g.bridgeChat || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
+        return false
+    }
+
+    for _, c := range g.bridgeChans {
+        if c == "*" || c == target {
+            return true
+        }
+    }
+    return false
+
+}
+
+func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
+    if !g.shouldBridge(target) {
+        return
+    }
+
+    isAction := false
+    if out, err := ctcp.Parse(msg); err == nil {
+        if out.Command != "ACTION" {
+            return
+        }
+        msg = out.Arg
+        isAction = true
+    }
+    err := g.SendBridgedLine(g.makeDataForFormat(source, target, msg, isAction))
 
     if err != nil {
         bot.Error(err)
