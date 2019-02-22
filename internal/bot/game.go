@@ -42,6 +42,8 @@ type Game struct {
     bridgeChat  bool
     bridgeChans []string
     bridgeFmt   util.Format
+    joinPartFmt util.Format
+    KickFmt     util.Format
     colourMap   *strings.Replacer
 
     stdinChan chan []byte
@@ -78,6 +80,8 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 
     g.UpdateFromConf(conf)
     g.bot.HookPrivmsg(g.onPrivmsg) // TODO: This may end up with an issue if Game is ever deleted and the hook sits here. Probably need IDs or something
+    g.bot.HookRaw("JOIN", g.onJoinPart, PriNorm)
+    g.bot.HookRaw("PART", g.onJoinPart, PriNorm)
     //g.bot.CmdHandler.RegisterCommand(g.Name, g.commandHook, PriNorm,false)
     go g.watchStdinChan()
     g.bot.CmdHandler.RegisterCommand(fmt.Sprintf("%s_status", g.Name), func(data *CommandData) error {
@@ -88,9 +92,13 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 }
 
 func (g *Game) UpdateFromConf(conf config.GameConfig) {
+    var err error
     g.bridgeFmt = conf.BridgeFmt
-    err := g.bridgeFmt.Compile(g.Name+"_bridge_format", nil)
-    if err != nil {
+    if err := g.bridgeFmt.Compile(g.Name+"_bridge_format", nil); err != nil {
+        g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
+    }
+    g.joinPartFmt = conf.JoinPartFmt
+    if err := g.joinPartFmt.Compile(g.Name+"_join_part_format", nil); err != nil {
         g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
     }
 
@@ -100,6 +108,7 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
     g.logChan = conf.LogChan
     g.bridgeChans = conf.BridgeChans
     g.bridgeChat = conf.BridgeChat // TODO: This causes a onetime race condition when reloading from IRC
+    // TODO: Add status change formats to config
 
     g.colourMap, err = util.MakeColourMap(conf.ColourMap.ToMap())
     if err != nil {
@@ -343,10 +352,10 @@ type dataForFmt struct {
     MsgStripped  string
     Target       string
     MatchesStrip bool
-    IsAction     bool
+    ExtraData    map[string]string
 }
 
-func (g *Game) makeDataForFormat(source string, target , msg string, isAction bool) dataForFmt {
+func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
     uh := ircutils.ParseUserhost(source)
     return dataForFmt{
         SourceNick:   uh.Nick,
@@ -358,7 +367,7 @@ func (g *Game) makeDataForFormat(source string, target , msg string, isAction bo
         MsgMapped:    g.MapColours(msg),
         MsgStripped:  ircfmt.Strip(msg),
         MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
-        IsAction:     isAction,
+        ExtraData:    make(map[string]string),
     }
 }
 
@@ -376,6 +385,11 @@ func (g *Game) shouldBridge(target string) bool {
 
 }
 
+type dataForPrivmsg struct {
+    dataForFmt
+    IsAction bool
+}
+
 func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
     if !g.shouldBridge(target) {
         return
@@ -389,18 +403,65 @@ func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMess
         msg = out.Arg
         isAction = true
     }
-    err := g.SendBridgedLine(g.makeDataForFormat(source, target, msg, isAction))
-
-    if err != nil {
+    data := dataForPrivmsg{g.makeDataForFormat(source, target, msg), isAction}
+    if err := g.SendFormattedLine(data, g.bridgeFmt); err != nil {
         bot.Error(err)
-        return
     }
 }
 
-func (g *Game) SendBridgedLine(d dataForFmt) error {
-    res, err := g.bridgeFmt.Execute(d)
+type dataForJoinPart struct {
+    dataForFmt
+    IsJoin bool
+}
+
+func (g *Game) onJoinPart(line ircmsg.IrcMessage, bot *Bot) {
+    channel := line.Params[0]
+    if !g.shouldBridge(channel) {
+        return
+    }
+    data := dataForJoinPart{g.makeDataForFormat(line.Prefix, channel, ""), line.Command == "JOIN"}
+    if err := g.SendFormattedLine(data, g.joinPartFmt); err != nil {
+        bot.Error(err)
+    }
+}
+
+//func (g *Game) onStatusChange(line ircmsg.IrcMessage, bot *Bot) {
+//    channel := line.Params[0]
+//    if !g.shouldBridge(channel) {
+//        return
+//    }
+//    var format util.Format
+//    var data dataForFmt
+//    switch line.Command {
+//    case "JOIN", "PART":
+//        format = g.joinPartFmt
+//        data = g.makeDataForFormat(line.Prefix, channel, "")
+//    case "KICK":
+//        format = g.KickFmt
+//        if len(line.Params) > 2 {
+//            data = g.makeDataForFormat(line.Prefix, channel, line.Params[2])
+//        } else {
+//            data = g.makeDataForFormat(line.Prefix, channel, "")
+//        }
+//        data.ExtraData["kickee"] = line.Params[1]
+//    case "MODE":
+//        format = g.ModeFmt
+//        modeStr := strings.Join(line.Params[2:], " ")
+//        data = g.makeDataForFormat(line.Prefix, channel, modeStr)
+//    }
+//
+//    if err := g.SendFormattedLine(data, format); err != nil {
+//        bot.Error(err)
+//    }
+//}
+
+func (g *Game) SendFormattedLine(d interface{}, fmt util.Format) error {
+    res, err := fmt.Execute(d)
     if err != nil {
         return err
+    }
+    if len(res) == 0 {
+        return nil
     }
     if _, err := g.WriteString(res); err != nil {
         return err

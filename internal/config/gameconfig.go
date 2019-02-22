@@ -52,6 +52,8 @@ type GameConfig struct {
     Regexps       []GameRegexpConfig  `xml:"game_regexp"`
     BridgeChans   []string            `xml:"bridge_chan"`
     BridgeFmt     util.Format         `xml:"bridge_format"`
+    JoinPartFmt   util.Format         `xml:"join_part_format"`
+
     ColourMap     ColourMap           `xml:"colour_map,omitempty"`
     Commands      []GameCommandConfig `xml:"command"`
 }

@@ -5,7 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
-- Added a colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
+- A colour-stripped version of the message passed to chat bridge formats available under the name `MsgStripped`
+- Join/Part forward formats. They exist in game configs as `JoinPartFormat` and have a bool available to check whether or not it is a join or a part 
 
 ### Changed
 - Changed behaviour of config files when it comes to game commands.
