@@ -5,6 +5,7 @@
 - [ ] Make failed sasl auth actually do passwd based nickserv auth
 - [ ] Join / Part / Connect / Quit notices for bridged channels
 - [ ] Message after a reload stating that something happened
+- [ ] sane defaults for a good number of the format strings
 
 # Other stuff
 - [ ] Config documentation--separate markdown file
