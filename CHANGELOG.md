@@ -26,6 +26,7 @@ With format being the "standard" formatter with all its available tools and sett
 
 ### Fixed
 - Status command when used in a terminal no longer has missing format string warnings
+- Startup welcome message is now correctly formatted
 
 ## [0.1.1] - 2019-02-13
 ### Added

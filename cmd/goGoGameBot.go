@@ -39,7 +39,7 @@ func main() {
     for _, line := range strings.Split(asciiArt, "\n") {
         l.Info(line)
     }
-    l.Info("goGoGameBot version %s loading....", version)
+    l.Infof("goGoGameBot version %s loading....", version)
 
     conf, err := config.GetConfig(*configFile)
     if err != nil {
