@@ -448,3 +448,14 @@ func (b *Bot) StopAllGames() {
     }
     wg.Wait()
 }
+
+func (b *Bot) ForEachGame(f func(g *Game), skip *Game) {
+    b.GamesMutex.Lock()
+    defer b.GamesMutex.Unlock()
+    for _, g := range b.Games {
+        if g == skip {
+            continue
+        }
+        f(g)
+    }
+}
