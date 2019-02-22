@@ -425,36 +425,6 @@ func (g *Game) onJoinPart(line ircmsg.IrcMessage, bot *Bot) {
     }
 }
 
-//func (g *Game) onStatusChange(line ircmsg.IrcMessage, bot *Bot) {
-//    channel := line.Params[0]
-//    if !g.shouldBridge(channel) {
-//        return
-//    }
-//    var format util.Format
-//    var data dataForFmt
-//    switch line.Command {
-//    case "JOIN", "PART":
-//        format = g.joinPartFmt
-//        data = g.makeDataForFormat(line.Prefix, channel, "")
-//    case "KICK":
-//        format = g.KickFmt
-//        if len(line.Params) > 2 {
-//            data = g.makeDataForFormat(line.Prefix, channel, line.Params[2])
-//        } else {
-//            data = g.makeDataForFormat(line.Prefix, channel, "")
-//        }
-//        data.ExtraData["kickee"] = line.Params[1]
-//    case "MODE":
-//        format = g.ModeFmt
-//        modeStr := strings.Join(line.Params[2:], " ")
-//        data = g.makeDataForFormat(line.Prefix, channel, modeStr)
-//    }
-//
-//    if err := g.SendFormattedLine(data, format); err != nil {
-//        bot.Error(err)
-//    }
-//}
-
 func (g *Game) SendFormattedLine(d interface{}, fmt util.Format) error {
     res, err := fmt.Execute(d)
     if err != nil {
