@@ -37,8 +37,18 @@ func (f *Format) doFmtStringCleanup() {
     }
 }
 
+var (
+    ErrEmptyFormat = errors.New("format: cannot compile an empty format")
+)
+
 func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
+    if f.compiled {
+        return errors.New("format: cannot compile a format twice")
+    }
     f.doFmtStringCleanup()
+    if f.FormatString == "" {
+        return ErrEmptyFormat
+    }
     toSet := template.New(name)
     toSet.Funcs(TemplateUtilFuncs)
     for _, entry := range funcMaps {
