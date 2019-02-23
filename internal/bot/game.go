@@ -450,6 +450,10 @@ func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
 }
 
 func (g *Game) SendFormattedLine(d interface{}, fmt util.Format) error {
+    if !g.IsRunning() {
+        return nil
+    }
+
     res, err := fmt.Execute(d)
     if err != nil {
         return err
@@ -474,7 +478,7 @@ func (g *Game) watchStdinChan() {
 }
 
 func (g *Game) Write(p []byte) (n int, err error) {
-    if !g.process.IsRunning() {
+    if !g.IsRunning() {
         return 0, errors.New("cannot write to a non-running game")
     }
     g.stdinChan <- p
@@ -493,4 +497,8 @@ func (g *Game) MapColours(s string) string {
 
 func (g *Game) WriteString(s string) (n int, err error) {
     return g.Write([]byte(s))
+}
+
+func (g *Game) IsRunning() bool {
+    return g.process.IsRunning()
 }

@@ -5,9 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Added
-- Different games running under the bot can now have messges passed between them
+- Different games running under the bot can now have messages passed between them
 ### Fixed
 - unset formatters for GameRegexps and various other configs no longer error on start or in use.
+- Passing messages between games no longer causes an error when the other games are not running
 
 ## [0.2.0] - 2019-02-22
 ### Added
