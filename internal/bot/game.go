@@ -39,12 +39,14 @@ type Game struct {
     bot         *Bot
 
     /*chat stuff*/
-    bridgeChat  bool
-    bridgeChans []string
-    bridgeFmt   util.Format
-    joinPartFmt util.Format
-    KickFmt     util.Format
-    colourMap   *strings.Replacer
+    bridgeChat           bool
+    bridgeChans          []string
+    bridgeFmt            util.Format
+    joinPartFmt          util.Format
+    forwardFromOthersFmt util.Format
+    allowForwards        bool
+
+    colourMap *strings.Replacer
 
     stdinChan chan []byte
 
@@ -91,15 +93,23 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
     return g, nil
 }
 
+func (g *Game) CompileOrError(f *util.Format, name string, funcMap map[string]interface{}) {
+    if err := f.Compile(g.Name+"_"+name, nil); err != nil {
+        g.bot.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.Name, err))
+    }
+}
+
 func (g *Game) UpdateFromConf(conf config.GameConfig) {
     var err error
     g.bridgeFmt = conf.BridgeFmt
-    if err := g.bridgeFmt.Compile(g.Name+"_bridge_format", nil); err != nil {
-        g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
-    }
+    g.CompileOrError(&g.bridgeFmt, "bridge_format", nil)
     g.joinPartFmt = conf.JoinPartFmt
-    if err := g.joinPartFmt.Compile(g.Name+"_join_part_format", nil); err != nil {
-        g.bot.Error(fmt.Errorf("could not compile template game %s: %s", g.Name, err))
+    g.CompileOrError(&g.joinPartFmt, "join_part_format", nil)
+
+    if conf.OtherForwardFmt.FormatString != "" {
+        g.forwardFromOthersFmt = conf.OtherForwardFmt
+        g.CompileOrError(&g.forwardFromOthersFmt, "forward_others_format", nil)
+        g.allowForwards = true
     }
 
     g.adminChan = conf.AdminLogChan
@@ -171,7 +181,7 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
     }
     err := conf.StdinFormat.Compile(conf.Name)
     if err != nil {
-        g.bot.Error(fmt.Errorf("game: could not create GameCommand template: %s", err))
+        g.bot.Error(fmt.Errorf("game: could not create GameCommand for %s: template: %s", g.Name, err))
         return
     }
     resolvedName := strings.ToUpper(fmt.Sprintf("%s_%s", g.Name, conf.Name))
@@ -422,6 +432,20 @@ func (g *Game) onJoinPart(line ircmsg.IrcMessage, bot *Bot) {
     data := dataForJoinPart{g.makeDataForFormat(line.Prefix, channel, ""), line.Command == "JOIN"}
     if err := g.SendFormattedLine(data, g.joinPartFmt); err != nil {
         bot.Error(err)
+    }
+}
+
+type dataForOtherGameFmt struct {
+    Msg        string
+    SourceGame string
+}
+
+func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
+    if !g.allowForwards {
+        return
+    }
+    if err := g.SendFormattedLine(dataForOtherGameFmt{msg, source.Name}, g.forwardFromOthersFmt); err != nil {
+        g.bot.Error(err)
     }
 }
 
