@@ -23,13 +23,15 @@ const (
 // GameRegexp is a representation of a matcher for the stdout of a process, and a text/template to apply to that line
 // if it matches.
 type GameRegexp struct {
-    Name             string
-    watcher          watchers.Watcher
-    template         util.Format
-    Priority         int
-    game             *Game
-    shouldEat        bool
-    shouldSendToChan bool
+    Name            string
+    watcher         watchers.Watcher
+    template        util.Format
+    Priority        int
+    game            *Game
+    shouldEat       bool
+    sendToChan      bool
+    forwardToOthers bool
+    hasFormat       bool
 }
 
 type GameRegexpList []*GameRegexp
@@ -59,9 +61,14 @@ func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
     }
     game.log.Debug(funcs)
 
-    err = c.Format.Compile(c.Name, funcs)
-    if err != nil {
-        return nil, err
+    hasFormat := true
+
+    if err := c.Format.Compile(c.Name, funcs); err != nil {
+        if err == util.ErrEmptyFormat {
+            hasFormat = false
+        } else {
+            return nil, err
+        }
     }
 
     p := DEFAULTPRIORITY
@@ -70,13 +77,15 @@ func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
     }
 
     return &GameRegexp{
-        game:             game,
-        Name:             c.Name,
-        watcher:          w,
-        template:         c.Format,
-        Priority:         p,
-        shouldSendToChan: c.SendToChan,
-        shouldEat:        c.ShouldEat,
+        game:            game,
+        Name:            c.Name,
+        watcher:         w,
+        template:        c.Format,
+        Priority:        p,
+        sendToChan:      c.SendToChan,
+        shouldEat:       c.ShouldEat,
+        forwardToOthers: c.ForwardToOthers,
+        hasFormat:       hasFormat,
     }, nil
 }
 
@@ -86,6 +95,10 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, error) {
     isMatched, match := g.watcher.MatchLine(line)
     if !isMatched {
         return false, nil
+    }
+
+    if !g.hasFormat {
+        return g.shouldEat, nil
     }
 
     if stderr {
@@ -100,8 +113,12 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, error) {
         return false, nil
     }
 
-    if g.shouldSendToChan {
+    if g.sendToChan {
         g.game.sendToLogChan(out)
+    }
+
+    if g.forwardToOthers {
+        g.game.bot.ForEachGame(func(tg *Game) { tg.sendLineFromOtherGame(out, g.game) }, g.game)
     }
 
     return g.shouldEat, nil
