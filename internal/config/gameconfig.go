@@ -93,6 +93,11 @@ func (g *GameConfig) includeFromFile() error {
     return nil
 }
 
+type toInclude struct {
+    XMLName xml.Name `xml:"regexps"`
+    Regexps []GameRegexpConfig `xml:"game_regexp"`
+}
+
 func (g *GameConfig) doIncludeRegexps() error {
     if g.IncludeRegexp == "" {
         return nil
@@ -103,12 +108,13 @@ func (g *GameConfig) doIncludeRegexps() error {
         return err
     }
 
-    var toAdd []GameRegexpConfig
+    var toAdd toInclude
+    //var toAdd []GameRegexpConfig
     if err := xml.Unmarshal(data, &toAdd); err != nil {
         return err
     }
 
-    g.Regexps = append(g.Regexps, toAdd...)
+    g.Regexps = append(g.Regexps, toAdd.Regexps...)
     return nil
 }
 

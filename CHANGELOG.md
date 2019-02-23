@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - unset formatters for GameRegexps and various other configs no longer error on start or in use.
 - Passing messages between games no longer causes an error when the other games are not running
+- included GameRegexps now include past the first entry in the `regexps` tag
 
 ## [0.2.0] - 2019-02-22
 ### Added
