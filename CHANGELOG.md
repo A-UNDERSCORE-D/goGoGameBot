@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+
+## [0.2.1] - 2019-03-29
 ### Added
 - Different games running under the bot can now have messages passed between them
 - Stopping a game that is not running now results in a message stating that the game cannot be stopped
@@ -59,6 +62,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.2.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/05443765e782d1b7aa0220fc9309755b28ffa11e...d7bd61c31ff1bfb051c527866b0e64d3b434dac4
 [0.2.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/c54e1526b5d97e5f7e9ed7c0412e1164bb0c04cb...05443765e782d1b7aa0220fc9309755b28ffa11e
 [0.1.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/b27ecee11a0add85feb208210c07419d42d4a97d...c54e1526b5d97e5f7e9ed7c0412e1164bb0c04cb
 [0.1.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/673bce90c9a03f2cc7c3d0cd7005bf06a0bfafa6...b27ecee11a0add85feb208210c07419d42d4a97d
