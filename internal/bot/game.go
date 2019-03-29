@@ -233,10 +233,7 @@ func (g *Game) Run() {
     }
     g.startStdWatchers()
 
-    if err := g.process.WaitForCompletion(); err != nil {
-        if g.killedByUs {
-            return
-        }
+    if err := g.process.WaitForCompletion(); err != nil && !g.killedByUs{
         g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
     }
 
