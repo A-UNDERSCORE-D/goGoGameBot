@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Different games running under the bot can now have messages passed between them
+- Stopping a game that is not running now results in a message stating that the game cannot be stopped
+
 ### Fixed
 - unset formatters for GameRegexps and various other configs no longer error on start or in use.
 - Passing messages between games no longer causes an error when the other games are not running

@@ -245,6 +245,7 @@ func (g *Game) Run() {
 
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
     if !g.process.IsRunning() {
+        g.sendToLogChan("cannot stop a non-running game")
         return nil
     }
     g.sendToLogChan("stopping")
