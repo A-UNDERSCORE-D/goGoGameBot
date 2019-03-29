@@ -5,6 +5,7 @@ import (
     "os"
     "os/signal"
     "strings"
+    "syscall"
     "time"
 
     "github.com/chzyer/readline"
@@ -54,19 +55,34 @@ func main() {
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
 
-    go func() { sig := <-sigChan; b.Stop(fmt.Sprintf("Caught Signal: %s", sig)) }()
+    go func() { sig := <-sigChan; b.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
 
     go runCLI(b, rl)
-    if err := b.Run(); err != nil {
+    err = b.Run()
+    if err != nil && err != bot.ErrRestart {
         l.Warnf("Got an error from bot on exit: %s", err)
     }
+
     b.StopAllGames()
+    if err == bot.ErrRestart {
+        ExecSelf()
+    }
+
     go func() {
         <-time.After(time.Second * 1)
         fmt.Println("Hang on close detected. forcing an exit")
+
         os.Exit(0)
     }()
     _ = rl.Close()
+}
+
+func ExecSelf() {
+    executable, err := os.Executable()
+    if err != nil {
+        panic(err) // This should never fail and if it does we should explode violently
+    }
+    panic(syscall.Exec(executable, os.Args, []string{})) // This should never fail and if it does we should explode violently
 }
 
 func runCLI(b *bot.Bot, rl *readline.Instance) {
@@ -77,7 +93,7 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
             line, err := rl.Readline()
             if err != nil {
                 close(lineChan)
-                b.Stop("SIGINT")
+                b.Stop("SIGINT", false)
                 return
             }
             lineChan <- line

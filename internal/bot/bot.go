@@ -10,13 +10,13 @@ import (
     "strings"
     "sync"
 
-    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
     "github.com/goshuirc/irc-go/ircmsg"
 
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+    "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
 
 const (
@@ -30,6 +30,7 @@ const (
 
     // Connecting means the bot is in progress of connecting and negotiating with the target IRC server
     CONNECTING
+    RESTARTING
 )
 
 const (
@@ -42,6 +43,7 @@ const (
 
 var (
     ErrNotConnected = errors.New("not connected to IRC")
+    ErrRestart      = errors.New("restart me")
 )
 
 type RawChanPair struct {
@@ -95,6 +97,10 @@ func (b *Bot) Run() error {
         }
     }
     <-b.DoneChan
+    if b.Status == RESTARTING {
+        return ErrRestart
+    }
+
     if b.Status != DISCONNECTED {
         b.Status = DISCONNECTED
     }
@@ -102,7 +108,7 @@ func (b *Bot) Run() error {
 }
 
 // Stop makes the bot quit out and stop all its games
-func (b *Bot) Stop(quitMsg string) {
+func (b *Bot) Stop(quitMsg string, restart bool) {
     b.Log.Info("stop requested: ", quitMsg)
     b.StopAllGames()
     if b.Status == DISCONNECTED {
@@ -111,15 +117,24 @@ func (b *Bot) Stop(quitMsg string) {
 
     _ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
     b.WaitForRaw("ERROR")
-    b.Status = DISCONNECTED
+    if restart {
+        b.Status = RESTARTING
+    } else {
+        b.Status = DISCONNECTED
+    }
 }
 
 func (b *Bot) stopCmd(data *CommandData) error {
     if data.ArgString() == "" {
-        b.Stop("Quit requested")
+        b.Stop("Quit requested", false)
     } else {
-        b.Stop(data.ArgString())
+        b.Stop(data.ArgString(), false)
     }
+    return nil
+}
+
+func (b *Bot) restartCmd(data *CommandData) error {
+    b.Stop("restarting", true)
     return nil
 }
 
@@ -140,6 +155,7 @@ func (b *Bot) Init() {
     b.CmdHandler.RegisterCommand("STOPGAME", StopGame, PriNorm, true)
     b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
     b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
+    b.CmdHandler.RegisterCommand("RESTART", b.restartCmd, PriHighest, true)
     b.CmdHandler.RegisterCommand("STATUS", func(data *CommandData) error {
         data.Reply("Main stats: " + systemstats.GetStats())
         data.Bot.GamesMutex.Lock()
