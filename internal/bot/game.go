@@ -225,6 +225,9 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 
 // Run starts the game and blocks until it completes
 func (g *Game) Run() {
+    if g.IsRunning() {
+        g.sendToLogChan("cannot start an already running game")
+    }
     g.sendToLogChan("starting")
     g.killedByUs = false
     if err := g.process.Start(); err != nil {
