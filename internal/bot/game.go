@@ -36,6 +36,7 @@ type Game struct {
     DumpStderr  bool
     DumpStdout  bool
     AutoStart   bool
+    autoRestart bool
     bot         *Bot
 
     /*chat stuff*/
@@ -77,7 +78,6 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
         process:   proc,
         log:       gameLog,
         stdinChan: make(chan []byte, 50),
-        AutoStart: conf.AutoStart,
     }
 
     g.UpdateFromConf(conf)
@@ -111,6 +111,9 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
         g.CompileOrError(&g.forwardFromOthersFmt, "forward_others_format", nil)
         g.allowForwards = true
     }
+
+    g.AutoStart = conf.AutoStart
+    g.autoRestart = conf.RestartOnCleanExit
 
     g.adminChan = conf.AdminLogChan
     g.DumpStderr = conf.LogStderr
@@ -225,24 +228,35 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 
 // Run starts the game and blocks until it completes
 func (g *Game) Run() {
-    if g.IsRunning() {
-        g.sendToLogChan("cannot start an already running game")
-    }
-    g.sendToLogChan("starting")
-    g.killedByUs = false
-    if err := g.process.Start(); err != nil {
-        g.bot.Error(err)
-        return
-    }
-    g.startStdWatchers()
+    for {
+        if g.IsRunning() {
+            g.sendToLogChan("cannot start an already running game")
+        }
+        g.sendToLogChan("starting")
+        g.killedByUs = false
+        if err := g.process.Start(); err != nil {
+            g.bot.Error(err)
+            break // TODO: This MAY cause a bug in some places
+        }
+        g.startStdWatchers()
 
-    if err := g.process.WaitForCompletion(); err != nil && !g.killedByUs{
-        g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
-    }
+        if err := g.process.WaitForCompletion(); err != nil && !g.killedByUs {
+            g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
+        }
 
-    g.sendToLogChan("Process exited with " + g.process.GetReturnStatus())
-    if err := g.process.Reset(); err != nil {
-        g.bot.Error(err)
+        ret := g.process.GetReturnStatus()
+        retCode := g.process.GetReturnCode()
+        g.sendToLogChan("Process exited with " + ret)
+        if err := g.process.Reset(); err != nil {
+            g.bot.Error(err)
+            break
+        }
+
+        if !g.autoRestart || g.killedByUs || retCode != 0 {
+            break
+        }
+        g.sendToLogChan("restarting in 3 seconds")
+        time.Sleep(time.Second * 3)
     }
 }
 

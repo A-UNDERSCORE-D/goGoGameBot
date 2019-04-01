@@ -37,24 +37,25 @@ type GameCommandConfig struct {
 }
 
 type GameConfig struct {
-    XMLName         xml.Name           `xml:"game"`
-    Include         string             `xml:"include,attr,omitempty"`
-    IncludeRegexp   string             `xml:"include_regexp,attr,omitempty"`
-    Name            string             `xml:"name,attr"`
-    AutoStart       bool               `xml:"auto_start,attr"`
-    Path            string             `xml:"bin_path,attr"`
-    WorkingDir      string             `xml:"working_dir,attr"`
-    Args            string             `xml:"args,attr"`
-    LogChan         string             `xml:"log_chan,attr"`
-    AdminLogChan    string             `xml:"admin_log_chan,attr"`
-    LogStdout       bool               `xml:"log_stdout,attr"`
-    LogStderr       bool               `xml:"log_stderr,attr"`
-    BridgeChat      bool               `xml:"bridge_chat,attr"`
-    Regexps         []GameRegexpConfig `xml:"game_regexp"`
-    BridgeChans     []string           `xml:"bridge_chan"`
-    BridgeFmt       util.Format        `xml:"bridge_format"`
-    JoinPartFmt     util.Format        `xml:"join_part_format"`
-    OtherForwardFmt util.Format        `xml:"other_forward_format"`
+    XMLName            xml.Name           `xml:"game"`
+    Include            string             `xml:"include,attr,omitempty"`
+    IncludeRegexp      string             `xml:"include_regexp,attr,omitempty"`
+    Name               string             `xml:"name,attr"`
+    AutoStart          bool               `xml:"auto_start,attr"`
+    RestartOnCleanExit bool               `xml:"restart_on_clean_exit,attr"`
+    Path               string             `xml:"bin_path,attr"`
+    WorkingDir         string             `xml:"working_dir,attr"`
+    Args               string             `xml:"args,attr"`
+    LogChan            string             `xml:"log_chan,attr"`
+    AdminLogChan       string             `xml:"admin_log_chan,attr"`
+    LogStdout          bool               `xml:"log_stdout,attr"`
+    LogStderr          bool               `xml:"log_stderr,attr"`
+    BridgeChat         bool               `xml:"bridge_chat,attr"`
+    Regexps            []GameRegexpConfig `xml:"game_regexp"`
+    BridgeChans        []string           `xml:"bridge_chan"`
+    BridgeFmt          util.Format        `xml:"bridge_format"`
+    JoinPartFmt        util.Format        `xml:"join_part_format"`
+    OtherForwardFmt    util.Format        `xml:"other_forward_format"`
 
     ColourMap ColourMap           `xml:"colour_map,omitempty"`
     Commands  []GameCommandConfig `xml:"command"`
@@ -94,7 +95,7 @@ func (g *GameConfig) includeFromFile() error {
 }
 
 type toInclude struct {
-    XMLName xml.Name `xml:"regexps"`
+    XMLName xml.Name           `xml:"regexps"`
     Regexps []GameRegexpConfig `xml:"game_regexp"`
 }
 

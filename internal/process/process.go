@@ -119,6 +119,10 @@ func (p *Process) GetReturnStatus() string {
     return p.cmd.ProcessState.String()
 }
 
+func (p *Process) GetReturnCode() int {
+    return p.cmd.ProcessState.ExitCode()
+}
+
 func (p *Process) GetStatus() string {
     out := strings.Builder{}
     if !p.IsRunning() {
