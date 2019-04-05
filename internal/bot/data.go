@@ -96,5 +96,4 @@ func (d *CommandData) Reply(msg string) {
     }
 
     d.Bot.SendPrivmsg(target, ircfmt.Unescape(msg))
-
 }

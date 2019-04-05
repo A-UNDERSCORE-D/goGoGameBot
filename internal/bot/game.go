@@ -108,7 +108,7 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
 
     if conf.OtherForwardFmt.FormatString != "" {
         g.forwardFromOthersFmt = conf.OtherForwardFmt
-        g.CompileOrError(&g.forwardFromOthersFmt, "forward_others_format", nil)
+        g.CompileOrError(&g.forwardFromOthersFmt, "forward_others_format", map[string]interface{}{"mapColours": g.MapColours})
         g.allowForwards = true
     }
 

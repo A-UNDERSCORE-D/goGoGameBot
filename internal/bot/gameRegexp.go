@@ -4,6 +4,8 @@ import (
     "fmt"
     "text/template"
 
+    "github.com/goshuirc/irc-go/ircfmt"
+
     "git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
     "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/watchers"
@@ -112,7 +114,7 @@ func (g *GameRegexp) CheckAndExecute(line string, stderr bool) (bool, error) {
         g.game.bot.Error(fmt.Errorf("could not run game template %q for %q: %s", g.game.Name, g.Name, err))
         return false, nil
     }
-
+    out = ircfmt.Unescape(out)
     if g.sendToChan {
         g.game.sendToLogChan(out)
     }
