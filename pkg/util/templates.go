@@ -5,12 +5,15 @@ import (
     "errors"
     "strings"
     "text/template"
+
+    "github.com/goshuirc/irc-go/ircfmt"
 )
 
 var TemplateUtilFuncs = template.FuncMap{
     "zwsp":    AddZwsp,
     "wordEOL": WordEol,
     "escape":  EscapeString,
+    "stripColour": ircfmt.Strip,
 }
 
 type Format struct {
