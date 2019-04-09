@@ -61,7 +61,6 @@ func NewGameRegexp(game *Game, c config.GameRegexpConfig) (*GameRegexp, error) {
         "adminchan": game.templSendToAdminChan,
         "sendto":    game.templSendPrivmsg,
     }
-    game.log.Debug(funcs)
 
     hasFormat := true
 
