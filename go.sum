@@ -12,8 +12,8 @@ github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/go-ole/go-ole v1.2.2 h1:HXmymm3IQ8iAfpqlbbUGLHd+SZrnmI4y1pv+WL/3R7c=
 github.com/go-ole/go-ole v1.2.2/go.mod h1:7FAglXiTm7HKlQRDeOQ6ZNUHidzCWXuZWq/1dTyBNF8=
-github.com/goshuirc/irc-go v0.0.0-20190126032240-cf199aea7186 h1:DJnTV5oXtAvoNm0RwTq4iAKS9e3a/TFqaLgohs9QiJc=
-github.com/goshuirc/irc-go v0.0.0-20190126032240-cf199aea7186/go.mod h1:rhIkxdehxNqK9iwJXWzQnxlGuuUR4cHu7PN64VryKXk=
+github.com/goshuirc/irc-go v0.0.0-20190405063927-24277bb98041 h1:0+w+LylI/HYmHgwbnZRR6+SYOWXTaC/1fqiwtQE7Z2c=
+github.com/goshuirc/irc-go v0.0.0-20190405063927-24277bb98041/go.mod h1:rhIkxdehxNqK9iwJXWzQnxlGuuUR4cHu7PN64VryKXk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/shirou/gopsutil v2.18.12+incompatible h1:1eaJvGomDnH74/5cF4CTmTbLHAriGFsTZppLXDX93OM=
