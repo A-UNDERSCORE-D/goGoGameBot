@@ -77,14 +77,16 @@ rangeLoop:
                 authStr := util.GenerateSASLString(b.IrcConf.Nick, b.IrcConf.NSAuth.Nick, b.IrcConf.NSAuth.Password)
                 _ = b.WriteLine(util.MakeSimpleIRCLine(auth, authStr))
             } else {
-                b.Error(fmt.Errorf(errDuringSasl, line.SourceLine))
+                // TODO: This is a workaround for removed features in irc-go
+                b.Error(fmt.Errorf(errDuringSasl, "line.SourceLine"))
             }
 
         case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
             break rangeLoop
 
         case util.RPL_NICKLOCKED, util.RPL_SASLFAIL, util.RPL_SASLTOOLONG, util.RPL_SASLABORTED, util.RPL_SASLALREADY, util.RPL_SASLMECHS:
-            b.Error(fmt.Errorf(errSaslFailed, line.SourceLine))
+            // TODO: This is a workaround for removed features in irc-go
+            b.Error(fmt.Errorf(errSaslFailed, "line.SourceLine"))
             break rangeLoop
 
         default:
