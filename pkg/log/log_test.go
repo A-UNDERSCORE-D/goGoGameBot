@@ -1,31 +1,30 @@
 package log
 
 import (
-    "io/ioutil"
-    "log"
-    "sync"
-    "testing"
+	"io/ioutil"
+	"log"
+	"sync"
+	"testing"
 )
 
 func BenchmarkLogger_Info(b *testing.B) {
-    l := Logger{
-        flags:    FTimestamp,
-        output:   ioutil.Discard,
-        prefix:   "test",
-        wMutex:   sync.Mutex{},
-        minLevel: 0,
-    }
-    for i := 0; i < b.N; i++ {
-        l.Info("test")
-    }
+	l := Logger{
+		flags:    FTimestamp,
+		output:   ioutil.Discard,
+		prefix:   "test",
+		wMutex:   sync.Mutex{},
+		minLevel: 0,
+	}
+	for i := 0; i < b.N; i++ {
+		l.Info("test")
+	}
 }
 
-
 func BenchmarkStdlogger(b *testing.B) {
-    l := log.New(ioutil.Discard, "test", log.Ltime)
-    for i := 0; i < b.N; i++ {
-        l.Print("test")
-    }
+	l := log.New(ioutil.Discard, "test", log.Ltime)
+	for i := 0; i < b.N; i++ {
+		l.Print("test")
+	}
 }
 
 /*
