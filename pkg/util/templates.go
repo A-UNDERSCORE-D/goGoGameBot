@@ -44,7 +44,7 @@ var (
     ErrEmptyFormat = errors.New("format: cannot compile an empty format")
 )
 
-func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
+func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.FuncMap) error {
     if f.compiled {
         return errors.New("format: cannot compile a format twice")
     }
@@ -57,6 +57,11 @@ func (f *Format) Compile(name string, funcMaps ...template.FuncMap) error {
     for _, entry := range funcMaps {
         toSet.Funcs(entry)
     }
+
+    if evalColour {
+        f.FormatString = ircfmt.Unescape(f.FormatString)
+    }
+
     res, err := toSet.Parse(f.FormatString)
     if err != nil {
         return err

@@ -94,7 +94,7 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 }
 
 func (g *Game) CompileOrError(f *util.Format, name string, funcMap map[string]interface{}) {
-    if err := f.Compile(g.Name+"_"+name, nil); err != nil {
+    if err := f.Compile(g.Name+"_"+name,false,nil); err != nil {
         g.bot.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.Name, err))
     }
 }
@@ -182,7 +182,7 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
         g.bot.Error(errors.New("game: cannot create gamecommand with empty name"))
         return
     }
-    err := conf.StdinFormat.Compile(conf.Name)
+    err := conf.StdinFormat.Compile(conf.Name, false)
     if err != nil {
         g.bot.Error(fmt.Errorf("game: could not create GameCommand for %s: template: %s", g.Name, err))
         return
