@@ -4,6 +4,8 @@ import (
     "fmt"
     "io"
     "os"
+    "runtime"
+    "strconv"
     "strings"
     "sync"
     "time"
@@ -11,7 +13,7 @@ import (
 
 const (
     FTimestamp = 1 << iota
-    //FShowFile // Maybe some other time.
+    FShowFile // Maybe some other time.
 )
 
 const (
@@ -79,6 +81,21 @@ func New(flags int, output io.Writer, prefix string, minLevel int) *Logger {
     return &Logger{flags: flags, output: output, prefix: prefix, minLevel: minLevel, wMutex: sync.Mutex{}}
 }
 
+func shortenFilename(filename string) string {
+    out := filename
+    for i := len(filename) -1; i > 0; i-- {
+        if filename[i] == '/' {
+            out = filename[i+1:]
+            break
+        }
+    }
+    return out
+}
+
+const openBrace = '['
+const closeBrace = ']'
+const space = ' '
+
 func (l *Logger) writeOut(msg string, level int) {
     if level < l.minLevel {
         return
@@ -86,22 +103,37 @@ func (l *Logger) writeOut(msg string, level int) {
 
     outStr := strings.Builder{}
     if l.flags&FTimestamp != 0 {
-        outStr.WriteRune('[')
+        outStr.WriteRune(openBrace)
         outStr.WriteString(time.Now().Format("15:04:05.000"))
-        outStr.WriteRune(']')
-        outStr.WriteRune(' ')
+        outStr.WriteRune(closeBrace)
+        outStr.WriteRune(space)
     }
 
-    outStr.WriteRune('[')
+    outStr.WriteRune(openBrace)
     outStr.WriteString(levelToString(level))
-    outStr.WriteRune(']')
-    outStr.WriteRune(' ')
+    outStr.WriteRune(closeBrace)
+    outStr.WriteRune(space)
+
+    if l.flags&FShowFile != 0 {
+        outStr.WriteRune(openBrace)
+        _, file, line, ok := runtime.Caller(2)
+        if !ok {
+            outStr.WriteString("???")
+        } else {
+            outStr.WriteString(shortenFilename(file))
+            outStr.WriteRune(':')
+            outStr.WriteString(strconv.Itoa(line))
+        }
+
+        outStr.WriteRune(closeBrace)
+        outStr.WriteRune(space)
+    }
 
     if l.prefix != "" {
-        outStr.WriteRune('[')
+        outStr.WriteRune(openBrace)
         outStr.WriteString(l.prefix)
-        outStr.WriteRune(']')
-        outStr.WriteRune(' ')
+        outStr.WriteRune(closeBrace)
+        outStr.WriteRune(space)
     }
 
     outStr.WriteString(strings.TrimRight(msg, "\r\n"))
