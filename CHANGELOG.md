@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+### Added
+- The format for incoming lines from other games has access to a new function, `mapColours`, it allows you to map the raw
+IRC colours in the given string to the set colour map on the game
+- All format strings have access to a new function `stripColours` that allows them to strip raw colours from the given line
 
+### Fixed
+- colour escapes are now evaluated in format strings
 
 ## [0.2.2] - 2019-04-01
 ### Added
