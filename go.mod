@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-ole/go-ole v1.2.2 // indirect
-	github.com/goshuirc/irc-go v0.0.0-20190405063927-24277bb98041
+	github.com/goshuirc/irc-go v0.0.0-20190412022721-5ac2a98bf54c
 	github.com/shirou/gopsutil v2.18.12+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/spf13/pflag v1.0.3
