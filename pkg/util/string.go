@@ -2,14 +2,18 @@ package util
 
 import "strings"
 
+// CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array for
+// repeated spaces
 func CleanSplitOnSpace(s string) []string {
 	split := strings.Split(s, " ")
-	for i, v := range split {
-		if strings.Count(v, " ") == len(v) && len(split) > i {
-			split = append(split[:i], split[i+1:]...)
+	var out []string
+	for _, v := range split {
+		if len(v) == 0 {
+			continue
 		}
+		out = append(out, v)
 	}
-	return split
+	return out
 }
 
 func WordEol(s string, wordIdx int) string {
@@ -19,7 +23,6 @@ func WordEol(s string, wordIdx int) string {
 		eol = append(eol, strings.Join(splitMsg[i:], " "))
 	}
 	if wordIdx < len(eol) {
-		//noinspection ALL
 		return eol[wordIdx]
 	}
 	return ""
