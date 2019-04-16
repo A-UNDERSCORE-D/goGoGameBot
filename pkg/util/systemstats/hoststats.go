@@ -3,6 +3,7 @@ package systemstats
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +40,15 @@ func getBotUsageStats() string {
 	return out.String()
 }
 
+func getGoStats() string {
+	out := strings.Builder{}
+	out.WriteString("Goroutines: ")
+	out.WriteString(strconv.Itoa(runtime.NumGoroutine()))
+	out.WriteString(" Version: ")
+	out.WriteString(runtime.Version())
+	return out.String()
+}
+
 func GetStats() string {
-	return fmt.Sprintf("Bot: %s System: %s", getBotUsageStats(), getSystemUsageStats())
+	return fmt.Sprintf("Bot: %s System: %s Go: %s", getBotUsageStats(), getSystemUsageStats(), getGoStats())
 }
