@@ -23,10 +23,13 @@ const (
 	RPL_SASLMECHS   = "908"
 )
 
+// MakeSimpleIRCLine is a helper function that creates an ircmsg.IrcMessage with no tags and no prefix.
 func MakeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
 	return ircmsg.MakeMessage(nil, "", command, args...)
 }
 
+// GenerateSASLString generates a base64 encoded string from the given parameters that can be used for SASL PLAIN authentication
+// with an IRC server
 func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
 	return base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s\x00%s\x00%s", nick, saslUsername, saslPasswd)),
@@ -65,6 +68,7 @@ func GlobToRegexp(mask string) *regexp.Regexp {
 	return re
 }
 
+// AnyMaskMatch returns whether or not the given match
 func AnyMaskMatch(toCheck string, masks []string) bool {
 	for _, mask := range masks {
 		if GlobToRegexp(mask).MatchString(toCheck) {
