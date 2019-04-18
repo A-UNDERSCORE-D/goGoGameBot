@@ -29,7 +29,7 @@ func MakeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
 
 func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
 	return base64.StdEncoding.EncodeToString(
-		[]byte(fmt.Sprintf("%s\x00%s\x00%s\x00", nick, saslUsername, saslPasswd)),
+		[]byte(fmt.Sprintf("%s\x00%s\x00%s", nick, saslUsername, saslPasswd)),
 	)
 }
 

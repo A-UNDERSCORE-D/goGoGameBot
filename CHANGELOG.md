@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Stats command now shows the current goroutine count and the current go runtime version
 
+### Fixed
+- SASL authentication no longer sends an additional `\x00` in the PLAIN auth string
+
 ## [0.2.3] - 2019-04-13
 ### Added
 - The format for incoming lines from other games has access to a new function, `mapColours`, it allows you to map the raw
