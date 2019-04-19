@@ -12,6 +12,7 @@ import (
 
 //noinspection ALL
 const (
+	//revive:disable:var-naming
 	RPL_LOGGEDIN    = "900"
 	RPL_LOGGEDOUT   = "901"
 	RPL_NICKLOCKED  = "902"
@@ -21,6 +22,7 @@ const (
 	RPL_SASLABORTED = "906"
 	RPL_SASLALREADY = "907"
 	RPL_SASLMECHS   = "908"
+	//revive:enable:var-naming
 )
 
 // MakeSimpleIRCLine is a helper function that creates an ircmsg.IrcMessage with no tags and no prefix.

@@ -132,9 +132,8 @@ func GetConfig(filename string) (*Config, error) {
 
 			return nil, ErrConfNotExist
 
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 
 	return conf, nil

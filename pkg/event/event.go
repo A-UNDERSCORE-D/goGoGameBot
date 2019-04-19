@@ -29,7 +29,7 @@ type HandlerFunc func(string, ArgMap)
 type Handler struct {
 	Func     HandlerFunc
 	Priority int
-	Id       int64
+	ID       int64
 }
 
 type Manager struct {
@@ -64,7 +64,7 @@ func (m *Manager) Detach(id int64) bool {
 loop:
 	for name, hl := range m.events {
 		for i, handler := range hl {
-			if handler.Id == id {
+			if handler.ID == id {
 				targetName = name
 				targetIdx = i
 				break loop

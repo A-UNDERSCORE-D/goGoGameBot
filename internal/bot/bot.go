@@ -133,7 +133,7 @@ func (b *Bot) stopCmd(data *CommandData) error {
 	return nil
 }
 
-func (b *Bot) restartCmd(data *CommandData) error {
+func (b *Bot) restartCmd(_ *CommandData) error {
 	b.Stop("restarting", true)
 	return nil
 }

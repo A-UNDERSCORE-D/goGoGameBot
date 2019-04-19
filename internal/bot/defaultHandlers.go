@@ -18,7 +18,7 @@ func onPing(lineIn ircmsg.IrcMessage, b *Bot) {
 	}
 }
 
-func onWelcome(lineIn ircmsg.IrcMessage, b *Bot) {
+func onWelcome(_ ircmsg.IrcMessage, b *Bot) {
 	// This should set a few things like max targets etc at some point.
 	//lineIn := data["line"].(ircmsg.IrcMessage)
 	b.Status = CONNECTED
@@ -47,7 +47,7 @@ const (
 	errSaslFailed = "sasl authentication failed. Falling back to PRIVMSG based auth (caused by %q)"
 )
 
-func (b *Bot) saslHandler(capability *Capability, _ ircmsg.IrcMessage, group *sync.WaitGroup) {
+func (b *Bot) saslHandler(_ *Capability, _ ircmsg.IrcMessage, group *sync.WaitGroup) {
 	defer group.Done()
 	aggChan, aggDone := b.GetMultiRawChan(
 		auth,

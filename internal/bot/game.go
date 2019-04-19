@@ -415,7 +415,7 @@ type dataForPrivmsg struct {
 	IsAction bool
 }
 
-func (g *Game) onPrivmsg(source, target, msg string, originalLine ircmsg.IrcMessage, bot *Bot) {
+func (g *Game) onPrivmsg(source, target, msg string, _ ircmsg.IrcMessage, bot *Bot) {
 	if !g.shouldBridge(target) {
 		return
 	}
