@@ -17,13 +17,9 @@ func CleanSplitOnSpace(s string) []string {
 }
 
 func WordEol(s string, wordIdx int) string {
-	var eol []string
-	splitMsg := strings.Split(s, " ")
-	for i := range splitMsg {
-		eol = append(eol, strings.Join(splitMsg[i:], " "))
-	}
-	if wordIdx < len(eol) {
-		return eol[wordIdx]
+	split := strings.Split(s, " ")
+	if wordIdx > -1 && len(split) >= wordIdx {
+		return strings.Join(split[wordIdx:], " ")
 	}
 	return ""
 }
