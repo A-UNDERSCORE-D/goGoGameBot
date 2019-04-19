@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - SASL authentication no longer sends an additional `\x00` in the PLAIN auth string
+- `game.CompileOrError` function no longer discards the passed function mapping
 
 ## [0.2.3] - 2019-04-13
 ### Added

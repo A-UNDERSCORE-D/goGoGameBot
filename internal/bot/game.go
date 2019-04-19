@@ -93,8 +93,8 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 	return g, nil
 }
 
-func (g *Game) CompileOrError(f *util.Format, name string, funcMap map[string]interface{}) {
-	if err := f.Compile(g.Name+"_"+name, false, nil); err != nil {
+func (g *Game) CompileOrError(f *util.Format, name string, funcMaps map[string]interface{}) {
+	if err := f.Compile(g.Name+"_"+name, false, funcMaps); err != nil {
 		g.bot.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.Name, err))
 	}
 }
