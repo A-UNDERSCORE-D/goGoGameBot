@@ -312,15 +312,15 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
 
 	for _, chanPair := range chans {
 		// Just in case someone is sitting on this, that could be bad
-		go func() {
+		go func(pair RawChanPair) {
 			defer func() {
 				err := recover()
 				if err != nil {
 					b.Log.Warnf("[WARN] sendToRawChans lambda recovered panic: %s", err)
 				}
 			}()
-			chanPair.writeChan <- line
-		}()
+			pair.writeChan <- line
+		}(chanPair)
 	}
 }
 
