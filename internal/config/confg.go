@@ -9,6 +9,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
+// Config is the top level struct that GGGB's XML config file is unpacked into
 type Config struct {
 	XMLName     xml.Name     `xml:"bot"`
 	Irc         BotConfig    `xml:"bot_config"`

@@ -26,10 +26,12 @@ const (
 	// Disconnected means the bot is not currently connected, could come from either a DC while connected or before the
 	// connection is first made
 	DISCONNECTED
+	// Errored indicates that the bot has errored
 	ERRORED
 
 	// Connecting means the bot is in progress of connecting and negotiating with the target IRC server
 	CONNECTING
+	// Restarting indicates that the bot intends restarting
 	RESTARTING
 )
 
@@ -46,11 +48,14 @@ var (
 	ErrRestart      = errors.New("restart me")
 )
 
+// RawChanPair holds a channel to send ircmsg.IrcMsg raw lines down, and a control channel to indicate when messages are
+// no longer wanted
 type RawChanPair struct {
 	writeChan chan ircmsg.IrcMessage
 	doneChan  chan bool
 }
 
+// Bot is the main IRC bot object, it holds the connection to IRC, and maintains communication between games and IRC
 type Bot struct {
 	Config        config.Config            // Config for the IRC connection etc
 	IrcConf       config.BotConfig         // Easier access to the IRC section of the config
@@ -275,6 +280,7 @@ func (b *Bot) Error(err error) {
 
 /***start of hook oriented functions***********************************************************************************/
 
+// HookFunc is a callback to be attached to a hook
 type HookFunc func(ircmsg.IrcMessage, *Bot)
 
 // HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
@@ -288,6 +294,8 @@ func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
 	)
 }
 
+// PrivmsgFunc is a specific kind of callback for hooking on PRIVMSG, it gets rid of some of the boilerplate that would
+// otherwise be required for a PRIVMSG hook
 type PrivmsgFunc func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot)
 
 // HookPrivmsg hooks a callback to all PRIVMSG lines. The callback is launched in a goroutine.
@@ -324,7 +332,7 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
 	}
 }
 
-// Bot.GetRawChan returns a pair of channels, the first of which will receive ircmsg.IrcMessage as they come in
+// GetRawChan returns a pair of channels, the first of which will receive ircmsg.IrcMessage as they come in
 // and the second of which will
 func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool) {
 	if b.rawChans == nil {
@@ -456,6 +464,8 @@ func (b *Bot) GetGameByName(name string) (*Game, int) {
 	return nil, -1
 }
 
+// StopAllGames stops all the games on the bot, using StopOrKill() in the background. The games are stopped in
+// parallel, meaning the maximum wait time should be reduced
 func (b *Bot) StopAllGames() {
 	wg := new(sync.WaitGroup)
 	for _, g := range b.Games {
@@ -465,6 +475,7 @@ func (b *Bot) StopAllGames() {
 	wg.Wait()
 }
 
+// ForEachGame is a helper function that runs the given function for every game the bot has
 func (b *Bot) ForEachGame(f func(g *Game), skip *Game) {
 	b.GamesMutex.Lock()
 	defer b.GamesMutex.Unlock()

@@ -93,12 +93,15 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 	return g, nil
 }
 
+// CompileOrError is a helper function that attempts to compile a util.Format and if unsuccessful, sends the resulting
+// error down this game's bot's error function
 func (g *Game) CompileOrError(f *util.Format, name string, funcMaps map[string]interface{}) {
 	if err := f.Compile(g.Name+"_"+name, false, funcMaps); err != nil {
 		g.bot.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.Name, err))
 	}
 }
 
+// UpdateFromConf updates the game with the given config object
 func (g *Game) UpdateFromConf(conf config.GameConfig) {
 	var err error
 	g.bridgeFmt = conf.BridgeFmt
@@ -139,6 +142,7 @@ func (g *Game) UpdateFromConf(conf config.GameConfig) {
 
 }
 
+// UpdateCommands replaces the game's commands with the ones in the passed slice
 func (g *Game) UpdateCommands(conf []config.GameCommandConfig) {
 	for _, c := range g.commandList {
 		g.UnregisterCommand(c)
@@ -155,10 +159,13 @@ type gameCommandData struct {
 	Source    ircutils.UserHost
 }
 
+// ArgString returns the arguments on the object as a space separated string
 func (g *gameCommandData) ArgString() string {
 	return strings.Join(g.Args, " ")
 }
 
+// UnregisterCommand removes the given command name from the bot's command handler. If the given command does not exist
+// it is logged and ignored
 func (g *Game) UnregisterCommand(name string) {
 	targetIdx := -1
 	for i, n := range g.commandList {
@@ -177,6 +184,7 @@ func (g *Game) UnregisterCommand(name string) {
 	g.commandList = append(g.commandList[:targetIdx], g.commandList[targetIdx+1:]...)
 }
 
+// RegisterCommand adds a command to the game's command list, if it errors, it passes those errors to the game's bot
 func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
 	if conf.Name == "" {
 		g.bot.Error(errors.New("game: cannot create gamecommand with empty name"))
@@ -260,6 +268,8 @@ func (g *Game) Run() {
 	}
 }
 
+// StopOrKillTimeout sends SIGTERM to the running process. If the game is still running after the timeout has passed,
+// the process is sent SIGKILL
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 	if !g.process.IsRunning() {
 		g.sendToLogChan("cannot stop a non-running game")
@@ -464,6 +474,7 @@ func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
 	}
 }
 
+// SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
 func (g *Game) SendFormattedLine(d interface{}, fmt util.Format) error {
 	if !g.IsRunning() {
 		return nil
@@ -492,6 +503,7 @@ func (g *Game) watchStdinChan() {
 	}
 }
 
+// Write writes the given data to the process's STDIN, it it safe to use concurrently
 func (g *Game) Write(p []byte) (n int, err error) {
 	if !g.IsRunning() {
 		return 0, errors.New("cannot write to a non-running game")
@@ -502,6 +514,7 @@ func (g *Game) Write(p []byte) (n int, err error) {
 
 /***util functions*****************************************************************************************************/
 
+// MapColours maps any IRC colours found in the string to the colour map on the game
 func (g *Game) MapColours(s string) string {
 	if g.colourMap == nil {
 		g.log.Warn("Colour map is nil. returning stripped string instead")
@@ -510,10 +523,12 @@ func (g *Game) MapColours(s string) string {
 	return g.colourMap.Replace(ircfmt.Escape(s))
 }
 
+// WriteString is the same as Write but accepts a string instead of a byte slice
 func (g *Game) WriteString(s string) (n int, err error) {
 	return g.Write([]byte(s))
 }
 
+// IsRunning returns whether or not the process is currently running
 func (g *Game) IsRunning() bool {
 	return g.process.IsRunning()
 }

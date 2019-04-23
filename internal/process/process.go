@@ -18,8 +18,9 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
+// NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
+// setup, they are returned
 func NewProcess(command string, args []string, workingDir string, logger *log.Logger) (*Process, error) {
-
 	p := &Process{
 		commandString: command,
 		argListString: args,
@@ -88,6 +89,7 @@ func (p *Process) setupCmd() error {
 	return nil
 }
 
+// Reset cleans up an already-run process, making it ready to be run again
 func (p *Process) Reset() error {
 	p.DoneChan = make(chan bool) // TODO: This causes a data race. In theory it's not an issue, but it'd be nice to fix it
 	p.statusMutex.Lock()
@@ -97,6 +99,7 @@ func (p *Process) Reset() error {
 	return p.setupCmd()
 }
 
+// Start starts the process, if startup errors, that error is returned
 func (p *Process) Start() error {
 	p.log.Info("Starting")
 	if err := p.cmd.Start(); err != nil {
@@ -109,51 +112,63 @@ func (p *Process) Start() error {
 	return nil
 }
 
+// IsRunning returns whether or not the current process is running
 func (p *Process) IsRunning() bool {
 	p.statusMutex.Lock()
 	defer p.statusMutex.Unlock()
 	return p.hasStarted && !p.hasExited
 }
 
+// GetReturnStatus returns a string containing the return status of the process, an example would be "exit code 1"
 func (p *Process) GetReturnStatus() string {
 	return p.cmd.ProcessState.String()
 }
 
+// GetReturnCode returns the exit code of the process as an int. Calling this on a Process that has not been started
+// will panic
 func (p *Process) GetReturnCode() int {
 	return p.cmd.ProcessState.ExitCode()
 }
 
+// GetStatus returns the current status of the process, including memory and CPU usage
 func (p *Process) GetStatus() string {
 	out := strings.Builder{}
 	if !p.IsRunning() {
 		out.WriteString("$c[red]$b Not running$r")
 		return out.String()
 	}
+
 	ps, err := process.NewProcess(int32(p.cmd.Process.Pid))
+
 	if err != nil {
 		return fmt.Sprintf("$b$c[red]ERROR:$b %s", err)
 	}
+
 	out.WriteString("$c[light green]$bRunning$r: ")
 	out.WriteString("CPU usage: ")
 	cpuPercentage, err := ps.CPUPercent()
+
 	if err != nil {
 		out.WriteString("Error ")
 	} else {
 		out.WriteString(fmt.Sprintf("%.2f%% ", cpuPercentage))
 	}
+
 	out.WriteString("Memory Usage: ")
+
 	if m, err := ps.MemoryInfo(); err != nil {
 		out.WriteString("Error: %s ")
 	} else {
 		out.WriteString(humanize.IBytes(m.RSS))
 	}
+
 	if m, err := ps.MemoryPercent(); err == nil {
 		out.WriteString(fmt.Sprintf(" (%.2f%%)", m))
 	}
 	return out.String()
 }
 
-// writes data to stdin on this process, adding a newline if one does not exist
+// Write writes data to stdin on this process, adding a newline if one does not exist
 func (p *Process) Write(data []byte) (int, error) {
 	toWrite := data
 	if !bytes.HasSuffix(toWrite, []byte{'\n'}) {
@@ -166,10 +181,13 @@ func (p *Process) Write(data []byte) (int, error) {
 	return p.Stdin.Write(toWrite)
 }
 
+// WriteString writes the given string to the stdin of the running process, If a newline does not end the given string.
+// it is added
 func (p *Process) WriteString(toWrite string) (int, error) {
 	return p.Write([]byte(toWrite))
 }
 
+// WaitForCompletion blocks until the Process's command has completed. If an error occurs while waiting, it is returned
 func (p *Process) WaitForCompletion() error {
 	defer close(p.DoneChan)
 	err := p.cmd.Wait()
@@ -182,7 +200,7 @@ func (p *Process) WaitForCompletion() error {
 	return nil
 }
 
-// sends the given signal to the underlying process
+// SendSignal sends the given signal to the underlying process
 func (p *Process) SendSignal(sig os.Signal) error {
 	if !p.IsRunning() {
 		return errors.New("attempt to send non-running process a signal")
