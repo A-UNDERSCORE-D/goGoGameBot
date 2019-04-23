@@ -49,6 +49,7 @@ func getGoStats() string {
 	return out.String()
 }
 
+// GetStats returns a string containing statistics of the currently running bot, and the system as a whole
 func GetStats() string {
 	return fmt.Sprintf("Bot: %s System: %s Go: %s", getBotUsageStats(), getSystemUsageStats(), getGoStats())
 }
