@@ -8,6 +8,7 @@ import (
 const ctcpChar = 0x01
 const ctcpCharString = string(ctcpChar)
 
+// IsCTCP returns whether or not the given string is a valid CTCP command
 func IsCTCP(s string) bool {
 	return len(s) > 1 && s[0] == ctcpChar
 }
@@ -17,6 +18,8 @@ type CTCP struct {
 	Arg     string
 }
 
+// Parse takes a string and returns a CTCP struct representation of the command. If the passed string is not a valid
+// CTCP string, Parse returns an error
 func Parse(s string) (CTCP, error) {
 	if !IsCTCP(s) {
 		return CTCP{}, errors.New("not a CTCP string")
