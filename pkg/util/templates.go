@@ -44,6 +44,9 @@ var (
 	ErrEmptyFormat = errors.New("format: cannot compile an empty format")
 )
 
+// Compile compiles the given format string into a text.template, evaluating IRC colours if requested, and adding the
+// default functions plus any passed to the template. if the template is invalid or the format has already been compiled,
+// Compile errors
 func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.FuncMap) error {
 	if f.compiled {
 		return errors.New("format: cannot compile a format twice")
@@ -71,6 +74,7 @@ func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.Func
 	return nil
 }
 
+// ExecuteBytes is like Execute but returns a slice of bytes
 func (f *Format) ExecuteBytes(data interface{}) ([]byte, error) {
 	if !f.compiled {
 		return nil, errors.New("util.Format: cannot execute an uncompiled Format")
@@ -83,6 +87,7 @@ func (f *Format) ExecuteBytes(data interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Execute runs a compiled Format and returns the resulting string
 func (f *Format) Execute(data interface{}) (string, error) {
 	b, err := f.ExecuteBytes(data)
 	return string(b), err
