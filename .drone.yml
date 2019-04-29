@@ -1,3 +1,4 @@
+---
 kind: pipeline
 name: default
 
@@ -10,3 +11,9 @@ steps:
     event:
       - push
       - pull-request
+
+---
+kind: signature
+hmac: 1984e3acf5cc7e4c5944f777126dc556ed97997a3a9ff719f6eeb42b53c5159f
+
+...
