@@ -4,10 +4,10 @@ github.com/StackExchange/wmi
 github.com/chzyer/readline
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
-# github.com/go-ole/go-ole v1.2.2
+# github.com/go-ole/go-ole v1.2.4
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
-# github.com/goshuirc/irc-go v0.0.0-20190412022721-5ac2a98bf54c
+# github.com/goshuirc/irc-go v0.0.0-20190429021144-be1bb797f4ee
 github.com/goshuirc/irc-go/ircfmt
 github.com/goshuirc/irc-go/ircmsg
 github.com/goshuirc/irc-go/ircutils
@@ -22,6 +22,6 @@ github.com/shirou/gopsutil/net
 github.com/shirou/w32
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# golang.org/x/sys v0.0.0-20190220154126-629670e5acc5
+# golang.org/x/sys v0.0.0-20190428183149-804c0c7841b5
 golang.org/x/sys/unix
 golang.org/x/sys/windows
