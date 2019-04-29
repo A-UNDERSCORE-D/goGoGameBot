@@ -1,5 +1,5 @@
 # GoGoGameBot
-[![Go Report Card](https://goreportcard.com/badge/git.ferricyanide.solutions/A_D/goGoGamebot)](https://goreportcard.com/report/git.ferricyanide.solutions/A_D/goGoGamebot)
+[![Go Report Card](https://goreportcard.com/badge/git.ferricyanide.solutions/A_D/goGoGamebot)](https://goreportcard.com/report/git.ferricyanide.solutions/A_D/goGoGamebot) [![Build Status](https://drone.ferricyanide.solutions/api/badges/A_D/goGoGameBot/status.svg)](https://drone.ferricyanide.solutions/A_D/goGoGameBot)
 
 GoGoGameBot is a go reimplementation of my python GameBot. 
 Both are designed to allow administration of game servers over IRC in a highly

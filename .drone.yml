@@ -1,0 +1,10 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: run-tests
+    image: golang
+    commands:
+      - go test ./...
+    when:
+      - push
