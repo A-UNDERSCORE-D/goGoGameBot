@@ -8,4 +8,5 @@ steps:
     - go test ./...
   when:
     event:
-    - push
+      - push
+      - pull-request
