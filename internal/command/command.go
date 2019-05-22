@@ -32,6 +32,7 @@ func (c *SingleCommand) Name() string       { return c.name }
 
 type SubCommandList struct {
 	SingleCommand
+	// TODO: protect this with a mutex
 	subCommands map[string]Command
 }
 
@@ -61,6 +62,15 @@ func (s *SubCommandList) addSubcommand(command Command) error {
 		return fmt.Errorf("command %s already exists on command %s", command.Name(), s.Name())
 	}
 	s.subCommands[strings.ToLower(command.Name())] = command
+	return nil
+}
+
+func (s *SubCommandList) removeSubcmd(name string) error {
+	cmd :=  s.findSubcommand(name)
+	if cmd == nil {
+		return fmt.Errorf("%q does not have a subcommand called %q", s.Name(), name)
+	}
+	delete(s.subCommands, name)
 	return nil
 }
 

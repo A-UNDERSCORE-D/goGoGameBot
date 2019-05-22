@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/goshuirc/irc-go/ircutils"
 
@@ -14,14 +15,33 @@ import (
 const noAdmin = 0
 
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
-	return &Manager{logger: logger, messenger: messenger, commands:make(map[string]Command)}
+	return &Manager{Logger: logger, messenger: messenger, commands:make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
 }
 
 type Manager struct {
 	admins    []Admin
+	cmdMutex sync.RWMutex
 	commands  map[string]Command
-	logger    *log.Logger
+	commandPrefixes []string
+	Logger    *log.Logger
 	messenger interfaces.IRCMessager
+}
+
+func (m *Manager) AddPrefix(name string) {
+	m.commandPrefixes = append(m.commandPrefixes, name)
+}
+
+func (m *Manager) RemovePrefix(name string) {
+	toRemove := -1
+	for i, pfx := range m.commandPrefixes {
+		if pfx == name {
+			toRemove = i
+			break
+		}
+	}
+	if toRemove != -1 {
+		m.commandPrefixes = append(m.commandPrefixes[:toRemove], m.commandPrefixes[toRemove+1:]...)
+	}
 }
 
 func (m *Manager) AddCommand(name string, requiresAdmin int, callback Callback, help string) error {
@@ -33,6 +53,17 @@ func (m *Manager) AddCommand(name string, requiresAdmin int, callback Callback, 
 	})
 }
 
+func (m *Manager) RemoveCommand(name string) error {
+	if m.getCommandByName(name) == nil {
+		return fmt.Errorf("command %q does not exist on %v", name, m)
+	}
+	m.Logger.Debugf("removing command %s", name)
+	m.cmdMutex.Lock()
+	defer m.cmdMutex.Unlock()
+	delete(m.commands, name)
+	return nil
+}
+
 func (m *Manager) addCommand(cmd Command) error {
 	if strings.Contains(cmd.Name(), " ") {
 		return errors.New("commands cannot contain spaces")
@@ -41,7 +72,10 @@ func (m *Manager) addCommand(cmd Command) error {
 	if m.getCommandByName(cmd.Name()) != nil {
 		return fmt.Errorf("command %q already exists on %v", cmd.Name(), m)
 	}
+	m.Logger.Debugf("adding command %s: %v", cmd.Name(), cmd)
+	m.cmdMutex.Lock()
 	m.commands[strings.ToLower(cmd.Name())] = cmd
+	m.cmdMutex.Unlock()
 	return nil
 }
 
@@ -59,6 +93,8 @@ func (m *Manager) AddAdmin(mask string, level int) error {
 }
 
 func (m *Manager) getCommandByName(name string) Command {
+	m.cmdMutex.RLock()
+	defer m.cmdMutex.RUnlock()
 	if c, ok := m.commands[strings.ToLower(name)]; ok {
 		return c
 	}
@@ -84,6 +120,20 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 	return cmd.addSubcommand(&SingleCommand{name: name, adminRequired: requiresAdmin, callback: callback, help: help})
 }
 
+func (m *Manager) RemoveSubCommand(rootname, name string) error {
+	var cmd Command
+	if cmd = m.getCommandByName(rootname); cmd == nil {
+		return fmt.Errorf("command %q does not exist on %v", rootname, m)
+	}
+	var realCmd *SubCommandList
+	var ok bool
+	if realCmd, ok = cmd.(*SubCommandList); !ok {
+		return fmt.Errorf("command %q is not a command that has subcommands", rootname)
+	}
+
+	return realCmd.removeSubcmd(name)
+}
+
 func (m *Manager) adminFromMask(mask string) int {
 	max := 0
 	for _, admin := range m.admins {
@@ -106,14 +156,32 @@ func (m *Manager) CheckAdmin(data *Data, requiredLevel int) bool {
 	return false
 }
 
+func (m *Manager) stripPrefix(line string) (string, bool) {
+	hasPrefix := false
+	var out string
+	for _, pfx := range m.commandPrefixes {
+		if strings.HasPrefix(strings.ToUpper(line), strings.ToUpper(pfx)) {
+			hasPrefix = true
+			out = line[len(pfx):]
+		}
+	}
+
+	return out, hasPrefix
+}
+
 func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost, target string) {
 	if len(line) == 0 {
+		return
+	}
+	var ok bool
+	if line, ok = m.stripPrefix(line); !ok {
 		return
 	}
 	lineSplit := strings.Split(line, " ")
 	if len(lineSplit) < 1 {
 		return
 	}
+
 	cmdName := lineSplit[0]
 	cmd := m.getCommandByName(cmdName)
 	if cmd == nil {
@@ -133,9 +201,11 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 
 func (m *Manager) String() string {
 	var cmds []string
+	m.cmdMutex.RLock()
 	for k, _ := range m.commands {
 		cmds = append(cmds, k)
 	}
+	m.cmdMutex.RUnlock()
 	var admins []string
 	for _, v := range m.admins {
 		admins = append(admins, fmt.Sprintf("%s: %d", v.Mask, v.Level))

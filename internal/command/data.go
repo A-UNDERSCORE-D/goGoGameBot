@@ -20,20 +20,35 @@ func (d *Data) CheckPerms(requiredLevel int) bool {
 	return d.Manager.CheckAdmin(d, requiredLevel)
 }
 
-func (d *Data) SendTargetNotice(msg string) {
-	d.Manager.messenger.SendNotice(d.Target, msg)
+func (d *Data) SendNotice(target, msg string) {
+	d.Manager.messenger.SendNotice(target, msg)
 }
 
-func (d *Data) SendTargetMessage(msg string) {
-	d.Manager.messenger.SendPrivmsg(d.Target, msg)
+func (d *Data) SendTargetNotice(msg string) {
+	d.SendNotice(d.Target, msg)
 }
 
 func (d *Data) SendSourceNotice(msg string) {
-	d.Manager.messenger.SendNotice(d.Source.Nick, msg)
+	d.SendNotice(d.Source.Nick, msg)
+}
+
+func (d *Data) SendPrivmsg(target, msg string) {
+	d.Manager.messenger.SendPrivmsg(target, msg)
+}
+func (d *Data) SendTargetMessage(msg string) {
+	d.SendPrivmsg(d.Target, msg)
 }
 
 func (d *Data) SendSourceMessage(msg string) {
-	d.Manager.messenger.SendPrivmsg(d.Source.Nick, msg)
+	d.SendPrivmsg(d.Source.Nick, msg)
+}
+
+func (d *Data) SendRawMessage(line string) error {
+	return d.Manager.messenger.WriteString(line)
+}
+
+func (d *Data) String() string {
+	return strings.Join(d.Args, " ")
 }
 
 func (d *Data) SourceMask() string {
