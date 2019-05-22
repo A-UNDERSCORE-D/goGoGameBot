@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 type Callback func(data Data)
@@ -32,7 +33,7 @@ func (c *SingleCommand) Name() string       { return c.name }
 
 type SubCommandList struct {
 	SingleCommand
-	// TODO: protect this with a mutex
+	sync.RWMutex
 	subCommands map[string]Command
 }
 
@@ -40,20 +41,26 @@ func (s *SubCommandList) Help() string {
 	out := strings.Builder{}
 	out.WriteString("Available subcommands are: ")
 	var subCmds []string
+	s.RLock()
 	for _, c := range s.subCommands {
 		subCmds = append(subCmds, c.Name())
 	}
+	s.RUnlock()
 	out.WriteString(strings.Join(subCmds, ", "))
 	return out.String()
 }
 
 func (s *SubCommandList) findSubcommand(name string) Command {
+	s.Lock()
 	if s.subCommands == nil {
 		s.subCommands = make(map[string]Command)
 	}
+	s.Unlock()
+	s.RLock()
 	if c, ok := s.subCommands[strings.ToLower(name)]; ok {
 		return c
 	}
+	s.RUnlock()
 	return nil
 }
 
@@ -61,7 +68,9 @@ func (s *SubCommandList) addSubcommand(command Command) error {
 	if s.findSubcommand(command.Name()) != nil {
 		return fmt.Errorf("command %s already exists on command %s", command.Name(), s.Name())
 	}
+	s.Lock()
 	s.subCommands[strings.ToLower(command.Name())] = command
+	s.Unlock()
 	return nil
 }
 
@@ -70,7 +79,9 @@ func (s *SubCommandList) removeSubcmd(name string) error {
 	if cmd == nil {
 		return fmt.Errorf("%q does not have a subcommand called %q", s.Name(), name)
 	}
+	s.Lock()
 	delete(s.subCommands, name)
+	s.Unlock()
 	return nil
 }
 
