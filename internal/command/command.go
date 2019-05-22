@@ -51,11 +51,6 @@ func (s *SubCommandList) Help() string {
 }
 
 func (s *SubCommandList) findSubcommand(name string) Command {
-	s.Lock()
-	if s.subCommands == nil {
-		s.subCommands = make(map[string]Command)
-	}
-	s.Unlock()
 	s.RLock()
 	if c, ok := s.subCommands[strings.ToLower(name)]; ok {
 		return c

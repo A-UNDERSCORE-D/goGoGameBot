@@ -15,7 +15,36 @@ import (
 const noAdmin = 0
 
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
-	return &Manager{Logger: logger, messenger: messenger, commands:make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
+	m := &Manager{Logger: logger, messenger: messenger, commands:make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
+	_ = m.AddCommand("help", 0, func(data Data) {
+		var toSend string
+		if len(data.Args) == 0 {
+			// just dump the available commands
+			var commandNames []string
+			m.cmdMutex.RLock()
+			for _, c := range m.commands {
+				commandNames = append(commandNames, c.Name())
+			}
+			m.cmdMutex.RUnlock()
+			toSend = fmt.Sprintf("Available commands are %s", strings.Join(commandNames, ", "))
+		} else {
+			// specific help on a command requested
+			var cmd Command
+			if cmd = m.getCommandByName(data.Args[0]); cmd == nil {
+				return
+			}
+
+			if realCmd, ok := cmd.(*SubCommandList); ok && len(data.Args) > 1 && realCmd.findSubcommand(data.Args[1]) != nil {
+				subCmd := realCmd.findSubcommand(data.Args[1])
+				m.Logger.Infof("got a thing: %v, %#1v", subCmd)
+				toSend = fmt.Sprintf("%s: %s", strings.Join(data.Args[:2], " "), subCmd.Help())
+			} else {
+				toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
+			}
+		}
+		data.SendSourceNotice(toSend)
+	}, "prints command help")
+	return m
 }
 
 type Manager struct {
@@ -105,7 +134,7 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 	if m.getCommandByName(rootName) == nil {
 		err := m.addCommand(&SubCommandList{
 			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: rootName},
-			subCommands:   nil,
+			subCommands: make(map[string]Command),
 		})
 		if err != nil {
 			return err
@@ -187,6 +216,7 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	if cmd == nil {
 		return
 	}
+	m.Logger.Debugf("firing command %q (original line %q)", cmdName, line)
 
 	data := Data{
 		IsFromIRC:    fromIRC,
