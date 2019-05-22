@@ -3,6 +3,7 @@ package command
 import (
 	"strings"
 
+	"github.com/goshuirc/irc-go/ircfmt"
 	"github.com/goshuirc/irc-go/ircutils"
 )
 
@@ -21,7 +22,7 @@ func (d *Data) CheckPerms(requiredLevel int) bool {
 }
 
 func (d *Data) SendNotice(target, msg string) {
-	d.Manager.messenger.SendNotice(target, msg)
+	d.Manager.messenger.SendNotice(target, ircfmt.Unescape(msg))
 }
 
 func (d *Data) SendTargetNotice(msg string) {
@@ -33,7 +34,7 @@ func (d *Data) SendSourceNotice(msg string) {
 }
 
 func (d *Data) SendPrivmsg(target, msg string) {
-	d.Manager.messenger.SendPrivmsg(target, msg)
+	d.Manager.messenger.SendPrivmsg(target, ircfmt.Unescape(msg))
 }
 func (d *Data) SendTargetMessage(msg string) {
 	d.SendPrivmsg(d.Target, msg)
