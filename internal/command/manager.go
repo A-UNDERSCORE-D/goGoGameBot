@@ -15,7 +15,7 @@ import (
 const noAdmin = 0
 
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
-	m := &Manager{Logger: logger, messenger: messenger, commands:make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
+	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
 	_ = m.AddCommand("help", 0, func(data Data) {
 		var toSend string
 		if len(data.Args) == 0 {
@@ -48,12 +48,12 @@ func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
 }
 
 type Manager struct {
-	admins    []Admin
-	cmdMutex sync.RWMutex
-	commands  map[string]Command
+	admins          []Admin
+	cmdMutex        sync.RWMutex
+	commands        map[string]Command
 	commandPrefixes []string
-	Logger    *log.Logger
-	messenger interfaces.IRCMessager
+	Logger          *log.Logger
+	messenger       interfaces.IRCMessager
 }
 
 func (m *Manager) AddPrefix(name string) {
@@ -134,7 +134,7 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 	if m.getCommandByName(rootName) == nil {
 		err := m.addCommand(&SubCommandList{
 			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: rootName},
-			subCommands: make(map[string]Command),
+			subCommands:   make(map[string]Command),
 		})
 		if err != nil {
 			return err
@@ -174,6 +174,7 @@ func (m *Manager) adminFromMask(mask string) int {
 }
 
 const notAllowed = "You are not permitted to use this command"
+
 func (m *Manager) CheckAdmin(data *Data, requiredLevel int) bool {
 	if !data.IsFromIRC {
 		return true // Non IRC users have direct access

@@ -17,16 +17,16 @@ func TestAdmin_CheckMask(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "basic test",
+			name:   "basic test",
 			fields: fields{1, "*!*@*"},
-			args:args{"test!test@test.test"},
-			want: true,
+			args:   args{"test!test@test.test"},
+			want:   true,
 		},
 		{
-			name: "basic test",
+			name:   "basic test",
 			fields: fields{1, "*!*@someHost"},
-			args:args{"test!test@test.test"},
-			want: false,
+			args:   args{"test!test@test.test"},
+			want:   false,
 		},
 	}
 	for _, tt := range tests {

@@ -1,36 +1,25 @@
 package bot
 
-import (
-	"fmt"
-	"strings"
-
-	"github.com/goshuirc/irc-go/ircmsg"
-	"github.com/goshuirc/irc-go/ircutils"
-
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-)
-
 type HandleFunc func(data *CommandData) error
 
 // CommandHandler wraps the event manager on a Bot and uses it to build a command interface
-type CommandHandler struct {
+/*type CommandHandler struct {
 	bot      *Bot
 	prefix   string
 	commands map[string][]int64
 }
-
+*/
 // NewCommandHandler creates a CommandHandler and attaches its primary listener to the event manager on the given bot
-func NewCommandHandler(b *Bot, prefixes string) *CommandHandler {
+/*func NewCommandHandler(b *Bot, prefixes string) *CommandHandler {
 	h := &CommandHandler{bot: b, prefix: prefixes, commands: make(map[string][]int64)}
 	b.HookRaw("PRIVMSG", h.mainListener, PriNorm)
 	//b.EventMgr.Attach("RAW_PRIVMSG", h.mainListener, PriNorm)
 	return h
 }
-
+*/
 // mainListener is the main PRIVMSG handler for the command handler. It dispatches events for commands after they have
 // been broken up into a CommandData
-func (h *CommandHandler) mainListener(line ircmsg.IrcMessage, b *Bot) {
+/*func (h *CommandHandler) mainListener(line ircmsg.IrcMessage, b *Bot) {
 	splitMsg := util.CleanSplitOnSpace(line.Params[1])
 	if len(splitMsg) < 1 {
 		return // There's nothing there
@@ -63,18 +52,18 @@ func (h *CommandHandler) mainListener(line ircmsg.IrcMessage, b *Bot) {
 		Source:    line.Prefix,
 		IsFromIRC: true,
 	})
-}
+}*/
 
 // FireCommand preps data for a command to be fired and uses internalFireCommand to fire it
-func (h *CommandHandler) FireCommand(data *CommandData) {
+/*func (h *CommandHandler) FireCommand(data *CommandData) {
 	if data.Bot == nil {
 		data.Bot = h.bot
 	}
 	h.internalFireCommand(strings.ToUpper(data.Command), event.ArgMap{"data": data})
-}
+}*/
 
 // internalFireCommand fires the event to run a command if it exists, otherwise it fires the command not found event
-func (h *CommandHandler) internalFireCommand(cmd string, im event.ArgMap) {
+/*func (h *CommandHandler) internalFireCommand(cmd string, im event.ArgMap) {
 
 	go h.bot.EventMgr.Dispatch("CMD", im)
 
@@ -83,10 +72,10 @@ func (h *CommandHandler) internalFireCommand(cmd string, im event.ArgMap) {
 	} else {
 		go h.bot.EventMgr.Dispatch("CMDNOTFOUND", im)
 	}
-}
+}*/
 
 // RegisterCommand registers a callback with a command
-func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int, requiresAdmin bool) {
+/*func (h *CommandHandler) RegisterCommand(cmd string, f HandleFunc, priority int, requiresAdmin bool) {
 	wrapped := func(event string, infoMap event.ArgMap) {
 		data := infoMap["data"].(*CommandData)
 		if data.SourceIsIgnored() || data.isCancelled {
@@ -122,11 +111,11 @@ func (h *CommandHandler) UnregisterCommand(name string) {
 	}
 
 	delete(h.commands, resolvedName)
-}
+}*/
 
 // checkPermissions does runs a glob based permission check on the incoming command, cancelling the command being fired
 // if the check fails
-func checkPermissions(data *CommandData) error {
+/*func checkPermissions(data *CommandData) error {
 	if !data.IsFromIRC {
 		return nil
 	}
@@ -148,23 +137,22 @@ func checkPermissions(data *CommandData) error {
 		)
 	}
 	return nil
-}
+}*/
 
 // rawCommand is a command handler that allows the user to send raw IRC lines from the bot
-func rawCommand(data *CommandData) error {
+/*func rawCommand(data command.Data) {
 	if len(data.Args) < 1 {
 		if data.IsFromIRC {
-			target, _ := data.UserHost()
-			_ = data.Bot.WriteLine(
-				util.MakeSimpleIRCLine("NOTICE", target.Nick, "cannot have an empty command"),
-			)
+			data.SendSourceNotice("Cannot have an empty command")
 		} else {
-			data.Bot.Log.Warn("Cannot have an empty command")
+			data.Manager.Logger.Warn("Cannot have an empty command")
 		}
-		return nil
+		return
 	}
 
-	toSend := strings.TrimRight(data.ArgString(), "\r\n") + "\r\n"
-	_, err := data.Bot.writeRaw([]byte(toSend))
-	return err
+	toSend := strings.TrimRight(strings.Join(data.Args, " "), "\r\n") + "\r\n"
+	if err := data.SendRawMessage(toSend); err != nil {
+		data.Manager.Logger.Warn(err)
+	}
 }
+*/

@@ -139,7 +139,6 @@ func BenchmarkFormat_CompileColour(b *testing.B) {
 	}
 }
 
-
 var formatCompileTests = []struct {
 	name    string
 	f       *Format

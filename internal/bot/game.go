@@ -1,25 +1,22 @@
+// 0+build ignore
+
 package bot
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/goshuirc/irc-go/ircfmt"
-	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
 
 // TODO: Past x lines on stdout and stderr need to be stored, x being the largest requested by any GameRegexp
@@ -86,19 +83,10 @@ func NewGame(conf config.GameConfig, b *Bot) (*Game, error) {
 	g.bot.HookRaw("PART", g.onJoinPart, PriNorm)
 	//g.bot.CmdHandler.RegisterCommand(g.Name, g.commandHook, PriNorm,false)
 	go g.watchStdinChan()
-	g.bot.CmdHandler.RegisterCommand(fmt.Sprintf("%s_status", g.Name), func(data *CommandData) error {
-		data.Reply(g.process.GetStatus())
-		return nil
-	}, PriNorm, false)
+	_ = g.bot.CommandManager.AddSubCommand(g.Name, "STATUS", 0, func(data command.Data) {
+		data.SendTargetMessage(g.process.GetStatus())
+	}, "returns the status of the supplied game")
 	return g, nil
-}
-
-// CompileOrError is a helper function that attempts to compile a util.Format and if unsuccessful, sends the resulting
-// error down this game's bot's error function
-func (g *Game) CompileOrError(f *util.Format, name string, funcMaps map[string]interface{}) {
-	if err := f.Compile(g.Name+"_"+name, false, funcMaps); err != nil {
-		g.bot.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.Name, err))
-	}
 }
 
 // UpdateFromConf updates the game with the given config object
@@ -180,7 +168,7 @@ func (g *Game) UnregisterCommand(name string) {
 		return
 	}
 
-	g.bot.CmdHandler.UnregisterCommand(name)
+	g.bot.CommandManager.RemoveSubCommand(g.Name, name)
 	g.commandList = append(g.commandList[:targetIdx], g.commandList[targetIdx+1:]...)
 }
 
@@ -197,19 +185,24 @@ func (g *Game) RegisterCommand(conf config.GameCommandConfig) {
 	}
 	resolvedName := strings.ToUpper(fmt.Sprintf("%s_%s", g.Name, conf.Name))
 	g.log.Infof("registering command %q", resolvedName)
-	g.bot.CmdHandler.RegisterCommand(
-		resolvedName,
-		func(data *CommandData) error {
-			uh, _ := data.UserHost()
-			toSend, err := conf.StdinFormat.ExecuteBytes(&gameCommandData{data.IsFromIRC, data.Args, uh})
+
+	adminLevel := 0
+	if conf.RequiresAdmin {
+		adminLevel = 1
+	}
+
+	g.bot.CommandManager.AddSubCommand(
+		g.Name,
+		conf.Name,
+		adminLevel,
+		func(data command.Data) {
+			toSend, err := conf.StdinFormat.ExecuteBytes(&gameCommandData{data.IsFromIRC, data.Args, data.Source})
 			if err != nil {
-				return err
+				return
 			}
 			g.stdinChan <- toSend
-			return nil
 		},
-		PriNorm,
-		conf.RequiresAdmin,
+		"no help available",
 	)
 	g.commandList = append(g.commandList, resolvedName)
 }
@@ -232,124 +225,6 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 	defer g.regexpMutex.Unlock()
 	g.regexps = newRegexps
 	sort.Sort(g.regexps)
-}
-
-// Run starts the game and blocks until it completes
-func (g *Game) Run() {
-	for {
-		if g.IsRunning() {
-			g.sendToLogChan("cannot start an already running game")
-		}
-		g.sendToLogChan("starting")
-		g.killedByUs = false
-		if err := g.process.Start(); err != nil {
-			g.bot.Error(err)
-			break // TODO: This MAY cause a bug in some places
-		}
-		g.startStdWatchers()
-
-		if err := g.process.WaitForCompletion(); err != nil && !g.killedByUs {
-			g.bot.Error(fmt.Errorf("[%s]: error on exit: %s", g.Name, err))
-		}
-
-		ret := g.process.GetReturnStatus()
-		retCode := g.process.GetReturnCode()
-		g.sendToLogChan("Process exited with " + ret)
-		if err := g.process.Reset(); err != nil {
-			g.bot.Error(err)
-			break
-		}
-
-		if !g.autoRestart || g.killedByUs || retCode != 0 {
-			break
-		}
-		g.sendToLogChan("restarting in 3 seconds")
-		time.Sleep(time.Second * 3)
-	}
-}
-
-// StopOrKillTimeout sends SIGTERM to the running process. If the game is still running after the timeout has passed,
-// the process is sent SIGKILL
-func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
-	if !g.process.IsRunning() {
-		g.sendToLogChan("cannot stop a non-running game")
-		return nil
-	}
-	g.sendToLogChan("stopping")
-	g.killedByUs = true
-	return g.process.StopOrKillTimeout(timeout)
-}
-
-// StopOrKill sends SIGINT to the running game, and after 30 seconds if the game has not closed on its own, it sends
-// SIGKILL
-func (g *Game) StopOrKill() error {
-	return g.StopOrKillTimeout(time.Second * 30)
-}
-
-// StopOrKillWaitgroup is exactly the same as StopOrKill but it takes a waitgroup that is marked as done after the game
-// has exited
-func (g *Game) StopOrKillWaitgroup(wg *sync.WaitGroup) {
-	if err := g.StopOrKillTimeout(time.Second * 30); err != nil {
-		g.bot.Error(err)
-	}
-	wg.Done()
-}
-
-// sendToLogChan sends the given message to the configured log channel for the game
-func (g *Game) sendToLogChan(msg string) {
-	g.bot.SendPrivmsg(g.logChan, fmt.Sprintf("[%s] %s", g.Name, msg))
-}
-
-func (g *Game) sendToAdminChan(msg string) {
-	g.bot.SendPrivmsg(g.adminChan, fmt.Sprintf("[%s] %s", g.Name, msg))
-}
-
-// startStdWatches starts the read loops for stdout and stderr
-func (g *Game) startStdWatchers() {
-	go g.watchStd(false)
-	go g.watchStd(true)
-}
-
-// watchStd watches the indicated std file for data and calls handle on the line
-func (g *Game) watchStd(stderr bool) {
-	var s *bufio.Scanner
-	if stderr {
-		s = bufio.NewScanner(g.process.Stderr)
-	} else {
-		s = bufio.NewScanner(g.process.Stdout)
-	}
-
-	for s.Scan() {
-		line := s.Text()
-		g.handleOutput(line, stderr)
-	}
-}
-
-// handleOutput handles logging of stdout/err lines and running GameRegexps against them
-func (g *Game) handleOutput(line string, stderr bool) {
-	pfx := "[STDOUT] "
-	if stderr {
-		pfx = "[STDERR] "
-	}
-
-	if (stderr && g.DumpStderr) || (!stderr && g.DumpStdout) {
-		g.sendToLogChan(pfx + line)
-	}
-
-	g.log.Info(pfx, line)
-	g.regexpMutex.Lock()
-	defer g.regexpMutex.Unlock()
-
-	for _, gRegexp := range g.regexps {
-		shouldEat, err := gRegexp.CheckAndExecute(line, stderr)
-		if err != nil {
-			g.bot.Error(err)
-			continue
-		}
-		if shouldEat {
-			break
-		}
-	}
 }
 
 // Start of template funcs
@@ -377,158 +252,4 @@ func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
 
 /**********************************************************************************************************************/
 
-type dataForFmt struct {
-	SourceNick   string
-	SourceUser   string
-	SourceHost   string
-	MsgRaw       string
-	MsgEscaped   string
-	MsgMapped    string
-	MsgStripped  string
-	Target       string
-	MatchesStrip bool
-	ExtraData    map[string]string
-}
-
-func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
-	uh := ircutils.ParseUserhost(source)
-	return dataForFmt{
-		SourceNick:   uh.Nick,
-		SourceUser:   uh.User,
-		SourceHost:   uh.Host,
-		Target:       target,
-		MsgRaw:       msg,
-		MsgEscaped:   ircfmt.Escape(msg),
-		MsgMapped:    g.MapColours(msg),
-		MsgStripped:  ircfmt.Strip(msg),
-		MatchesStrip: util.AnyMaskMatch(source, g.bot.Config.Strips),
-		ExtraData:    make(map[string]string),
-	}
-}
-
-func (g *Game) shouldBridge(target string) bool {
-	if !g.bridgeChat || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
-		return false
-	}
-
-	for _, c := range g.bridgeChans {
-		if c == "*" || c == target {
-			return true
-		}
-	}
-	return false
-
-}
-
-type dataForPrivmsg struct {
-	dataForFmt
-	IsAction bool
-}
-
-func (g *Game) onPrivmsg(source, target, msg string, _ ircmsg.IrcMessage, bot *Bot) {
-	if !g.shouldBridge(target) {
-		return
-	}
-
-	isAction := false
-	if out, err := ctcp.Parse(msg); err == nil {
-		if out.Command != "ACTION" {
-			return
-		}
-		msg = out.Arg
-		isAction = true
-	}
-	data := dataForPrivmsg{g.makeDataForFormat(source, target, msg), isAction}
-	if err := g.SendFormattedLine(data, g.bridgeFmt); err != nil {
-		bot.Error(err)
-	}
-}
-
-type dataForJoinPart struct {
-	dataForFmt
-	IsJoin bool
-}
-
-func (g *Game) onJoinPart(line ircmsg.IrcMessage, bot *Bot) {
-	channel := line.Params[0]
-	if !g.shouldBridge(channel) {
-		return
-	}
-	data := dataForJoinPart{g.makeDataForFormat(line.Prefix, channel, ""), line.Command == "JOIN"}
-	if err := g.SendFormattedLine(data, g.joinPartFmt); err != nil {
-		bot.Error(err)
-	}
-}
-
-type dataForOtherGameFmt struct {
-	Msg        string
-	SourceGame string
-}
-
-func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
-	if !g.allowForwards {
-		return
-	}
-	if err := g.SendFormattedLine(dataForOtherGameFmt{msg, source.Name}, g.forwardFromOthersFmt); err != nil {
-		g.bot.Error(err)
-	}
-}
-
-// SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
-func (g *Game) SendFormattedLine(d interface{}, fmt util.Format) error {
-	if !g.IsRunning() {
-		return nil
-	}
-
-	res, err := fmt.Execute(d)
-	if err != nil {
-		return err
-	}
-	if len(res) == 0 {
-		return nil
-	}
-	if _, err := g.WriteString(res); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *Game) watchStdinChan() {
-	for {
-		toSend := <-g.stdinChan
-		toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
-		if _, err := g.process.Write(toSend); err != nil {
-			g.bot.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.Name, err))
-		}
-	}
-}
-
-// Write writes the given data to the process's STDIN, it it safe to use concurrently
-func (g *Game) Write(p []byte) (n int, err error) {
-	if !g.IsRunning() {
-		return 0, errors.New("cannot write to a non-running game")
-	}
-	g.stdinChan <- p
-	return len(p), nil
-}
-
 /***util functions*****************************************************************************************************/
-
-// MapColours maps any IRC colours found in the string to the colour map on the game
-func (g *Game) MapColours(s string) string {
-	if g.colourMap == nil {
-		g.log.Warn("Colour map is nil. returning stripped string instead")
-		return ircfmt.Strip(s)
-	}
-	return g.colourMap.Replace(ircfmt.Escape(s))
-}
-
-// WriteString is the same as Write but accepts a string instead of a byte slice
-func (g *Game) WriteString(s string) (n int, err error) {
-	return g.Write([]byte(s))
-}
-
-// IsRunning returns whether or not the process is currently running
-func (g *Game) IsRunning() bool {
-	return g.process.IsRunning()
-}

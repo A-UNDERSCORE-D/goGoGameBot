@@ -26,6 +26,7 @@ func (h HandlerList) Swap(i, j int) {
 
 // Map is a map of string to HandlerList, it exists as a type alias for ease of use
 type Map map[string]HandlerList
+
 // ArgMap is a map of string to interface, it exists as a type alias for ease of use
 type ArgMap map[string]interface{}
 

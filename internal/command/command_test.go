@@ -39,17 +39,17 @@ func TestSingleCommand_Fire(t *testing.T) {
 
 func TestSingleCommand_AdminRequired(t *testing.T) {
 	tests := []struct {
-		name   string
+		name          string
 		adminRequired int
 	}{
 		{
-			name:   "basic test",
+			name:          "basic test",
 			adminRequired: 1,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := (&SingleCommand{adminRequired:tt.adminRequired}).AdminRequired(); got != tt.adminRequired {
+			if got := (&SingleCommand{adminRequired: tt.adminRequired}).AdminRequired(); got != tt.adminRequired {
 				t.Errorf("SingleCommand.AdminRequired() = %v, want %v", got, tt.adminRequired)
 			}
 		})

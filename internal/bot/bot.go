@@ -11,8 +11,11 @@ import (
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
+	"github.com/goshuirc/irc-go/ircutils"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
@@ -57,20 +60,21 @@ type RawChanPair struct {
 
 // Bot is the main IRC bot object, it holds the connection to IRC, and maintains communication between games and IRC
 type Bot struct {
-	Config        config.Config            // Config for the IRC connection etc
-	IrcConf       config.BotConfig         // Easier access to the IRC section of the config
-	sockMutex     sync.Mutex               // Mutex for the IRC socket
-	sock          net.Conn                 // IRC socket
-	Status        int                      // Current connection status
-	DoneChan      chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
-	Log           *log.Logger              // Logger setup to have a prefix etc, for easy logging
-	EventMgr      *event.Manager           // Main heavy lifter for the event system
-	rawchansMutex sync.Mutex               // Mutex protecting the rawChans map
-	rawChans      map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
-	capManager    *CapabilityManager       // Manager for IRCv3 capabilities
-	CmdHandler    *CommandHandler          // Handler for irc (or commandline) commands
-	Games         []*Game                  // Games loaded onto the bot
-	GamesMutex    sync.Mutex               // Mutex protecting the games slice
+	Config         config.Config            // Config for the IRC connection etc
+	IrcConf        config.BotConfig         // Easier access to the IRC section of the config
+	sockMutex      sync.Mutex               // Mutex for the IRC socket
+	sock           net.Conn                 // IRC socket
+	Status         int                      // Current connection status
+	DoneChan       chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
+	Log            *log.Logger              // Logger setup to have a prefix etc, for easy logging
+	EventMgr       *event.Manager           // Main heavy lifter for the event system
+	rawchansMutex  sync.Mutex               // Mutex protecting the rawChans map
+	rawChans       map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
+	capManager     *CapabilityManager       // Manager for IRCv3 capabilities
+	CommandManager *command.Manager
+	Games          []*Game    // Games loaded onto the bot
+	GamesMutex     sync.Mutex // Mutex protecting the games slice
+	//CmdHandler    *CommandHandler          // Handler for irc (or commandline) commands
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
@@ -82,7 +86,10 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 		EventMgr: new(event.Manager),
 		DoneChan: make(chan bool),
 	}
-
+	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b)
+	for _, adm := range conf.Permissions {
+		b.CommandManager.AddAdmin(adm.Mask, 3)
+	}
 	b.Init()
 	return b
 }
@@ -129,24 +136,21 @@ func (b *Bot) Stop(quitMsg string, restart bool) {
 	}
 }
 
-func (b *Bot) stopCmd(data *CommandData) error {
-	if data.ArgString() == "" {
+func (b *Bot) stopCmd(data command.Data) {
+	if str := data.String(); str == "" {
 		b.Stop("Quit requested", false)
 	} else {
-		b.Stop(data.ArgString(), false)
+		b.Stop(str, false)
 	}
-	return nil
 }
 
-func (b *Bot) restartCmd(_ *CommandData) error {
+func (b *Bot) restartCmd(_ command.Data) {
 	b.Stop("restarting", true)
-	return nil
 }
 
 // Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
 	b.capManager = &CapabilityManager{bot: b}
-	b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
 
 	b.HookRaw("PING", onPing, PriHighest)
 	b.HookRaw("001", onWelcome, PriNorm)
@@ -154,22 +158,29 @@ func (b *Bot) Init() {
 	b.EventMgr.Attach("ERR", func(s string, maps event.ArgMap) {
 		onError(maps, b)
 	}, PriHighest)
-
-	b.CmdHandler.RegisterCommand("RAW", rawCommand, PriNorm, true)
-	b.CmdHandler.RegisterCommand("STARTGAME", StartGameCmd, PriNorm, true)
-	b.CmdHandler.RegisterCommand("STOPGAME", StopGame, PriNorm, true)
-	b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
-	b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
-	b.CmdHandler.RegisterCommand("RESTART", b.restartCmd, PriHighest, true)
-	b.CmdHandler.RegisterCommand("STATUS", func(data *CommandData) error {
-		data.Reply("Main stats: " + systemstats.GetStats())
-		data.Bot.GamesMutex.Lock()
-		defer data.Bot.GamesMutex.Unlock()
-		for _, g := range data.Bot.Games {
-			data.Reply(fmt.Sprintf("[%s] %s", g.Name, g.process.GetStatus()))
+	//b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
+	//b.CommandManager.AddCommand("RAW", 3, rawCommand, "sends the passed line as a raw IRC line")
+	//b.CommandManager.AddCommand("STARTGAME", 1, StartGameCmd, "starts the game requested")
+	b.CommandManager.AddCommand("STOP", 3, b.stopCmd, "stops all games on the bot and quits the bot")
+	b.CommandManager.AddCommand("RESTART", 3, b.restartCmd, "stops all games on the bot and restarts the bot")
+	//b.CmdHandler.RegisterCommand("STARTGAME", StartGameCmd, PriNorm, true)
+	//b.CmdHandler.RegisterCommand("STOPGAME", StopGame, PriNorm, true)
+	//b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
+	//b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
+	//b.CmdHandler.RegisterCommand("RESTART", b.restartCmd, PriHighest, true)
+	b.CommandManager.AddCommand("STATUS", 0, func(data command.Data) {
+		data.SendTargetMessage("Main stats: " + systemstats.GetStats())
+		b.GamesMutex.Lock()
+		defer b.GamesMutex.Unlock()
+		for _, g := range b.Games {
+			data.SendTargetMessage(fmt.Sprintf("[%s] %s", g.Name, g.process.GetStatus()))
 		}
-		return nil
-	}, PriNorm, true)
+	}, "returns the status of the bot's system and games")
+
+	b.HookPrivmsg(func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot) {
+		b.CommandManager.ParseLine(message, true, ircutils.ParseUserhost(source), target)
+	})
+
 	b.reloadGames(b.Config.Games)
 }
 
@@ -218,6 +229,11 @@ func (b *Bot) writeRaw(line []byte) (int, error) {
 	defer b.sockMutex.Unlock()
 	b.Log.Infof("<< %s", string(line))
 	return b.sock.Write(line)
+}
+
+func (b *Bot) WriteString(line string) error {
+	_, err := b.writeRaw([]byte(line))
+	return err
 }
 
 // WriteLine writes an ircmsg.IrcMessage to the connected IRC server
@@ -281,7 +297,7 @@ func (b *Bot) Error(err error) {
 /***start of hook oriented functions***********************************************************************************/
 
 // HookFunc is a callback to be attached to a hook
-type HookFunc func(ircmsg.IrcMessage, *Bot)
+type HookFunc = func(ircmsg.IrcMessage, interfaces.Bot)
 
 // HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
 func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
@@ -296,12 +312,12 @@ func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
 
 // PrivmsgFunc is a specific kind of callback for hooking on PRIVMSG, it gets rid of some of the boilerplate that would
 // otherwise be required for a PRIVMSG hook
-type PrivmsgFunc func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot)
+type PrivmsgFunc = func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot)
 
 // HookPrivmsg hooks a callback to all PRIVMSG lines. The callback is launched in a goroutine.
 func (b *Bot) HookPrivmsg(f PrivmsgFunc) {
 	b.HookRaw("PRIVMSG",
-		func(line ircmsg.IrcMessage, bot *Bot) {
+		func(line ircmsg.IrcMessage, bot interfaces.Bot) {
 			go f(line.Prefix, line.Params[0], line.Params[1], line, b)
 		},
 		DEFAULTPRIORITY,
@@ -417,72 +433,33 @@ func (b *Bot) SendNotice(target, msg string) {
 	}
 }
 
-/***start of game control functions***********************************************************************************/
-
-// reloadGames reloads the data on all games using the given config slice
-func (b *Bot) reloadGames(conf []config.GameConfig) { // TODO: Removing games that no longer exist?
-	for _, gameConf := range conf {
-		currentGame, idx := b.GetGameByName(gameConf.Name)
-		if idx == -1 {
-			g, err := NewGame(gameConf, b)
-			if err != nil {
-				b.Error(err)
-				continue
-			}
-			b.addGame(g)
-
-		} else {
-			currentGame.UpdateFromConf(gameConf)
-		}
-	}
+func wrapCommand(callback interfaces.CmdFunc) command.Callback {
+	return func(data command.Data) { callback(data.IsFromIRC, data.Args, data.Source, data.Target) }
 }
 
-func (b *Bot) addGame(game *Game) {
-	b.GamesMutex.Lock()
-	defer b.GamesMutex.Unlock()
-	b.Games = append(b.Games, game)
-
+func (b *Bot) HookCommand(name string, adminRequired int, help string, callback interfaces.CmdFunc) error {
+	return b.CommandManager.AddCommand(
+		name,
+		adminRequired,
+		wrapCommand(callback),
+		help,
+	)
 }
 
-func (b *Bot) startGame(game *Game) {
-	if game.bot != b {
-		b.Log.Warnf("attempt to start game %q (%p) for bot %[2]v (%[2]p) on bot %[3]v (%[3]p)", game.Name, game, b, game.bot)
-	}
-	go game.Run()
+func (b *Bot) HookSubCommand(rootCommand, name string, adminRequired int, help string, callback interfaces.CmdFunc) error {
+	return b.CommandManager.AddSubCommand(
+		rootCommand,
+		name,
+		adminRequired,
+		wrapCommand(callback),
+		help,
+	)
 }
 
-// GetGameByName returns the game with the given name, and the index for the game in the bot's game slice.
-// If no game was found, the pointer will be nil, and the index will be -1
-func (b *Bot) GetGameByName(name string) (*Game, int) {
-	b.GamesMutex.Lock()
-	defer b.GamesMutex.Unlock()
-	for i, g := range b.Games {
-		if g.Name == name {
-			return g, i
-		}
-	}
-	return nil, -1
+func (b *Bot) UnhookCommand(name string) error {
+	return b.CommandManager.RemoveCommand(name)
 }
 
-// StopAllGames stops all the games on the bot, using StopOrKill() in the background. The games are stopped in
-// parallel, meaning the maximum wait time should be reduced
-func (b *Bot) StopAllGames() {
-	wg := new(sync.WaitGroup)
-	for _, g := range b.Games {
-		wg.Add(1)
-		go g.StopOrKillWaitgroup(wg)
-	}
-	wg.Wait()
-}
-
-// ForEachGame is a helper function that runs the given function for every game the bot has
-func (b *Bot) ForEachGame(f func(g *Game), skip *Game) {
-	b.GamesMutex.Lock()
-	defer b.GamesMutex.Unlock()
-	for _, g := range b.Games {
-		if g == skip {
-			continue
-		}
-		f(g)
-	}
+func (b *Bot) UnhookSubCommand(rootName, name string) error {
+	return b.CommandManager.RemoveSubCommand(rootName, name)
 }

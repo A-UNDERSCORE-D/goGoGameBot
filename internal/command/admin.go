@@ -10,5 +10,3 @@ type Admin struct {
 func (a *Admin) MatchesMask(mask string) bool {
 	return util.GlobToRegexp(a.Mask).MatchString(mask)
 }
-
-

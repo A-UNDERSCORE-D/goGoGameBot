@@ -13,6 +13,7 @@ type simpleIRCLineArgs struct {
 	command string
 	params  []string
 }
+
 var simpleIRCLineTests = []struct {
 	name string
 	args simpleIRCLineArgs
@@ -43,6 +44,7 @@ var simpleIRCLineTests = []struct {
 		ircmsg.IrcMessage{Command: "TEST", Params: []string{"test"}},
 	},
 }
+
 func TestMakeSimpleIRCLine(t *testing.T) {
 	for _, tt := range simpleIRCLineTests {
 		t.Run(tt.name, func(t *testing.T) {

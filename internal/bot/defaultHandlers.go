@@ -7,7 +7,7 @@ import (
 
 	"github.com/goshuirc/irc-go/ircmsg"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
@@ -95,48 +95,48 @@ rangeLoop:
 	}
 }
 
-func msgOrLog(data *CommandData, msg string) {
+func msgOrLog(data command.Data, msg string) {
 	if data.IsFromIRC {
-		data.Bot.SendPrivmsg(data.Target, msg)
+		data.SendPrivmsg(data.Target, msg)
 	} else {
-		data.Bot.Log.Warn(msg)
+		data.Manager.Logger.Warn(msg)
 	}
 }
 
-func StartGameCmd(data *CommandData) error {
-	if len(data.Args) < 1 {
-		msgOrLog(data, "startgame requires an argument")
-		return nil
-	}
-	gameName := data.Args[0]
-	g, _ := data.Bot.GetGameByName(gameName)
-	if g == nil {
-		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
-		return nil
-	}
-	data.Bot.startGame(g)
-	return nil
-}
+//func StartGameCmd(data command.Data) error {
+//	if len(data.Args) < 1 {
+//		msgOrLog(data, "startgame requires an argument")
+//		return nil
+//	}
+//	gameName := data.Args[0]
+//	g, _ := data.Bot.GetGameByName(gameName)
+//	if g == nil {
+//		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
+//		return nil
+//	}
+//	data.Bot.startGame(g)
+//	return nil
+//}
 
-func StopGame(data *CommandData) error {
-	if len(data.Args) < 1 {
-		msgOrLog(data, "stopgame requires an argument")
-		return nil
-	}
-	gameName := data.Args[0]
-	g, _ := data.Bot.GetGameByName(gameName)
-	if g == nil {
-		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
-		return nil
-	}
-	return g.StopOrKill()
-}
-
-func reloadGameCmd(data *CommandData) error {
-	conf, err := config.GetConfig("config.xml") // TODO: when flags are added this needs to read them.
-	if err != nil {
-		return err
-	}
-	data.Bot.reloadGames(conf.Games)
-	return nil
-}
+//func StopGame(data *CommandData) error {
+//	if len(data.Args) < 1 {
+//		msgOrLog(data, "stopgame requires an argument")
+//		return nil
+//	}
+//	gameName := data.Args[0]
+//	g, _ := data.Bot.GetGameByName(gameName)
+//	if g == nil {
+//		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
+//		return nil
+//	}
+//	return g.StopOrKill()
+//}
+//
+//func reloadGameCmd(data *CommandData) error {
+//	conf, err := config.GetConfig("config.xml") // TODO: when flags are added this needs to read them.
+//	if err != nil {
+//		return err
+//	}
+//	data.Bot.reloadGames(conf.Games)
+//	return nil
+//}

@@ -70,7 +70,7 @@ func (s *SubCommandList) addSubcommand(command Command) error {
 }
 
 func (s *SubCommandList) removeSubcmd(name string) error {
-	cmd :=  s.findSubcommand(name)
+	cmd := s.findSubcommand(name)
 	if cmd == nil {
 		return fmt.Errorf("%q does not have a subcommand called %q", s.Name(), name)
 	}

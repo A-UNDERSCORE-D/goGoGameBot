@@ -8,13 +8,13 @@ import (
 )
 
 type Data struct {
-	IsFromIRC        bool
-	Args             []string
-	OriginalArgs     string
-	Source           ircutils.UserHost
-	Target           string
+	IsFromIRC    bool
+	Args         []string
+	OriginalArgs string
+	Source       ircutils.UserHost
+	Target       string
 	//SourceAdminLevel int
-	Manager          *Manager
+	Manager *Manager
 }
 
 func (d *Data) CheckPerms(requiredLevel int) bool {

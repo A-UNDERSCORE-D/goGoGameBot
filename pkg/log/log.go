@@ -76,6 +76,7 @@ func (l *Logger) SetPrefix(prefix string) *Logger {
 func (l *Logger) MinLevel() int {
 	return l.minLevel
 }
+
 // New creates a new logger with the set options
 func New(flags int, output io.Writer, prefix string, minLevel int) *Logger {
 	return &Logger{flags: flags, output: output, prefix: prefix, minLevel: minLevel, wMutex: sync.Mutex{}}

@@ -149,9 +149,9 @@ func TestManager_Dispatch(t *testing.T) {
 			"test",
 			[]string{"42", "47", "1337"},
 			[]Handler{
-				{Func:createTestFunc("47"), Priority:1},
-				{Func:createTestFunc("1337"), Priority:2},
-				{Func:createTestFunc("42"), Priority:0},
+				{Func: createTestFunc("47"), Priority: 1},
+				{Func: createTestFunc("1337"), Priority: 2},
+				{Func: createTestFunc("42"), Priority: 0},
 			},
 		},
 	}

@@ -24,9 +24,9 @@ func TestData_CheckPerms(t *testing.T) {
 
 func TestData_SendTargetNotice(t *testing.T) {
 	d := Data{
-		Source:       ircutils.ParseUserhost("test!test@test"),
-		Target:       "#test",
-		Manager:      NewManager(baseLogger, &mockMessager{}),
+		Source:  ircutils.ParseUserhost("test!test@test"),
+		Target:  "#test",
+		Manager: NewManager(baseLogger, &mockMessager{}),
 	}
 	d.SendTargetNotice("test")
 	n := d.Manager.messenger.(*mockMessager).lastNotices
@@ -38,9 +38,9 @@ func TestData_SendTargetNotice(t *testing.T) {
 
 func TestData_SendTargetMessage(t *testing.T) {
 	d := Data{
-		Source:       ircutils.ParseUserhost("test!test@test"),
-		Target:       "#test",
-		Manager:      NewManager(baseLogger, &mockMessager{}),
+		Source:  ircutils.ParseUserhost("test!test@test"),
+		Target:  "#test",
+		Manager: NewManager(baseLogger, &mockMessager{}),
 	}
 	d.SendTargetMessage("test")
 	n := d.Manager.messenger.(*mockMessager).lastMessages
@@ -52,9 +52,9 @@ func TestData_SendTargetMessage(t *testing.T) {
 
 func TestData_SendSourceNotice(t *testing.T) {
 	d := Data{
-		Source:       ircutils.ParseUserhost("test!test@test"),
-		Target:       "#test",
-		Manager:      NewManager(baseLogger, &mockMessager{}),
+		Source:  ircutils.ParseUserhost("test!test@test"),
+		Target:  "#test",
+		Manager: NewManager(baseLogger, &mockMessager{}),
 	}
 	d.SendSourceNotice("test message")
 	n := d.Manager.messenger.(*mockMessager).lastNotices
@@ -66,9 +66,9 @@ func TestData_SendSourceNotice(t *testing.T) {
 
 func TestData_SendSourceMessage(t *testing.T) {
 	d := Data{
-		Source:       ircutils.ParseUserhost("test!test@test"),
-		Target:       "#test",
-		Manager:      NewManager(baseLogger, &mockMessager{}),
+		Source:  ircutils.ParseUserhost("test!test@test"),
+		Target:  "#test",
+		Manager: NewManager(baseLogger, &mockMessager{}),
 	}
 	d.SendSourceMessage("test message")
 	n := d.Manager.messenger.(*mockMessager).lastMessages
@@ -80,7 +80,7 @@ func TestData_SendSourceMessage(t *testing.T) {
 
 func TestData_SourceMask(t *testing.T) {
 	tests := []struct {
-		name   string
+		name string
 		mask string
 	}{
 		{
@@ -95,7 +95,7 @@ func TestData_SourceMask(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &Data{
-				Source:       ircutils.ParseUserhost(tt.mask),
+				Source: ircutils.ParseUserhost(tt.mask),
 			}
 			if got := d.SourceMask(); got != tt.mask {
 				t.Errorf("Data.SourceMask() = %v, want %v", got, tt.mask)
