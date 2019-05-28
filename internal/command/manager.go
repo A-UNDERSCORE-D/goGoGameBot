@@ -149,15 +149,15 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 	return cmd.addSubcommand(&SingleCommand{name: name, adminRequired: requiresAdmin, callback: callback, help: help})
 }
 
-func (m *Manager) RemoveSubCommand(rootname, name string) error {
+func (m *Manager) RemoveSubCommand(rootName, name string) error {
 	var cmd Command
-	if cmd = m.getCommandByName(rootname); cmd == nil {
-		return fmt.Errorf("command %q does not exist on %v", rootname, m)
+	if cmd = m.getCommandByName(rootName); cmd == nil {
+		return fmt.Errorf("command %q does not exist on %v", rootName, m)
 	}
 	var realCmd *SubCommandList
 	var ok bool
 	if realCmd, ok = cmd.(*SubCommandList); !ok {
-		return fmt.Errorf("command %q is not a command that has subcommands", rootname)
+		return fmt.Errorf("command %q is not a command that has subcommands", rootName)
 	}
 
 	return realCmd.removeSubcmd(name)
