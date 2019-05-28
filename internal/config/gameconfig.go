@@ -33,7 +33,8 @@ func (g *GameRegexpConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) 
 type GameCommandConfig struct {
 	Name          string      `xml:"name,attr"`
 	StdinFormat   util.Format `xml:"format"`
-	RequiresAdmin bool        `xml:"requires_admin,attr"`
+	RequiresAdmin int         `xml:"requires_admin,attr"`
+	Help          string      `xml:"help"`
 }
 
 type GameConfig struct {
