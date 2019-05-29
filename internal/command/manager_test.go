@@ -17,6 +17,7 @@ var (
 type mockMessager struct {
 	lastMessages [][2]string
 	lastNotices  [][2]string
+	lastRaw      []string
 }
 
 func (m *mockMessager) SendPrivmsg(target, message string) {
@@ -25,6 +26,11 @@ func (m *mockMessager) SendPrivmsg(target, message string) {
 
 func (m *mockMessager) SendNotice(target, message string) {
 	m.lastNotices = append(m.lastNotices, [2]string{target, message})
+}
+
+func (m *mockMessager) WriteString(message string) error {
+	m.lastRaw = append(m.lastRaw, message)
+	return nil
 }
 
 func cmpSlice(a, b [][2]string) bool {
