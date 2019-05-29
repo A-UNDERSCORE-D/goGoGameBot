@@ -284,7 +284,6 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 	go b.EventMgr.Dispatch("RAW_"+upperCommand, im)
 	go b.EventMgr.Dispatch("RAW", im)
 	go b.sendToRawChans(upperCommand, line)
-
 }
 
 /***start of util functions********************************************************************************************/

@@ -229,27 +229,6 @@ func (g *Game) UpdateRegexps(conf []config.GameRegexpConfig) {
 
 // Start of template funcs
 
-func (g *Game) templSendToAdminChan(v ...interface{}) string {
-	msg := fmt.Sprint(v...)
-	g.sendToAdminChan(msg)
-	return msg
-}
-
-func (g *Game) templSendToLogChan(v ...interface{}) string {
-	msg := fmt.Sprint(v...)
-	g.sendToLogChan(msg)
-	return msg
-}
-
-func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
-	if c == "" {
-		return "", errors.New("cannot send to a nonexistent target")
-	}
-	msg := fmt.Sprint(v...)
-	g.bot.SendPrivmsg(c, msg)
-	return msg, nil
-}
-
 /**********************************************************************************************************************/
 
 /***util functions*****************************************************************************************************/
