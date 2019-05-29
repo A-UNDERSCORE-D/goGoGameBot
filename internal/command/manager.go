@@ -36,7 +36,7 @@ func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
 
 			if realCmd, ok := cmd.(*SubCommandList); ok && len(data.Args) > 1 && realCmd.findSubcommand(data.Args[1]) != nil {
 				subCmd := realCmd.findSubcommand(data.Args[1])
-				m.Logger.Infof("got a thing: %v, %#1v", subCmd)
+				m.Logger.Infof("got a thing: %v, %#[1]v", subCmd)
 				toSend = fmt.Sprintf("%s: %s", strings.Join(data.Args[:2], " "), subCmd.Help())
 			} else {
 				toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
