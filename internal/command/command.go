@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -46,6 +47,7 @@ func (s *SubCommandList) Help() string {
 		subCmds = append(subCmds, c.Name())
 	}
 	s.RUnlock()
+	sort.Strings(subCmds)
 	out.WriteString(strings.Join(subCmds, ", "))
 	return out.String()
 }
