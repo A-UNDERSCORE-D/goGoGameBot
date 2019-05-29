@@ -122,7 +122,7 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 	var g interfaces.Game
 	defer func() {
 		if err := recover(); err != nil {
-			m.bot.Error(fmt.Errorf("game.Manager: recovered a panic from functiuon %#v in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
+			m.bot.Error(fmt.Errorf("game.Manager: recovered a panic from functiuon %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
 		}
 	}()
 	m.gamesMutex.RLock()
