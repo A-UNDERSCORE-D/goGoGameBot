@@ -1,0 +1,158 @@
+package game
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/goshuirc/irc-go/ircfmt"
+	"github.com/goshuirc/irc-go/ircutils"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
+)
+
+// CompileOrError is a helper function that attempts to compile a util.Format and if unsuccessful, sends the resulting
+// error down this game's bot's error function
+func (g *Game) CompileOrError(f *util.Format, name string, funcMaps map[string]interface{}) {
+	if err := f.Compile(g.name+"_"+name, false, funcMaps); err != nil {
+		g.manager.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.name, err))
+	}
+}
+
+type dataForFmt struct {
+	SourceNick   string
+	SourceUser   string
+	SourceHost   string
+	MsgRaw       string
+	MsgEscaped   string
+	MsgMapped    string
+	MsgStripped  string
+	Target       string
+	MatchesStrip bool
+	ExtraData    map[string]string
+}
+
+func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
+	uh := ircutils.ParseUserhost(source)
+	return dataForFmt{
+		SourceNick:   uh.Nick,
+		SourceUser:   uh.User,
+		SourceHost:   uh.Host,
+		Target:       target,
+		MsgRaw:       msg,
+		MsgEscaped:   ircfmt.Escape(msg),
+		MsgMapped:    g.MapColours(msg),
+		MsgStripped:  ircfmt.Strip(msg),
+		MatchesStrip: util.AnyMaskMatch(source, g.chatBridge.stripMasks),
+		ExtraData:    make(map[string]string),
+	}
+}
+
+func (g *Game) shouldBridge(target string) bool {
+	if !g.chatBridge.shouldBridge || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
+		return false
+	}
+
+	for _, c := range g.chatBridge.channels {
+		if c == "*" || c == target {
+			return true
+		}
+	}
+	return false
+
+}
+
+type dataForPrivmsg struct {
+	dataForFmt
+	IsAction bool
+}
+
+func (g *Game) onPrivmsg(source, target, msg string) {
+	if !g.shouldBridge(target) {
+		return
+	}
+
+	isAction := false
+	if out, err := ctcp.Parse(msg); err == nil {
+		if out.Command != "ACTION" {
+			return
+		}
+		msg = out.Arg
+		isAction = true
+	}
+	data := dataForPrivmsg{g.makeDataForFormat(source, target, msg), isAction}
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.normal))
+}
+
+type dataForJoinPart struct {
+	dataForFmt
+	IsJoin bool
+}
+
+func (g *Game) onJoinPart(source, channel string, isJoin bool) {
+	if !g.shouldBridge(channel) {
+		return
+	}
+	data := dataForJoinPart{g.makeDataForFormat(source, channel, ""), isJoin}
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.joinPart))
+}
+
+type dataForNick struct {
+	dataForFmt
+	newNick string
+}
+
+func (g *Game) onNick(source, newnick string) {
+	data := dataForNick{g.makeDataForFormat(source, "", ""), newnick}
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.nick))
+}
+
+func (g *Game) onQuit(source, message string) {
+	data := g.makeDataForFormat(source, "", message)
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.quit))
+}
+
+type dataForKick struct {
+	dataForFmt
+	kickee string
+}
+
+func (g *Game) onKick(source, channel, kickee, message string) {
+	if !g.shouldBridge(channel) {
+		return
+	}
+	data := dataForKick{g.makeDataForFormat(source, channel, message), kickee}
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.kick))
+}
+
+type dataForOtherGameFmt struct {
+	Msg        string
+	SourceGame string
+}
+
+func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
+	if !g.chatBridge.allowForwards {
+		return
+	}
+	fmtData := dataForOtherGameFmt{msg, source.name}
+	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
+}
+
+// SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
+func (g *Game) SendFormattedLine(d interface{}, format util.Format) error {
+	if !g.IsRunning() {
+		return nil
+	}
+
+	res, err := format.Execute(d)
+	if err != nil {
+		return err
+	}
+	if len(res) == 0 {
+		return nil
+	}
+	if _, err := g.WriteString(res); err != nil {
+		return err
+	}
+	return nil
+}
