@@ -79,10 +79,11 @@ func TestSingleCommand_Name(t *testing.T) {
 	}
 }
 
+// TODO: update me to support deeper help requests
 func TestSubCommandList_Help(t *testing.T) {
-	testHelp := "test help is helpful"
-	if res := (&SubCommandList{SingleCommand: SingleCommand{help: testHelp}}).Help(); res != testHelp {
-		t.Errorf("SubCommandList.Help() = %v, want %v", res, testHelp)
+	testHelp := "Available subcommands are: "
+	if res := (&SubCommandList{SingleCommand: SingleCommand{name: "testCmd", help: testHelp}}).Help(); res != testHelp {
+		t.Errorf("SubCommandList.Help() = %q, want %q", res, testHelp)
 	}
 }
 
@@ -141,7 +142,7 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 	}{
 		{
 			name:   "add",
-			fields: fields{},
+			fields: fields{make(map[string]Command)},
 			args: args{
 				command: &SingleCommand{name: "test"},
 			},

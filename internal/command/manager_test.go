@@ -117,8 +117,8 @@ func TestManager_getCommandByName(t *testing.T) {
 		"helpful",
 	}
 	existingSubCommand := &SubCommandList{
-		SingleCommand{0, nil, "test is not doing, allah is doing", "test"},
-		map[string]Command{"test": &SingleCommand{0, nil, "lol", "test"}},
+		SingleCommand: SingleCommand{0, nil, "test is not doing, allah is doing", "test"},
+		subCommands:   map[string]Command{"test": &SingleCommand{0, nil, "lol", "test"}},
 	}
 	_ = m.addCommand(existingCommand)
 	_ = m.addCommand(existingSubCommand)
@@ -156,7 +156,10 @@ func TestManager_AddSubCommand(t *testing.T) {
 	sCmdManager := NewManager(baseLogger, &mockMessager{})
 	_ = sCmdManager.addCommand(&SingleCommand{0, nil, "single_command", "single"})
 	mCmdManager := NewManager(baseLogger, &mockMessager{})
-	_ = mCmdManager.addCommand(&SubCommandList{SingleCommand{0, nil, "baseCmd", "baseCmd"}, nil})
+	_ = mCmdManager.addCommand(&SubCommandList{
+		SingleCommand: SingleCommand{0, nil, "baseCmd", "baseCmd"},
+		subCommands:   make(map[string]Command)},
+	)
 	type args struct {
 		rootName      string
 		name          string
@@ -311,7 +314,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "normal call",
 			args: args{
-				line:    "testNoAccess",
+				line:    "~testNoAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -321,7 +324,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nonexistant call",
 			args: args{
-				line:    "hi, I dont exist!",
+				line:    "~hi, I dont exist!",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -330,7 +333,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "normal call weird case",
 			args: args{
-				line:    "tEsTNOAcCeSs",
+				line:    "~tEsTNOAcCeSs",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -340,7 +343,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "normal call with args",
 			args: args{
-				line:    "testNoAccess except this time with arguments",
+				line:    "~testNoAccess except this time with arguments",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -350,7 +353,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "normal call but not from IRC",
 			args: args{
-				line:    "testNoAccess",
+				line:    "~testNoAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "huzzah!"}}, // It tries to send a message anyway, but thats not our fault.
@@ -358,7 +361,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "privileged call without access",
 			args: args{
-				line:    "testAccess",
+				line:    "~testAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -368,7 +371,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "privileged call with access",
 			args: args{
-				line:    "testAccess",
+				line:    "~testAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
 				target:  "#test",
@@ -379,7 +382,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "privileged call not from IRC",
 			args: args{
-				line:    "testAccess",
+				line:    "~testAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "admin!"}},
@@ -387,7 +390,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested normal",
 			args: args{
-				line:    "test cmdNoAccess",
+				line:    "~test cmdNoAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -397,7 +400,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested privileged no access",
 			args: args{
-				line:    "test cmdAccess",
+				line:    "~test cmdAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("test!test@test"),
 				target:  "#test",
@@ -407,7 +410,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested privileged access",
 			args: args{
-				line:    "test cmdAccess",
+				line:    "~test cmdAccess",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
 				target:  "#test",
@@ -417,7 +420,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested privileged access non IRC",
 			args: args{
-				line:    "test cmdAccess",
+				line:    "~test cmdAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "HI! Im a subcommand that requires admin!"}},
@@ -425,7 +428,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested nonexistent",
 			args: args{
-				line:    "test IDontExist",
+				line:    "~test IDontExist",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
 				target:  "#test",
@@ -438,7 +441,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested weird casing",
 			args: args{
-				line:    "test cMdNOAcCeSs",
+				line:    "~test cMdNOAcCeSs",
 				fromIRC: true,
 				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
 				target:  "#test",
