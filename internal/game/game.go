@@ -45,19 +45,20 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 		stdinChan:       make(chan []byte),
 		controlChannels: channelPair{conf.StatusChannels.Admin, conf.StatusChannels.Msg},
 		chatBridge: chatBridge{
-			shouldBridge: !conf.Chat.DontBridge,
-			dumpStderr:   conf.Chat.DumpStderr,
-			dumpStdout:   conf.Chat.DumpStdout,
-			stripMasks:   append(conf.Chat.StripMasks, manager.stripMasks...),
-			channels:     conf.Chat.BridgedChannels,
-			colourMap:    cm,
+			shouldBridge:  !conf.Chat.DontBridge,
+			dumpStderr:    conf.Chat.DumpStderr,
+			dumpStdout:    conf.Chat.DumpStdout,
+			allowForwards: !conf.Chat.DontAllowForwards,
+			stripMasks:    append(conf.Chat.StripMasks, manager.stripMasks...),
+			channels:      conf.Chat.BridgedChannels,
+			colourMap:     cm,
 			format: formatSet{
-				normal:   &fmts.Normal,
-				joinPart: &fmts.JoinPart,
-				nick:     &fmts.Nick,
-				quit:     &fmts.Quit,
-				kick:     &fmts.Kick,
-				external: &fmts.External,
+				normal:   fmts.Normal,
+				joinPart: fmts.JoinPart,
+				nick:     fmts.Nick,
+				quit:     fmts.Quit,
+				kick:     fmts.Kick,
+				external: fmts.External,
 			},
 		},
 		manager: manager,
@@ -71,22 +72,23 @@ var _ interfaces.Game = &Game{} // Make sure that Game is actually satisfying th
 type status int
 
 type chatBridge struct {
-	shouldBridge bool
-	dumpStdout   bool
-	dumpStderr   bool
-	stripMasks   []string
-	channels     []string
-	format       formatSet
-	colourMap    *strings.Replacer
+	shouldBridge  bool
+	dumpStdout    bool
+	dumpStderr    bool
+	allowForwards bool
+	stripMasks    []string
+	channels      []string
+	format        formatSet
+	colourMap     *strings.Replacer
 }
 
 type formatSet struct {
-	normal   *util.Format
-	joinPart *util.Format
-	nick     *util.Format
-	quit     *util.Format
-	kick     *util.Format
-	external *util.Format
+	normal   util.Format
+	joinPart util.Format
+	nick     util.Format
+	quit     util.Format
+	kick     util.Format
+	external util.Format
 }
 
 type channelPair struct {
