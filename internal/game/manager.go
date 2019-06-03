@@ -52,17 +52,19 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 		case -1: // Game does not exist
 			g, err := NewGame(conf, m)
 			if err != nil {
-				m.bot.Error(err)
+				m.Error(err)
 				continue
 			}
 			if err := m.AddGame(g); err != nil {
-				m.bot.Error(err)
+				m.Error(err)
 				continue
 			}
 		default:
 			m.gamesMutex.RLock()
 			g := m.games[i]
-			g.UpdateFromConfig(conf)
+			if err := g.UpdateFromConfig(conf); err != nil {
+				m.Error(fmt.Errorf("reloading game %s errored: %s", g, err))
+			}
 			m.gamesMutex.RUnlock()
 		}
 	}
@@ -122,7 +124,7 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 	var g interfaces.Game
 	defer func() {
 		if err := recover(); err != nil {
-			m.bot.Error(fmt.Errorf("game.Manager: recovered a panic from functiuon %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
+			m.Error(fmt.Errorf("recovered a panic from function %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
 		}
 	}()
 	m.gamesMutex.RLock()
@@ -143,5 +145,5 @@ func (m *Manager) StopAllGames() {
 }
 
 func (m *Manager) Error(err error) {
-	m.bot.Error(err)
+	m.bot.Error(fmt.Errorf("game.Manager: %s", err))
 }
