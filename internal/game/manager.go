@@ -139,6 +139,7 @@ func (m *Manager) StopAllGames() {
 	m.status = shutdown
 	wg := sync.WaitGroup{}
 	m.ForEachGame(func(game interfaces.Game) { wg.Add(1); game.StopOrKillWaitgroup(&wg) }, nil)
+	wg.Wait()
 }
 
 func (m *Manager) Error(err error) {
