@@ -18,10 +18,11 @@ type GameManager interface {
 
 type Game interface {
 	GetName() string
-	UpdateFromConfig(config config.Game)
+	UpdateFromConfig(config config.Game) error
 	WriteExternalMessage(msg string) error
 	StopOrKiller
 	Runner
+	AutoStarter
 }
 
 type StopOrKiller interface {
@@ -32,4 +33,8 @@ type StopOrKiller interface {
 
 type Runner interface {
 	Run()
+}
+
+type AutoStarter interface {
+	AutoStart()
 }

@@ -71,7 +71,6 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	return g, nil
 }
 
-var _ interfaces.Game = &Game{} // Make sure that Game is actually satisfying that interface
 type status int
 
 type chatBridge struct {
@@ -107,7 +106,7 @@ type Game struct {
 	status          status
 	autoRestart     int
 	autoStart       bool
-	regexpManager   RegexpManager
+	regexpManager   *RegexpManager
 	stdinChan       chan []byte
 	controlChannels channelPair
 	chatBridge      chatBridge
@@ -223,6 +222,12 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 
 func (g *Game) GetName() string {
 	return g.name
+}
+
+func (g *Game) AutoStart() {
+	if g.autoStart {
+		g.Run()
+	}
 }
 
 func (g *Game) String() string {
