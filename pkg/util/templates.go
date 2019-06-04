@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"errors"
-	"strings"
 	"text/template"
 
 	"github.com/goshuirc/irc-go/ircfmt"
@@ -17,27 +16,9 @@ var TemplateUtilFuncs = template.FuncMap{
 }
 
 type Format struct {
-	FormatString    string             `xml:",chardata"`
-	StripNewlines   bool               `xml:"strip_newlines,attr"`
-	StripWhitespace bool               `xml:"strip_whitespace,attr"`
-	CompiledFormat  *template.Template `xml:"-"`
-	compiled        bool
-}
-
-var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "", "\t", "")
-
-func (f *Format) doFmtStringCleanup() {
-	if f.StripWhitespace {
-		var toSet []string
-		for _, l := range strings.Split(f.FormatString, "\n") {
-			toSet = append(toSet, strings.Trim(l, " "))
-		}
-		f.FormatString = strings.Join(toSet, "\n")
-	}
-
-	if f.StripNewlines {
-		f.FormatString = newlinesReplacer.Replace(f.FormatString)
-	}
+	FormatString   string             `xml:",chardata"`
+	CompiledFormat *template.Template `xml:"-"`
+	compiled       bool
 }
 
 var (
@@ -51,7 +32,7 @@ func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.Func
 	if f.compiled {
 		return errors.New("format: cannot compile a format twice")
 	}
-	f.doFmtStringCleanup()
+
 	if f.FormatString == "" {
 		return ErrEmptyFormat
 	}
