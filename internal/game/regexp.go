@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"sync"
 	"text/template"
@@ -37,7 +38,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager) (*Regexp, error) {
 		"sendPrivmsg":     manager.game.templSendPrivmsg,
 	}
 	var templ *util.Format = nil
-	if err := conf.Format.Compile(conf.Name, true, funcs); err != nil {
+	if err := conf.Format.Compile(conf.Name, true, nil, funcs); err != nil {
 		if err != util.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}
@@ -126,6 +127,10 @@ func (r *Regexp) checkAndExecute(line string, stdout bool) (bool, error) {
 	return true, nil
 }
 
+func NewRegexpManager(game *Game) *RegexpManager {
+	return &RegexpManager{game: game}
+}
+
 type RegexpManager struct {
 	sync.RWMutex
 	regexps RegexpList
@@ -147,4 +152,20 @@ func (r *RegexpManager) checkAndExecute(line string, isStdout bool) {
 
 func (r *RegexpManager) String() string {
 	return fmt.Sprintf("game.RegexpManager at %p attached to %s", r, r.game)
+}
+
+func (r *RegexpManager) UpdateFromConf(res []config.Regexp) error {
+	var reList RegexpList
+	for _, reConf := range res {
+		re, err := NewRegexp(reConf, r)
+		if err != nil {
+			return err
+		}
+		reList = append(reList, re)
+	}
+	sort.Sort(reList)
+	r.Lock()
+	r.regexps = reList
+	r.Unlock()
+	return nil
 }
