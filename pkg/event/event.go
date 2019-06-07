@@ -9,6 +9,14 @@ import (
 // This is a reimplementation of eventmgr found at github.com/goshuirc/eventmgr with an ID system added.
 // The original idea is theirs.
 
+const (
+	PriHighest = 16
+	PriHigh    = 32
+	PriNorm    = 48
+	PriLow     = 64
+	PriLowest  = 80
+)
+
 // HandlerList is a slice of handlers with functions added to allow the slice to be sorted
 type HandlerList []Handler
 
