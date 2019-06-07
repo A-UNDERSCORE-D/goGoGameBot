@@ -9,7 +9,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
-func NewManager(conf *config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
+func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
 		bot:    bot,
 		Logger: logger.Clone().SetPrefix("[GM]"),
@@ -142,6 +142,10 @@ func (m *Manager) StopAllGames() {
 	wg := sync.WaitGroup{}
 	m.ForEachGame(func(game interfaces.Game) { wg.Add(1); game.StopOrKillWaitgroup(&wg) }, nil)
 	wg.Wait()
+}
+
+func (m *Manager) StartAutoStartGames() {
+	m.ForEachGame(func(game interfaces.Game) { game.AutoStart() }, nil)
 }
 
 func (m *Manager) Error(err error) {
