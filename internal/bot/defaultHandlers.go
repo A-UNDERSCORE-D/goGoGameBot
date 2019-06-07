@@ -8,23 +8,14 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
-func onPing(lineIn ircmsg.IrcMessage, b *Bot) {
-	if err := b.WriteLine(util.MakeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
+func onPing(lineIn ircmsg.IrcMessage, b interfaces.Bot) {
+	if err := b.WriteIRCLine(util.MakeSimpleIRCLine("PONG", lineIn.Params...)); err != nil {
 		b.Error(fmt.Errorf("could not send pong: %s", err))
-	}
-}
-
-func onWelcome(_ ircmsg.IrcMessage, b *Bot) {
-	// This should set a few things like max targets etc at some point.
-	//lineIn := data["line"].(ircmsg.IrcMessage)
-	b.Status = CONNECTED
-	_ = b.WriteLine(util.MakeSimpleIRCLine("JOIN", b.IrcConf.AdminChan.Name, b.IrcConf.AdminChan.Key))
-	for _, c := range b.IrcConf.JoinChans {
-		_ = b.WriteLine(util.MakeSimpleIRCLine("JOIN", c.Name, c.Key))
 	}
 }
 
@@ -64,7 +55,7 @@ func (b *Bot) saslHandler(_ *Capability, _ ircmsg.IrcMessage, group *sync.WaitGr
 
 	defer close(aggDone)
 	// Request PLAIN authentication
-	if err := b.WriteLine(util.MakeSimpleIRCLine(auth, "PLAIN")); err != nil {
+	if err := b.WriteIRCLine(util.MakeSimpleIRCLine(auth, "PLAIN")); err != nil {
 		b.Error(fmt.Errorf(errDuringSasl, err)) // TODO: This should setup a callback to run privmsg auth
 		return
 	}
@@ -75,7 +66,7 @@ rangeLoop:
 		case auth:
 			if line.Params[0] == "+" {
 				authStr := util.GenerateSASLString(b.IrcConf.Nick, b.IrcConf.NSAuth.Nick, b.IrcConf.NSAuth.Password)
-				_ = b.WriteLine(util.MakeSimpleIRCLine(auth, authStr))
+				_ = b.WriteIRCLine(util.MakeSimpleIRCLine(auth, authStr))
 			} else {
 				// TODO: This is a workaround for removed features in irc-go
 				b.Error(fmt.Errorf(errDuringSasl, "line.SourceLine"))
@@ -102,41 +93,3 @@ func msgOrLog(data command.Data, msg string) {
 		data.Manager.Logger.Warn(msg)
 	}
 }
-
-//func StartGameCmd(data command.Data) error {
-//	if len(data.Args) < 1 {
-//		msgOrLog(data, "startgame requires an argument")
-//		return nil
-//	}
-//	gameName := data.Args[0]
-//	g, _ := data.Bot.GetGameByName(gameName)
-//	if g == nil {
-//		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
-//		return nil
-//	}
-//	data.Bot.startGame(g)
-//	return nil
-//}
-
-//func StopGame(data *CommandData) error {
-//	if len(data.Args) < 1 {
-//		msgOrLog(data, "stopgame requires an argument")
-//		return nil
-//	}
-//	gameName := data.Args[0]
-//	g, _ := data.Bot.GetGameByName(gameName)
-//	if g == nil {
-//		msgOrLog(data, fmt.Sprintf("%q is an invalid game name", gameName))
-//		return nil
-//	}
-//	return g.StopOrKill()
-//}
-//
-//func reloadGameCmd(data *CommandData) error {
-//	conf, err := config.GetConfig("config.xml") // TODO: when flags are added this needs to read them.
-//	if err != nil {
-//		return err
-//	}
-//	data.Bot.reloadGames(conf.Games)
-//	return nil
-//}
