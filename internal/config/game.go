@@ -13,14 +13,16 @@ type GameManager struct {
 }
 
 type Game struct {
-	XMLName        xml.Name  `xml:"game"`
-	Name           string    `xml:"name,attr"`
-	Parent         string    `xml:"parent"`
-	AutoRestart    int       `xml:"auto_restart,attr"`
-	AutoStart      bool      `xml:"auto_start,attr"`
-	Commands       []Command `xml:"commands>command"`
-	Regexps        []Regexp
-	StatusChannels struct {
+	XMLName         xml.Name  `xml:"game"`
+	Name            string    `xml:"name,attr"`
+	AutoRestart     int       `xml:"auto_restart,attr"`
+	AutoStart       bool      `xml:"auto_start,attr"`
+	Path            string    `xml:"binary"`
+	WorkingDir      string    `xml:"working_dir"`
+	Args            string    `xml:"args"`
+	Commands        []Command `xml:"commands>command"`
+	Regexps         []Regexp
+	ControlChannels struct {
 		Admin string `xml:"admin"`
 		Msg   string `xml:"msg"`
 	} `xml:"status_channels"`
@@ -30,18 +32,24 @@ type Game struct {
 		DontAllowForwards bool     `xml:"dont_allow_forwards,attr"`
 		DumpStdout        bool     `xml:"dump_stdout,attr"`
 		DumpStderr        bool     `xml:"dump_stderr,attr"`
-		StripMasks        []string `xml:"strip_masks>mask"`
-		BridgedChannels   []string `xml:"bridged_channels>channel"`
+		StripMasks        []string `xml:"strip_mask"`
+		BridgedChannels   []string `xml:"bridged_channel"`
 		Formats           struct {
-			Normal   util.Format `xml:"normal"`
-			JoinPart util.Format `xml:"join_part"`
-			Nick     util.Format `xml:"nick"`
-			Quit     util.Format `xml:"quit"`
-			Kick     util.Format `xml:"kick"`
-			External util.Format `xml:"external"`
+			Message  util.Format   `xml:"message"`
+			JoinPart util.Format   `xml:"join_part"`
+			Nick     util.Format   `xml:"nick"`
+			Quit     util.Format   `xml:"quit"`
+			Kick     util.Format   `xml:"kick"`
+			External util.Format   `xml:"external"`
+			Extra    []ExtraFormat `xml:"extra"`
 		} `xml:"formats"`
-	}
+	} `xml:"chat"`
 	ColourMap ColourMap `xml:"colour_map"`
+}
+
+type ExtraFormat struct {
+	util.Format
+	Name string `xml:"name,attr"`
 }
 
 type Command struct {
