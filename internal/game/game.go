@@ -181,17 +181,17 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	if err != nil {
 		return fmt.Errorf("could not create colour map for game %s from config: %s", g, err)
 	}
-	gName := g.GetName()
-	for _, err := range []error{
-		conf.Chat.Formats.Normal.Compile(gName+"_Normal", false),
-		conf.Chat.Formats.JoinPart.Compile(gName+"_JoinPart", false),
-		conf.Chat.Formats.Nick.Compile(gName+"_Nick", false),
-		conf.Chat.Formats.Quit.Compile(gName+"_Quit", false),
-		conf.Chat.Formats.Kick.Compile(gName+"_Kick", false),
-		conf.Chat.Formats.External.Compile(gName+"_External", false),
-	} {
-		if err != nil {
-			return fmt.Errorf("could not compile all formats for game %s (other formats may also have errored): %s", g, err)
+
+	if err := g.CompileFormats(&conf); err != nil {
+		return err
+	}
+
+	if err := g.clearCommands(); err != nil {
+		return err
+	}
+	for _, cmd := range conf.Commands {
+		if err := g.registerCommand(cmd); err != nil {
+			return err
 		}
 	}
 
@@ -217,6 +217,38 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	gf.kick = f.Kick
 	gf.external = f.External
 	g.Info("reload completed successfully")
+	return nil
+}
+
+func (g *Game) CompileFormats(gameConf *config.Game) error {
+	fmts := &gameConf.Chat.Formats
+	if err := fmts.Message.Compile("message", false, nil); err != nil {
+		return err
+	}
+	root := fmts.Message.CompiledFormat
+	if err := fmts.JoinPart.Compile("joinPart", false, root); err != nil {
+		return err
+	}
+	if err := fmts.Nick.Compile("nick", false, root); err != nil {
+		return err
+	}
+	if err := fmts.Quit.Compile("quit", false, root); err != nil {
+		return err
+	}
+	if err := fmts.Kick.Compile("kick", false, root); err != nil {
+		return err
+	}
+	if err := fmts.Quit.Compile("quit", false, root); err != nil {
+		return err
+	}
+	if err := fmts.External.Compile("external", false, root); err != nil {
+		return err
+	}
+	for _, v := range fmts.Extra {
+		if err := v.Compile(v.Name, false, root); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
