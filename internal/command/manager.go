@@ -15,6 +15,7 @@ import (
 const noAdmin = 0
 
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
+	// TODO: make the prefixes here configurable
 	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
 	_ = m.AddCommand("help", 0, func(data Data) {
 		var toSend string
