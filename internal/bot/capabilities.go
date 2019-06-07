@@ -77,7 +77,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
 	}
 
 	lineChan, done := cm.bot.GetRawChan("CAP")
-	if err := cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "LS", "302")); err != nil {
+	if err := cm.bot.WriteIRCLine(util.MakeSimpleIRCLine("CAP", "LS", "302")); err != nil {
 		cm.bot.Error(fmt.Errorf("could not negotiate capabilities: %s", err))
 		return
 	}
@@ -98,7 +98,7 @@ func (cm *CapabilityManager) NegotiateCaps() {
 				// Allow other things to run, then close up and send cap end
 				wg.Wait()
 				close(done)
-				_ = cm.bot.WriteLine(util.MakeSimpleIRCLine("CAP", "END"))
+				_ = cm.bot.WriteIRCLine(util.MakeSimpleIRCLine("CAP", "END"))
 			}()
 
 			cm.bot.Log.Infof("Server offered caps: %v",
@@ -164,7 +164,7 @@ func (cm *CapabilityManager) requestCaps() error {
 	for _, c := range capsToReq {
 		caps = append(caps, c.Name)
 	}
-	err := cm.bot.WriteLine(
+	err := cm.bot.WriteIRCLine(
 		util.MakeSimpleIRCLine("CAP", "REQ", strings.Join(caps, " ")),
 	)
 	if err != nil {

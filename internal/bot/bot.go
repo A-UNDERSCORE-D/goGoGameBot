@@ -4,22 +4,20 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"net"
 	"runtime/debug"
 	"strings"
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
-	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
 
 const (
@@ -36,14 +34,6 @@ const (
 	CONNECTING
 	// Restarting indicates that the bot intends restarting
 	RESTARTING
-)
-
-const (
-	PriHighest = 16
-	PriHigh    = 32
-	PriNorm    = 48
-	PriLow     = 64
-	PriLowest  = 80
 )
 
 var (
@@ -72,9 +62,7 @@ type Bot struct {
 	rawChans       map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
 	capManager     *CapabilityManager       // Manager for IRCv3 capabilities
 	CommandManager *command.Manager
-	Games          []*Game    // Games loaded onto the bot
-	GamesMutex     sync.Mutex // Mutex protecting the games slice
-	//CmdHandler    *CommandHandler          // Handler for irc (or commandline) commands
+	GameManager    *game.Manager
 }
 
 func NewBot(conf config.Config, logger *log.Logger) *Bot {
@@ -87,8 +75,16 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 		DoneChan: make(chan bool),
 	}
 	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b)
+	gm, err := game.NewManager(conf.GameManager, b, b.Log)
+	if err != nil {
+		panic(err)
+	}
+	b.GameManager = gm
+
 	for _, adm := range conf.Permissions {
-		b.CommandManager.AddAdmin(adm.Mask, 3)
+		if err := b.CommandManager.AddAdmin(adm.Mask, 3); err != nil {
+			panic(err)
+		}
 	}
 	b.Init()
 	return b
@@ -103,11 +99,7 @@ func (b *Bot) Run() error {
 		return err
 	}
 	b.WaitForRaw("001")
-	for _, g := range b.Games {
-		if g.AutoStart {
-			b.startGame(g)
-		}
-	}
+	b.GameManager.StartAutoStartGames()
 	<-b.DoneChan
 	if b.Status == RESTARTING {
 		return ErrRestart
@@ -122,12 +114,12 @@ func (b *Bot) Run() error {
 // Stop makes the bot quit out and stop all its games
 func (b *Bot) Stop(quitMsg string, restart bool) {
 	b.Log.Info("stop requested: ", quitMsg)
-	b.StopAllGames()
+	b.GameManager.StopAllGames()
 	if b.Status == DISCONNECTED {
 		return
 	}
 
-	_ = b.WriteLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
+	_ = b.WriteIRCLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
 	b.WaitForRaw("ERROR")
 	if restart {
 		b.Status = RESTARTING
@@ -147,41 +139,29 @@ func (b *Bot) stopCmd(data command.Data) {
 func (b *Bot) restartCmd(_ command.Data) {
 	b.Stop("restarting", true)
 }
+func panicNotNil(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 // Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
 	b.capManager = &CapabilityManager{bot: b}
 
-	b.HookRaw("PING", onPing, PriHighest)
-	b.HookRaw("001", onWelcome, PriNorm)
-
-	b.EventMgr.Attach("ERR", func(s string, maps event.ArgMap) {
-		onError(maps, b)
-	}, PriHighest)
-	//b.CmdHandler = NewCommandHandler(b, b.IrcConf.CommandPrefix)
-	//b.CommandManager.AddCommand("RAW", 3, rawCommand, "sends the passed line as a raw IRC line")
-	//b.CommandManager.AddCommand("STARTGAME", 1, StartGameCmd, "starts the game requested")
-	b.CommandManager.AddCommand("STOP", 3, b.stopCmd, "stops all games on the bot and quits the bot")
-	b.CommandManager.AddCommand("RESTART", 3, b.restartCmd, "stops all games on the bot and restarts the bot")
-	//b.CmdHandler.RegisterCommand("STARTGAME", StartGameCmd, PriNorm, true)
-	//b.CmdHandler.RegisterCommand("STOPGAME", StopGame, PriNorm, true)
-	//b.CmdHandler.RegisterCommand("RELOADGAMES", reloadGameCmd, PriNorm, true)
-	//b.CmdHandler.RegisterCommand("STOP", b.stopCmd, PriHighest, true)
-	//b.CmdHandler.RegisterCommand("RESTART", b.restartCmd, PriHighest, true)
-	b.CommandManager.AddCommand("STATUS", 0, func(data command.Data) {
-		data.SendTargetMessage("Main stats: " + systemstats.GetStats())
-		b.GamesMutex.Lock()
-		defer b.GamesMutex.Unlock()
-		for _, g := range b.Games {
-			data.SendTargetMessage(fmt.Sprintf("[%s] %s", g.Name, g.process.GetStatus()))
+	b.HookRaw("PING", onPing, event.PriHighest)
+	b.HookRaw("001", func(_ ircmsg.IrcMessage, _ interfaces.Bot) {
+		b.Status = CONNECTED
+		_ = b.WriteIRCLine(util.MakeSimpleIRCLine("JOIN", b.IrcConf.AdminChan.Name, b.IrcConf.AdminChan.Key))
+		for _, c := range b.IrcConf.JoinChans {
+			_ = b.WriteIRCLine(util.MakeSimpleIRCLine("JOIN", c.Name, c.Key))
 		}
-	}, "returns the status of the bot's system and games")
+	}, event.PriNorm)
 
-	b.HookPrivmsg(func(source, target, message string, originalLine ircmsg.IrcMessage, bot *Bot) {
-		b.CommandManager.ParseLine(message, true, ircutils.ParseUserhost(source), target)
-	})
+	b.EventMgr.Attach("ERR", func(s string, maps event.ArgMap) { onError(maps, b) }, event.PriHighest)
 
-	b.reloadGames(b.Config.Games)
+	panicNotNil(b.CommandManager.AddCommand("STOP", 3, b.stopCmd, "stops all games on the bot and quits the bot"))
+	panicNotNil(b.CommandManager.AddCommand("RESTART", 3, b.restartCmd, "stops all games on the bot and restarts the bot"))
 }
 
 // connect opens a socket to the IRC server specified and handles basic registration and SASL auth
@@ -208,11 +188,11 @@ func (b *Bot) connect() error {
 	userMsg := util.MakeSimpleIRCLine("USER", b.IrcConf.Ident, "*", "*", b.IrcConf.Gecos)
 	nickMsg := util.MakeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
-	if err := b.WriteLine(userMsg); err != nil {
+	if err := b.WriteIRCLine(userMsg); err != nil {
 		b.Status = ERRORED
 		return err
 	}
-	if err := b.WriteLine(nickMsg); err != nil {
+	if err := b.WriteIRCLine(nickMsg); err != nil {
 		b.Status = ERRORED
 		return err
 	}
@@ -236,8 +216,8 @@ func (b *Bot) WriteString(line string) error {
 	return err
 }
 
-// WriteLine writes an ircmsg.IrcMessage to the connected IRC server
-func (b *Bot) WriteLine(line ircmsg.IrcMessage) error {
+// WriteIRCLine writes an ircmsg.IrcMessage to the connected IRC server
+func (b *Bot) WriteIRCLine(line ircmsg.IrcMessage) error {
 	if b.Status == DISCONNECTED {
 		return ErrNotConnected
 	}
@@ -319,7 +299,7 @@ func (b *Bot) HookPrivmsg(f PrivmsgFunc) {
 		func(line ircmsg.IrcMessage, bot interfaces.Bot) {
 			go f(line.Prefix, line.Params[0], line.Params[1], line, b)
 		},
-		DEFAULTPRIORITY,
+		50,
 	)
 }
 
@@ -420,7 +400,7 @@ func (b *Bot) GetMultiRawChan(commands ...string) (<-chan ircmsg.IrcMessage, cha
 // SendPrivmsg sends a standard IRC message to the target. The target can be either a channel or a nickname
 func (b *Bot) SendPrivmsg(target, msg string) {
 	for _, v := range strings.Split(msg, "\n") {
-		_ = b.WriteLine(util.MakeSimpleIRCLine("PRIVMSG", target, v))
+		_ = b.WriteIRCLine(util.MakeSimpleIRCLine("PRIVMSG", target, v))
 	}
 }
 
@@ -428,7 +408,7 @@ func (b *Bot) SendPrivmsg(target, msg string) {
 func (b *Bot) SendNotice(target, msg string) {
 	me := target
 	for _, senpai := range strings.Split(msg, "\n") {
-		_ = b.WriteLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
+		_ = b.WriteIRCLine(util.MakeSimpleIRCLine("NOTICE", me, senpai))
 	}
 }
 

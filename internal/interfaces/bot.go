@@ -16,6 +16,7 @@ type IRCMessager interface {
 	SendPrivmsg(target, message string)
 	SendNotice(target, message string)
 	WriteString(message string) error
+	WriteIRCLine(line ircmsg.IrcMessage) error
 }
 
 type IRCHooker interface {
