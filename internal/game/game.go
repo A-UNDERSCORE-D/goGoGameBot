@@ -85,7 +85,7 @@ type chatBridge struct {
 }
 
 type formatSet struct {
-	normal   util.Format
+	message  util.Format
 	joinPart util.Format
 	nick     util.Format
 	quit     util.Format
@@ -210,7 +210,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	g.chatBridge.colourMap = cm
 	gf := &g.chatBridge.format
 	f := &conf.Chat.Formats
-	gf.normal = f.Normal
+	gf.message = f.Message
 	gf.joinPart = f.JoinPart
 	gf.nick = f.Nick
 	gf.quit = f.Quit
