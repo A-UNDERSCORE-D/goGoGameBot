@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -18,6 +19,12 @@ type mockMessager struct {
 	lastMessages [][2]string
 	lastNotices  [][2]string
 	lastRaw      []string
+	lastIRCLine  []ircmsg.IrcMessage
+}
+
+func (m *mockMessager) WriteIRCLine(line ircmsg.IrcMessage) error {
+	m.lastIRCLine = append(m.lastIRCLine, line)
+	return nil
 }
 
 func (m *mockMessager) SendPrivmsg(target, message string) {
@@ -50,8 +57,7 @@ func cmpSlice(a, b [][2]string) bool {
 }
 
 func (m *mockMessager) Clear() {
-	m.lastMessages = nil
-	m.lastNotices = nil
+	*m = mockMessager{}
 }
 
 func TestManager_AddCommand(t *testing.T) {
