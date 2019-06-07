@@ -27,8 +27,9 @@ var (
 
 // Compile compiles the given format string into a text.template, evaluating IRC colours if requested, and adding the
 // default functions plus any passed to the template. if the template is invalid or the format has already been compiled,
-// Compile errors
-func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.FuncMap) error {
+// Compile errors. An optional root text/template can be passed, and if so, the compiled format's internal template will
+// be associated with the passed root
+func (f *Format) Compile(name string, evalColour bool, root *template.Template, funcMaps ...template.FuncMap) error {
 	if f.compiled {
 		return errors.New("format: cannot compile a format twice")
 	}
@@ -36,7 +37,12 @@ func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.Func
 	if f.FormatString == "" {
 		return ErrEmptyFormat
 	}
-	toSet := template.New(name)
+	var toSet *template.Template
+	if root == nil {
+		toSet = template.New(name)
+	} else {
+		toSet = root.New(name)
+	}
 	toSet.Funcs(TemplateUtilFuncs)
 	for _, entry := range funcMaps {
 		toSet.Funcs(entry)
