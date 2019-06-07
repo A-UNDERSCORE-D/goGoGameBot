@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/goshuirc/irc-go/ircfmt"
@@ -10,14 +9,6 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
-
-// CompileOrError is a helper function that attempts to compile a util.Format and if unsuccessful, sends the resulting
-// error down this game's bot's error function
-func (g *Game) CompileOrError(f *util.Format, name string, funcMaps map[string]interface{}) {
-	if err := f.Compile(g.name+"_"+name, false, funcMaps); err != nil {
-		g.manager.Error(fmt.Errorf("could not compile template %s for game %s: %s", name, g.name, err))
-	}
-}
 
 type dataForFmt struct {
 	SourceNick   string
@@ -81,25 +72,30 @@ func (g *Game) onPrivmsg(source, target, msg string) {
 		isAction = true
 	}
 	data := dataForPrivmsg{g.makeDataForFormat(source, target, msg), isAction}
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.normal))
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.message))
 }
 
 type dataForJoinPart struct {
 	dataForFmt
 	IsJoin bool
+	Action string
 }
 
 func (g *Game) onJoinPart(source, channel string, isJoin bool) {
 	if !g.shouldBridge(channel) {
 		return
 	}
-	data := dataForJoinPart{g.makeDataForFormat(source, channel, ""), isJoin}
+	action := "joined"
+	if !isJoin {
+		action = "parted"
+	}
+	data := dataForJoinPart{g.makeDataForFormat(source, channel, ""), isJoin, action}
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.joinPart))
 }
 
 type dataForNick struct {
 	dataForFmt
-	newNick string
+	NewNick string
 }
 
 func (g *Game) onNick(source, newnick string) {
@@ -114,7 +110,7 @@ func (g *Game) onQuit(source, message string) {
 
 type dataForKick struct {
 	dataForFmt
-	kickee string
+	Kickee string
 }
 
 func (g *Game) onKick(source, channel, kickee, message string) {
