@@ -24,50 +24,17 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	if conf.Name == "" {
 		return nil, errors.New("cannot have an empty game name")
 	}
-	/*	cm, err := util.MakeColourMap(conf.ColourMap.ToMap())
-		if err != nil {
-			return nil, fmt.Errorf("could not build colour map for %s on %s: %s", conf.Name, manager, err)
-		}
-
-		fmts := conf.Chat.Formats
-		for k, v := range map[string]util.Format{"normal": fmts.Normal, "joinpart": fmts.JoinPart, "nick": fmts.Nick, "quit": fmts.Quit, "kick": fmts.Kick, "external": fmts.External} {
-			err := v.Compile(conf.Name+"_"+k, false)
-			if err != nil {
-				return nil, fmt.Errorf("could not compile %q game chat format for %s", k, conf.Name)
-			}
-		}*/
 
 	g := &Game{
-		name:   conf.Name,
-		status: normal,
-		/*		autoRestart:     conf.AutoRestart,
-				autoStart:       conf.AutoStart,
-				stdinChan:       make(chan []byte),
-				controlChannels: channelPair{conf.ControlChannels.Admin, conf.ControlChannels.Msg},
-				chatBridge: chatBridge{
-					shouldBridge:  !conf.Chat.DontBridge,
-					dumpStderr:    conf.Chat.DumpStderr,
-					dumpStdout:    conf.Chat.DumpStdout,
-					allowForwards: !conf.Chat.DontAllowForwards,
-					stripMasks:    append(conf.Chat.StripMasks, manager.stripMasks...),
-					channels:      conf.Chat.BridgedChannels,
-					colourMap:     cm,
-					format: formatSet{
-						normal:   fmts.Normal,
-						joinPart: fmts.JoinPart,
-						nick:     fmts.Nick,
-						quit:     fmts.Quit,
-						kick:     fmts.Kick,
-						external: fmts.External,
-					},
-				},*/
+		name:    conf.Name,
+		status:  normal,
 		manager: manager,
 		Logger:  manager.Logger.Clone().SetPrefix("[" + conf.Name + "]"),
 	}
+	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
 		return nil, err
 	}
-
 	return g, nil
 }
 
@@ -161,8 +128,7 @@ func (g *Game) runGame() (bool, error) {
 	return true, nil
 }
 
-// UpdateFromConfig updates the game object with the data from the config object. It is atomic--No changes will be applied
-// if any pre-processing errors, and that error will be returned
+// UpdateFromConfig updates the game object with the data from the config object.
 func (g *Game) UpdateFromConfig(conf config.Game) error {
 	if conf.Name != g.GetName() {
 		g.Crit("attempt to reload game with a config who's name does not match ours! bailing out of reload")
