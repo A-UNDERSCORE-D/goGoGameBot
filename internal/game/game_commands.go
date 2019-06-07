@@ -28,14 +28,14 @@ func (g *Game) createCommandCallback(fmt util.Format) interfaces.CmdFunc {
 	}
 }
 
-func (g *Game) registerCommand(conf config.GameCommandConfig) error {
+func (g *Game) registerCommand(conf config.Command) error {
 	if conf.Name == "" {
 		return errors.New("cannot have a game command with an empty name")
 	}
 	if conf.Help == "" {
 		return errors.New("cannot have a game command with an empty help string")
 	}
-	if err := conf.StdinFormat.Compile(g.name+"_"+conf.Name, false); err != nil {
+	if err := conf.Format.Compile(conf.Name, false, nil); err != nil {
 		return err
 	}
 	return g.manager.bot.HookSubCommand(
@@ -43,6 +43,10 @@ func (g *Game) registerCommand(conf config.GameCommandConfig) error {
 		conf.Name,
 		conf.RequiresAdmin,
 		conf.Help,
-		g.createCommandCallback(conf.StdinFormat),
+		g.createCommandCallback(conf.Format),
 	)
+}
+
+func (g *Game) clearCommands() error {
+	return g.manager.bot.UnhookCommand(g.name)
 }
