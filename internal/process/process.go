@@ -130,11 +130,11 @@ func (p *Process) GetReturnCode() int {
 	return p.cmd.ProcessState.ExitCode()
 }
 
-// GetStatus returns the current status of the process, including memory and CPU usage
+// Status returns the current status of the process, including memory and CPU usage
 func (p *Process) GetStatus() string {
 	out := strings.Builder{}
 	if !p.IsRunning() {
-		out.WriteString("$c[red]$b Not running$r")
+		out.WriteString("$c[red]$bNot running$r")
 		return out.String()
 	}
 
