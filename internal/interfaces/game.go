@@ -23,6 +23,7 @@ type Game interface {
 	StopOrKiller
 	Runner
 	AutoStarter
+	Statuser
 }
 
 type StopOrKiller interface {
@@ -37,4 +38,8 @@ type Runner interface {
 
 type AutoStarter interface {
 	AutoStart()
+}
+
+type Statuser interface {
+	Status() string
 }
