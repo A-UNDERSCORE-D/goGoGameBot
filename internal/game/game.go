@@ -134,11 +134,18 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		g.Crit("attempt to reload game with a config who's name does not match ours! bailing out of reload")
 		return fmt.Errorf("invalid config name")
 	}
+
+	if conf.ControlChannels.Admin == "" || conf.ControlChannels.Msg == "" {
+		g.Crit("cannot have an empty admin or msg channel. bailing out of reload")
+		return fmt.Errorf("cannot have an empty admin or msg channel")
+	}
+
 	var wd string
 	if conf.WorkingDir == "" {
 		wd = path.Dir(conf.Path)
 		g.Logger.Infof("game %q's working directory inferred to %q from binary path %q", g.GetName(), wd, conf.Path)
 	}
+
 	if err := g.regexpManager.UpdateFromConf(conf.Regexps); err != nil {
 		return err
 	}
