@@ -69,3 +69,7 @@ func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
 	g.manager.bot.SendPrivmsg(c, msg)
 	return msg, nil
 }
+
+func (g *Game) Status() string {
+	return g.process.GetStatus()
+}

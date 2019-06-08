@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"runtime/debug"
 	"strings"
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
+	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
@@ -18,6 +20,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
 
 const (
@@ -65,7 +68,7 @@ type Bot struct {
 	GameManager    *game.Manager
 }
 
-func NewBot(conf config.Config, logger *log.Logger) *Bot {
+func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 	b := &Bot{
 		Config:   conf,
 		IrcConf:  conf.Irc,
@@ -77,7 +80,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b)
 	gm, err := game.NewManager(conf.GameManager, b, b.Log)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("bot: error while creating game manager: %s", err)
 	}
 	b.GameManager = gm
 
@@ -89,7 +92,7 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 
 	b.capManager = &CapabilityManager{bot: b}
 	b.Init()
-	return b
+	return b, nil
 }
 
 /***Start of funcs for upper level control***************************************************************************/
@@ -159,6 +162,23 @@ func (b *Bot) Init() {
 	}, event.PriNorm)
 
 	b.EventMgr.Attach("ERR", func(s string, maps event.ArgMap) { onError(maps, b) }, event.PriHighest)
+	b.HookPrivmsg(func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot) {
+		b.CommandManager.ParseLine(message, true, ircutils.ParseUserhost(source), target)
+	})
+
+	_ = b.CommandManager.AddSubCommand("STATUS", "ALL", 0, func(data command.Data) {
+		msgs := []string{systemstats.GetStats()}
+		b.GameManager.ForEachGame(func(i interfaces.Game) {
+			msgs = append(msgs, fmt.Sprintf("[%s]%s", i.GetName(), i.Status()))
+		}, nil)
+		for _, m := range msgs {
+			if data.IsFromIRC {
+				data.SendTargetMessage(m)
+			} else {
+				b.Log.Info(m)
+			}
+		}
+	}, "returns status for the bot and all games")
 
 	panicNotNil(b.CommandManager.AddCommand("STOP", 3, b.stopCmd, "stops all games on the bot and quits the bot"))
 	panicNotNil(b.CommandManager.AddCommand("RESTART", 3, b.restartCmd, "stops all games on the bot and restarts the bot"))
