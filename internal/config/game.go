@@ -20,7 +20,7 @@ type Game struct {
 	Path            string    `xml:"binary"`
 	WorkingDir      string    `xml:"working_dir"`
 	Args            string    `xml:"args"`
-	Commands        []Command `xml:"commands>command"`
+	Commands        []Command `xml:"command"`
 	Regexps         []Regexp
 	ControlChannels struct {
 		Admin string `xml:"admin"`
@@ -54,8 +54,8 @@ type ExtraFormat struct {
 
 type Command struct {
 	XMLName       xml.Name    `xml:"command"`
-	Name          string      `xml:"name"`
-	RequiresAdmin int         `xml:"requires_admin"`
+	Name          string      `xml:"name,attr"`
+	RequiresAdmin int         `xml:"requires_admin,attr"`
 	Help          string      `xml:"help"`
 	Format        util.Format `xml:"format"`
 }
