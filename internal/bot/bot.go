@@ -86,6 +86,8 @@ func NewBot(conf config.Config, logger *log.Logger) *Bot {
 			panic(err)
 		}
 	}
+
+	b.capManager = &CapabilityManager{bot: b}
 	b.Init()
 	return b
 }
@@ -147,8 +149,6 @@ func panicNotNil(err error) {
 
 // Init sets up the default handlers and otherwise preps the bot to run
 func (b *Bot) Init() {
-	b.capManager = &CapabilityManager{bot: b}
-
 	b.HookRaw("PING", onPing, event.PriHighest)
 	b.HookRaw("001", func(_ ircmsg.IrcMessage, _ interfaces.Bot) {
 		b.Status = CONNECTED
