@@ -147,7 +147,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 
 	if err := g.regexpManager.UpdateFromConf(conf.Regexps); err != nil {
-		return err
+		return fmt.Errorf("could not update regepxs from config: %s", err)
 	}
 
 	cm, err := util.MakeColourMap(conf.ColourMap.ToMap())
@@ -156,19 +156,26 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 
 	if err := g.CompileFormats(&conf); err != nil {
-		return err
+		return fmt.Errorf("could not compile formats: %s", err)
 	}
 
-	if err := g.clearCommands(); err != nil {
-		return err
-	}
+	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
+
 	for _, cmd := range conf.Commands {
 		if err := g.registerCommand(cmd); err != nil {
 			return err
 		}
 	}
-
-	g.process.UpdateCmd(conf.Path, strings.Split(conf.Args, " "), wd)
+	procArgs := strings.Split(conf.Args, " ")
+	if g.process == nil {
+		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone())
+		if err != nil {
+			return err
+		}
+		g.process = p
+	} else {
+		g.process.UpdateCmd(conf.Path, procArgs, wd)
+	}
 	g.autoStart = conf.AutoStart
 	g.autoRestart = conf.AutoRestart
 	g.controlChannels.admin = conf.ControlChannels.Admin
@@ -196,26 +203,23 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 func (g *Game) CompileFormats(gameConf *config.Game) error {
 	fmts := &gameConf.Chat.Formats
 	if err := fmts.Message.Compile("message", false, nil); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "message", err)
 	}
 	root := fmts.Message.CompiledFormat
 	if err := fmts.JoinPart.Compile("joinPart", false, root); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "joinPart", err)
 	}
 	if err := fmts.Nick.Compile("nick", false, root); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "nick", err)
 	}
 	if err := fmts.Quit.Compile("quit", false, root); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "quit", err)
 	}
 	if err := fmts.Kick.Compile("kick", false, root); err != nil {
-		return err
-	}
-	if err := fmts.Quit.Compile("quit", false, root); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "kick", err)
 	}
 	if err := fmts.External.Compile("external", false, root); err != nil {
-		return err
+		return fmt.Errorf("could not compile format %s: %s", "external", err)
 	}
 	for _, v := range fmts.Extra {
 		if err := v.Compile(v.Name, false, root); err != nil {
