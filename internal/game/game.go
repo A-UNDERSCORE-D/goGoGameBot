@@ -29,7 +29,7 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 		name:    conf.Name,
 		status:  normal,
 		manager: manager,
-		Logger:  manager.Logger.Clone().SetPrefix("[" + conf.Name + "]"),
+		Logger:  manager.Logger.Clone().SetPrefix(conf.Name),
 	}
 	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
@@ -131,12 +131,12 @@ func (g *Game) runGame() (bool, error) {
 // UpdateFromConfig updates the game object with the data from the config object.
 func (g *Game) UpdateFromConfig(conf config.Game) error {
 	if conf.Name != g.GetName() {
-		g.Crit("attempt to reload game with a config who's name does not match ours! bailing out of reload")
+		g.Warn("attempt to reload game with a config who's name does not match ours! bailing out of reload")
 		return fmt.Errorf("invalid config name")
 	}
 
 	if conf.ControlChannels.Admin == "" || conf.ControlChannels.Msg == "" {
-		g.Crit("cannot have an empty admin or msg channel. bailing out of reload")
+		g.Warn("cannot have an empty admin or msg channel. bailing out of reload")
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
 
