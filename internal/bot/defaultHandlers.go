@@ -72,13 +72,13 @@ rangeLoop:
 				b.Error(fmt.Errorf(errDuringSasl, "line.SourceLine"))
 			}
 
-		case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
-			break rangeLoop
-
 		case util.RPL_NICKLOCKED, util.RPL_SASLFAIL, util.RPL_SASLTOOLONG, util.RPL_SASLABORTED, util.RPL_SASLALREADY, util.RPL_SASLMECHS:
 			// TODO: This is a workaround for removed features in irc-go
 			b.Error(fmt.Errorf(errSaslFailed, "line.SourceLine"))
-			break rangeLoop
+			fallthrough
+
+		case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
+			fallthrough
 
 		default:
 			break rangeLoop
