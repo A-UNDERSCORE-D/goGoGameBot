@@ -47,7 +47,10 @@ func main() {
 	if err != nil {
 		l.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
 	}
-	b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
+	b, err := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
+	if err != nil {
+		l.Critf("error while creating bot: %s", err)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
