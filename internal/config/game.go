@@ -36,7 +36,8 @@ type Game struct {
 		BridgedChannels   []string `xml:"bridged_channel"`
 		Formats           struct {
 			Message  util.Format   `xml:"message"`
-			JoinPart util.Format   `xml:"join_part"`
+			Join     util.Format   `xml:"join"`
+			Part     util.Format   `xml:"part"`
 			Nick     util.Format   `xml:"nick"`
 			Quit     util.Format   `xml:"quit"`
 			Kick     util.Format   `xml:"kick"`

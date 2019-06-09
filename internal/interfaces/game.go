@@ -26,7 +26,8 @@ type Game interface {
 	Statuser
 
 	OnPrivmsg(source, target, msg string)
-	OnJoinPart(source, channel string, isJoin bool)
+	OnJoin(source, channel string)
+	OnPart(source, channel, message string)
 	OnNick(source, newnick string)
 	OnQuit(source, message string)
 	OnKick(source, channel, kickee, message string)

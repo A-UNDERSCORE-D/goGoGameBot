@@ -26,11 +26,13 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	}
 
 	g := &Game{
-		name:    conf.Name,
-		status:  normal,
-		manager: manager,
-		Logger:  manager.Logger.Clone().SetPrefix(conf.Name),
+		name:      conf.Name,
+		status:    normal,
+		manager:   manager,
+		Logger:    manager.Logger.Clone().SetPrefix(conf.Name),
+		stdinChan: make(chan []byte),
 	}
+	go g.watchStdinChan()
 	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
 		return nil, err
@@ -53,7 +55,8 @@ type chatBridge struct {
 
 type formatSet struct {
 	message  util.Format
-	joinPart util.Format
+	join     util.Format
+	part     util.Format
 	nick     util.Format
 	quit     util.Format
 	kick     util.Format
@@ -191,7 +194,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	gf := &g.chatBridge.format
 	f := &conf.Chat.Formats
 	gf.message = f.Message
-	gf.joinPart = f.JoinPart
+	gf.join = f.Join
+	gf.part = f.Part
 	gf.nick = f.Nick
 	gf.quit = f.Quit
 	gf.kick = f.Kick
@@ -206,8 +210,11 @@ func (g *Game) CompileFormats(gameConf *config.Game) error {
 		return fmt.Errorf("could not compile format %s: %s", "message", err)
 	}
 	root := fmts.Message.CompiledFormat
-	if err := fmts.JoinPart.Compile("joinPart", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "joinPart", err)
+	if err := fmts.Join.Compile("join", false, root); err != nil {
+		return fmt.Errorf("could not compile format %s: %s", "join", err)
+	}
+	if err := fmts.Part.Compile("part", false, root); err != nil {
+		return fmt.Errorf("could not compile format %s: %s", "part", err)
 	}
 	if err := fmts.Nick.Compile("nick", false, root); err != nil {
 		return fmt.Errorf("could not compile format %s: %s", "nick", err)

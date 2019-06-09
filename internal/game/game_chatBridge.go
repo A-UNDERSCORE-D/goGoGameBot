@@ -76,22 +76,18 @@ func (g *Game) OnPrivmsg(source, target, msg string) {
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.message))
 }
 
-type dataForJoinPart struct {
-	dataForFmt
-	IsJoin bool
-	Action string
-}
-
-func (g *Game) OnJoinPart(source, channel string, isJoin bool) {
+func (g *Game) OnJoin(source, channel string) {
 	if !g.shouldBridge(channel) {
 		return
 	}
-	action := "joined"
-	if !isJoin {
-		action = "parted"
+	g.checkError(g.SendFormattedLine(g.makeDataForFormat(source, channel, ""), g.chatBridge.format.join))
+}
+
+func (g *Game) OnPart(source, target, message string) {
+	if !g.shouldBridge(target) {
+		return
 	}
-	data := dataForJoinPart{g.makeDataForFormat(source, channel, ""), isJoin, action}
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.joinPart))
+	g.checkError(g.SendFormattedLine(g.makeDataForFormat(source, target, message), g.chatBridge.format.part))
 }
 
 type dataForNick struct {
