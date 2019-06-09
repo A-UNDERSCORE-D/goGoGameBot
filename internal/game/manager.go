@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
+	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
@@ -161,6 +162,7 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 	}
 }
 
+// StopAllGames stops all the games on the manager, blocking until they all close or are killed
 func (m *Manager) StopAllGames() {
 	m.status = shutdown
 	wg := sync.WaitGroup{}
@@ -168,10 +170,35 @@ func (m *Manager) StopAllGames() {
 	wg.Wait()
 }
 
+// StartAutoStartGames starts any game marked as auto start
 func (m *Manager) StartAutoStartGames() {
 	m.ForEachGame(func(game interfaces.Game) { game.AutoStart() }, nil)
 }
 
+func (m *Manager) StartGame(name string) error {
+	if g := m.GetGameFromName(name); g != nil {
+		go g.Run()
+		return nil
+	}
+	return fmt.Errorf("game %q does not exist", name)
+}
+
+// Error is a helper function that returns the passed error to the manager's bot instance
 func (m *Manager) Error(err error) {
 	m.bot.Error(fmt.Errorf("game.Manager: %s", err))
+}
+
+func (m *Manager) setupCommands() {
+	_ = m.bot.HookCommand("STARTGAME", 2, "starts the specified game",
+		func(fromIRC bool, args []string, source ircutils.UserHost, target string, resp interfaces.CommandResponder) {
+			if len(args) < 1 {
+				resp.ReturnNotice("you must provide at least one game to start")
+				return
+			}
+			for _, name := range args {
+				if err := m.StartGame(name); err != nil {
+					resp.ReturnNotice(err.Error())
+				}
+			}
+		})
 }

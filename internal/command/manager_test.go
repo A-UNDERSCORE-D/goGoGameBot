@@ -270,20 +270,20 @@ func TestManager_ParseLine(t *testing.T) {
 	_ = m.AddCommand(
 		"testNoAccess",
 		noAdmin,
-		func(data Data) { data.SendTargetMessage("huzzah!") },
+		func(data *Data) { data.SendTargetMessage("huzzah!") },
 		"test cmd",
 	)
 	_ = m.AddCommand(
 		"testaccess",
 		1,
-		func(data Data) { data.SendTargetMessage("admin!") },
+		func(data *Data) { data.SendTargetMessage("admin!") },
 		"test cmd",
 	)
 	_ = m.AddSubCommand(
 		"test",
 		"cmdAccess",
 		1,
-		func(data Data) { data.SendTargetMessage("HI! Im a subcommand that requires admin!") },
+		func(data *Data) { data.SendTargetMessage("HI! Im a subcommand that requires admin!") },
 		"test cmd",
 	)
 
@@ -291,7 +291,7 @@ func TestManager_ParseLine(t *testing.T) {
 		"test",
 		"cmdNoAccess",
 		noAdmin,
-		func(data Data) { data.SendTargetMessage("HI! Im a subcommand that does not require admin") },
+		func(data *Data) { data.SendTargetMessage("HI! Im a subcommand that does not require admin") },
 		"test cmd",
 	)
 

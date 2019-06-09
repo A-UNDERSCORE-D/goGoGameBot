@@ -15,9 +15,8 @@ import (
 const noAdmin = 0
 
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes ...string) *Manager {
-	// TODO: make the prefixes here configurable
 	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: prefixes}
-	_ = m.AddCommand("help", 0, func(data Data) {
+	_ = m.AddCommand("help", 0, func(data *Data) {
 		var toSend string
 		if len(data.Args) == 0 {
 			// just dump the available commands
@@ -223,7 +222,7 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	}
 	m.Logger.Debugf("firing command %q (original line %q)", cmdName, line)
 
-	data := Data{
+	data := &Data{
 		IsFromIRC:    fromIRC,
 		Args:         lineSplit[1:],
 		OriginalArgs: line,

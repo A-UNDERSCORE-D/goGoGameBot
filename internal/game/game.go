@@ -242,7 +242,7 @@ func (g *Game) GetName() string {
 
 func (g *Game) AutoStart() {
 	if g.autoStart {
-		g.Run()
+		go g.Run()
 	}
 }
 

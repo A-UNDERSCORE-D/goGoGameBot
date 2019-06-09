@@ -11,7 +11,7 @@ import (
 )
 
 func (g *Game) createCommandCallback(fmt util.Format) interfaces.CmdFunc {
-	return func(fromIRC bool, args []string, source ircutils.UserHost, target string) {
+	return func(fromIRC bool, args []string, source ircutils.UserHost, target string, _ interfaces.CommandResponder) {
 		res, err := fmt.ExecuteBytes(struct {
 			FromIRC bool
 			Args    []string

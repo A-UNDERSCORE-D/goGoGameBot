@@ -48,6 +48,22 @@ func (d *Data) SendRawMessage(line string) error {
 	return d.Manager.messenger.WriteString(line)
 }
 
+func (d *Data) ReturnNotice(msg string) {
+	if d.IsFromIRC {
+		d.SendSourceNotice(msg)
+	} else {
+		d.Manager.Logger.Info(msg)
+	}
+}
+
+func (d *Data) ReturnMessage(msg string) {
+	if d.IsFromIRC {
+		d.SendTargetMessage(msg)
+	} else {
+		d.Manager.Logger.Info(msg)
+	}
+}
+
 func (d *Data) String() string {
 	return strings.Join(d.Args, " ")
 }

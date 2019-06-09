@@ -24,7 +24,12 @@ type IRCHooker interface {
 	HookRaw(command string, callback func(ircmsg.IrcMessage, Bot), priority int)
 }
 
-type CmdFunc func(fromIRC bool, args []string, source ircutils.UserHost, target string)
+type CommandResponder interface {
+	ReturnNotice(msg string)
+	ReturnMessage(msg string)
+}
+
+type CmdFunc func(fromIRC bool, args []string, source ircutils.UserHost, target string, responder CommandResponder)
 type CommandHooker interface {
 	HookCommand(name string, adminRequired int, help string, callback CmdFunc) error
 	HookSubCommand(rootCommand, name string, adminRequired int, help string, callback CmdFunc) error

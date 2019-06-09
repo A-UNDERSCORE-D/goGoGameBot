@@ -7,11 +7,11 @@ import (
 	"sync"
 )
 
-type Callback func(data Data)
+type Callback func(data *Data)
 
 type Command interface {
 	AdminRequired() int
-	Fire(data Data)
+	Fire(data *Data)
 	Help() string
 	Name() string
 }
@@ -22,7 +22,7 @@ type SingleCommand struct {
 	name          string
 }
 
-func (c *SingleCommand) Fire(data Data) {
+func (c *SingleCommand) Fire(data *Data) {
 	if data.CheckPerms(c.adminRequired) {
 		c.callback(data)
 	}
@@ -82,7 +82,7 @@ func (s *SubCommandList) removeSubcmd(name string) error {
 	return nil
 }
 
-func (s *SubCommandList) Fire(data Data) {
+func (s *SubCommandList) Fire(data *Data) {
 	if len(data.Args) < 1 {
 		data.SendSourceNotice("Not enough arguments")
 		data.SendSourceNotice(s.Help())
@@ -96,7 +96,7 @@ func (s *SubCommandList) Fire(data Data) {
 		return
 	}
 
-	newData := Data{
+	newData := &Data{
 		IsFromIRC:    data.IsFromIRC,
 		Args:         data.Args[0:],
 		OriginalArgs: data.OriginalArgs,

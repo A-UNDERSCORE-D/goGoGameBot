@@ -133,7 +133,7 @@ func (b *Bot) Stop(quitMsg string, restart bool) {
 	}
 }
 
-func (b *Bot) stopCmd(data command.Data) {
+func (b *Bot) stopCmd(data *command.Data) {
 	if str := data.String(); str == "" {
 		b.Stop("Quit requested", false)
 	} else {
@@ -141,7 +141,7 @@ func (b *Bot) stopCmd(data command.Data) {
 	}
 }
 
-func (b *Bot) restartCmd(_ command.Data) {
+func (b *Bot) restartCmd(_ *command.Data) {
 	b.Stop("restarting", true)
 }
 func panicNotNil(err error) {
@@ -166,7 +166,7 @@ func (b *Bot) Init() {
 		b.CommandManager.ParseLine(message, true, ircutils.ParseUserhost(source), target)
 	})
 
-	_ = b.CommandManager.AddSubCommand("STATUS", "ALL", 0, func(data command.Data) {
+	_ = b.CommandManager.AddSubCommand("STATUS", "ALL", 0, func(data *command.Data) {
 		msgs := []string{systemstats.GetStats()}
 		b.GameManager.ForEachGame(func(i interfaces.Game) {
 			msgs = append(msgs, fmt.Sprintf("[%s] %s", i.GetName(), i.Status()))
@@ -433,7 +433,7 @@ func (b *Bot) SendNotice(target, msg string) {
 }
 
 func wrapCommand(callback interfaces.CmdFunc) command.Callback {
-	return func(data command.Data) { callback(data.IsFromIRC, data.Args, data.Source, data.Target) }
+	return func(data *command.Data) { callback(data.IsFromIRC, data.Args, data.Source, data.Target, data) }
 }
 
 func (b *Bot) HookCommand(name string, adminRequired int, help string, callback interfaces.CmdFunc) error {

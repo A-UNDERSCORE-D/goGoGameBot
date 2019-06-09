@@ -15,7 +15,7 @@ func TestSingleCommand_Fire(t *testing.T) {
 		name          string
 	}
 	type args struct {
-		data Data
+		data *Data
 	}
 	tests := []struct {
 		name   string
@@ -174,7 +174,7 @@ func TestSubCommandList_Fire(t *testing.T) {
 		subCommands map[string]Command
 	}
 	type args struct {
-		data Data
+		data *Data
 	}
 	tests := []struct {
 		name        string
@@ -188,11 +188,11 @@ func TestSubCommandList_Fire(t *testing.T) {
 			fields: fields{map[string]Command{
 				"test": &SingleCommand{
 					name:     "test",
-					callback: func(data Data) { data.SendSourceNotice("works") },
+					callback: func(data *Data) { data.SendSourceNotice("works") },
 				},
 			}},
 			args: args{
-				data: Data{
+				data: &Data{
 					IsFromIRC: true,
 					Args:      []string{"test", "stuff"},
 					Source:    ircutils.ParseUserhost("test!test@test"),
@@ -204,7 +204,7 @@ func TestSubCommandList_Fire(t *testing.T) {
 		{
 			name: "does not exist",
 			args: args{
-				data: Data{
+				data: &Data{
 					IsFromIRC: true,
 					Args:      []string{"test", "stuff"},
 					Source:    ircutils.ParseUserhost("test!test@test"),
@@ -216,7 +216,7 @@ func TestSubCommandList_Fire(t *testing.T) {
 		{
 			name: "not enough args",
 			args: args{
-				data: Data{
+				data: &Data{
 					IsFromIRC: true,
 					Args:      []string{},
 					Source:    ircutils.ParseUserhost("test!test@test"),
