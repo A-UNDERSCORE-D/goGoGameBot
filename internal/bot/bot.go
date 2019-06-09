@@ -190,9 +190,9 @@ func (b *Bot) connect() error {
 	var err error
 
 	if !b.Config.Irc.SSL {
-		sock, err = net.Dial("tcp", b.IrcConf.Host+":"+b.IrcConf.Port)
+		sock, err = net.Dial("tcp", net.JoinHostPort(b.IrcConf.Host, b.IrcConf.Port))
 	} else {
-		sock, err = tls.Dial("tcp", b.IrcConf.Host+":"+b.IrcConf.Port, nil)
+		sock, err = tls.Dial("tcp", net.JoinHostPort(b.IrcConf.Host, b.IrcConf.Port), nil)
 	}
 
 	if err != nil {
