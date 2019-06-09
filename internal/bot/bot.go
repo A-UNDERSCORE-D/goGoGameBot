@@ -77,7 +77,7 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 		EventMgr: new(event.Manager),
 		DoneChan: make(chan bool),
 	}
-	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b, b.IrcConf.Nick+":", conf.Irc.CommandPrefix)
+	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b, b.IrcConf.Nick+": ", conf.Irc.CommandPrefix)
 	gm, err := game.NewManager(conf.GameManager, b, b.Log)
 	if err != nil {
 		return nil, fmt.Errorf("bot: error while creating game manager: %s", err)
@@ -169,7 +169,7 @@ func (b *Bot) Init() {
 	_ = b.CommandManager.AddSubCommand("STATUS", "ALL", 0, func(data command.Data) {
 		msgs := []string{systemstats.GetStats()}
 		b.GameManager.ForEachGame(func(i interfaces.Game) {
-			msgs = append(msgs, fmt.Sprintf("[%s]%s", i.GetName(), i.Status()))
+			msgs = append(msgs, fmt.Sprintf("[%s] %s", i.GetName(), i.Status()))
 		}, nil)
 		for _, m := range msgs {
 			if data.IsFromIRC {
@@ -227,7 +227,7 @@ func (b *Bot) connect() error {
 func (b *Bot) writeRaw(line []byte) (int, error) {
 	b.sockMutex.Lock()
 	defer b.sockMutex.Unlock()
-	b.Log.Infof("<< %s", string(line))
+	b.Log.Debugf("<< %s", string(line))
 	return b.sock.Write(line)
 }
 
@@ -262,11 +262,11 @@ func (b *Bot) readLoop() {
 	for scanner.Scan() {
 		lineStr := scanner.Text()
 
-		b.Log.Infof(">> %s", lineStr)
+		b.Log.Debugf(">> %s", lineStr)
 
 		line, err := ircmsg.ParseLine(lineStr)
 		if err != nil {
-			b.Log.Infof("[WARN] Discarding invalid line %q: %s", lineStr, err)
+			b.Log.Warnf("Discarding invalid line %q: %s", lineStr, err)
 			continue
 		}
 
