@@ -77,7 +77,7 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 		EventMgr: new(event.Manager),
 		DoneChan: make(chan bool),
 	}
-	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b)
+	b.CommandManager = command.NewManager(b.Log.Clone().SetPrefix("CMD"), b, b.IrcConf.Nick+":", conf.Irc.CommandPrefix)
 	gm, err := game.NewManager(conf.GameManager, b, b.Log)
 	if err != nil {
 		return nil, fmt.Errorf("bot: error while creating game manager: %s", err)

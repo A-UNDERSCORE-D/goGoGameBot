@@ -266,7 +266,7 @@ func TestManager_CheckAdmin(t *testing.T) {
 }
 
 func TestManager_ParseLine(t *testing.T) {
-	m := NewManager(baseLogger, &mockMessager{})
+	m := NewManager(baseLogger, &mockMessager{}, "~")
 	_ = m.AddCommand(
 		"testNoAccess",
 		noAdmin,
