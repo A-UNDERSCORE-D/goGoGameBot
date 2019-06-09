@@ -14,9 +14,9 @@ import (
 
 const noAdmin = 0
 
-func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
+func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes ...string) *Manager {
 	// TODO: make the prefixes here configurable
-	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: []string{"~", "goGoGameBot: "}}
+	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: prefixes}
 	_ = m.AddCommand("help", 0, func(data Data) {
 		var toSend string
 		if len(data.Args) == 0 {
@@ -37,13 +37,16 @@ func NewManager(logger *log.Logger, messenger interfaces.IRCMessager) *Manager {
 
 			if realCmd, ok := cmd.(*SubCommandList); ok && len(data.Args) > 1 && realCmd.findSubcommand(data.Args[1]) != nil {
 				subCmd := realCmd.findSubcommand(data.Args[1])
-				m.Logger.Infof("got a thing: %v, %#[1]v", subCmd)
 				toSend = fmt.Sprintf("%s: %s", strings.Join(data.Args[:2], " "), subCmd.Help())
 			} else {
 				toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
 			}
 		}
-		data.SendSourceNotice(toSend)
+		if data.IsFromIRC {
+			data.SendSourceNotice(toSend)
+		} else {
+			m.Logger.Info(toSend)
+		}
 	}, "prints command help")
 	return m
 }
@@ -79,7 +82,7 @@ func (m *Manager) AddCommand(name string, requiresAdmin int, callback Callback, 
 		adminRequired: requiresAdmin,
 		callback:      callback,
 		help:          help,
-		name:          name,
+		name:          strings.ToLower(name),
 	})
 }
 
@@ -134,7 +137,7 @@ func (m *Manager) getCommandByName(name string) Command {
 func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callback Callback, help string) error {
 	if m.getCommandByName(rootName) == nil {
 		err := m.addCommand(&SubCommandList{
-			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: rootName},
+			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: strings.ToUpper(rootName)},
 			subCommands:   make(map[string]Command),
 		})
 		if err != nil {
