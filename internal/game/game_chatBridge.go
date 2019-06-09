@@ -6,6 +6,7 @@ import (
 	"github.com/goshuirc/irc-go/ircfmt"
 	"github.com/goshuirc/irc-go/ircutils"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
@@ -58,7 +59,7 @@ type dataForPrivmsg struct {
 	IsAction bool
 }
 
-func (g *Game) onPrivmsg(source, target, msg string) {
+func (g *Game) OnPrivmsg(source, target, msg string) {
 	if !g.shouldBridge(target) {
 		return
 	}
@@ -81,7 +82,7 @@ type dataForJoinPart struct {
 	Action string
 }
 
-func (g *Game) onJoinPart(source, channel string, isJoin bool) {
+func (g *Game) OnJoinPart(source, channel string, isJoin bool) {
 	if !g.shouldBridge(channel) {
 		return
 	}
@@ -98,12 +99,12 @@ type dataForNick struct {
 	NewNick string
 }
 
-func (g *Game) onNick(source, newnick string) {
+func (g *Game) OnNick(source, newnick string) {
 	data := dataForNick{g.makeDataForFormat(source, "", ""), newnick}
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.nick))
 }
 
-func (g *Game) onQuit(source, message string) {
+func (g *Game) OnQuit(source, message string) {
 	data := g.makeDataForFormat(source, "", message)
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.quit))
 }
@@ -113,7 +114,7 @@ type dataForKick struct {
 	Kickee string
 }
 
-func (g *Game) onKick(source, channel, kickee, message string) {
+func (g *Game) OnKick(source, channel, kickee, message string) {
 	if !g.shouldBridge(channel) {
 		return
 	}
@@ -126,11 +127,11 @@ type dataForOtherGameFmt struct {
 	SourceGame string
 }
 
-func (g *Game) sendLineFromOtherGame(msg string, source *Game) {
+func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if !g.chatBridge.allowForwards {
 		return
 	}
-	fmtData := dataForOtherGameFmt{msg, source.name}
+	fmtData := dataForOtherGameFmt{msg, source.GetName()}
 	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
 }
 

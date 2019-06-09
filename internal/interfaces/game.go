@@ -24,6 +24,13 @@ type Game interface {
 	Runner
 	AutoStarter
 	Statuser
+
+	OnPrivmsg(source, target, msg string)
+	OnJoinPart(source, channel string, isJoin bool)
+	OnNick(source, newnick string)
+	OnQuit(source, message string)
+	OnKick(source, channel, kickee, message string)
+	SendLineFromOtherGame(msg string, source Game)
 }
 
 type StopOrKiller interface {
