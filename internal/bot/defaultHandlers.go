@@ -27,7 +27,7 @@ func onError(maps event.ArgMap, b *Bot) {
 	for _, l := range strings.Split(trace, "\n") {
 		b.Log.Warn(l)
 	}
-	if b.Status == CONNECTED {
+	if b.Status() == CONNECTED {
 		b.SendPrivmsg(b.Config.Irc.AdminChan.Name, "[ERROR] "+msg)
 	}
 }

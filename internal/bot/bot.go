@@ -53,11 +53,12 @@ type RawChanPair struct {
 
 // Bot is the main IRC bot object, it holds the connection to IRC, and maintains communication between games and IRC
 type Bot struct {
-	Config         config.Config            // Config for the IRC connection etc
-	IrcConf        config.BotConfig         // Easier access to the IRC section of the config
-	sockMutex      sync.Mutex               // Mutex for the IRC socket
-	sock           net.Conn                 // IRC socket
-	Status         int                      // Current connection status
+	Config         config.Config    // Config for the IRC connection etc
+	IrcConf        config.BotConfig // Easier access to the IRC section of the config
+	sockMutex      sync.Mutex       // Mutex for the IRC socket
+	sock           net.Conn         // IRC socket
+	statusMutex    sync.Mutex
+	status         int                      // Current connection status
 	DoneChan       chan bool                // DoneChan will be closed when the connection is done. May be replaced by a waitgroup or other semaphore
 	Log            *log.Logger              // Logger setup to have a prefix etc, for easy logging
 	EventMgr       *event.Manager           // Main heavy lifter for the event system
@@ -72,7 +73,7 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 	b := &Bot{
 		Config:   conf,
 		IrcConf:  conf.Irc,
-		Status:   DISCONNECTED,
+		status:   DISCONNECTED,
 		Log:      logger,
 		EventMgr: new(event.Manager),
 		DoneChan: make(chan bool),
@@ -106,12 +107,12 @@ func (b *Bot) Run() error {
 	b.WaitForRaw("001")
 	b.GameManager.StartAutoStartGames()
 	<-b.DoneChan
-	if b.Status == RESTARTING {
+	if b.Status() == RESTARTING {
 		return ErrRestart
 	}
 
-	if b.Status != DISCONNECTED {
-		b.Status = DISCONNECTED
+	if b.Status() != DISCONNECTED {
+		b.SetStatus(DISCONNECTED)
 	}
 	return nil
 }
@@ -120,16 +121,16 @@ func (b *Bot) Run() error {
 func (b *Bot) Stop(quitMsg string, restart bool) {
 	b.Log.Info("stop requested: ", quitMsg)
 	b.GameManager.StopAllGames()
-	if b.Status == DISCONNECTED {
+	if b.Status() == DISCONNECTED {
 		return
 	}
 
 	_ = b.WriteIRCLine(util.MakeSimpleIRCLine("QUIT", quitMsg))
 	b.WaitForRaw("ERROR")
 	if restart {
-		b.Status = RESTARTING
+		b.SetStatus(RESTARTING)
 	} else {
-		b.Status = DISCONNECTED
+		b.SetStatus(DISCONNECTED)
 	}
 }
 
@@ -154,7 +155,7 @@ func panicNotNil(err error) {
 func (b *Bot) Init() {
 	b.HookRaw("PING", onPing, event.PriHighest)
 	b.HookRaw("001", func(_ ircmsg.IrcMessage, _ interfaces.Bot) {
-		b.Status = CONNECTED
+		b.SetStatus(CONNECTED)
 		_ = b.WriteIRCLine(util.MakeSimpleIRCLine("JOIN", b.IrcConf.AdminChan.Name, b.IrcConf.AdminChan.Key))
 		for _, c := range b.IrcConf.JoinChans {
 			_ = b.WriteIRCLine(util.MakeSimpleIRCLine("JOIN", c.Name, c.Key))
@@ -199,7 +200,7 @@ func (b *Bot) connect() error {
 		return err
 	}
 	b.sock = sock
-	b.Status = CONNECTING
+	b.SetStatus(CONNECTING)
 
 	go b.readLoop()
 	b.capManager.requestCap(&Capability{Name: "sasl", Callback: b.saslHandler})
@@ -209,11 +210,11 @@ func (b *Bot) connect() error {
 	nickMsg := util.MakeSimpleIRCLine("NICK", b.IrcConf.Nick)
 
 	if err := b.WriteIRCLine(userMsg); err != nil {
-		b.Status = ERRORED
+		b.SetStatus(ERRORED)
 		return err
 	}
 	if err := b.WriteIRCLine(nickMsg); err != nil {
-		b.Status = ERRORED
+		b.SetStatus(ERRORED)
 		return err
 	}
 
@@ -238,7 +239,7 @@ func (b *Bot) WriteString(line string) error {
 
 // WriteIRCLine writes an ircmsg.IrcMessage to the connected IRC server
 func (b *Bot) WriteIRCLine(line ircmsg.IrcMessage) error {
-	if b.Status == DISCONNECTED {
+	if b.Status() == DISCONNECTED {
 		return ErrNotConnected
 	}
 
@@ -461,4 +462,16 @@ func (b *Bot) UnhookCommand(name string) error {
 
 func (b *Bot) UnhookSubCommand(rootName, name string) error {
 	return b.CommandManager.RemoveSubCommand(rootName, name)
+}
+
+func (b *Bot) Status() int {
+	b.statusMutex.Lock()
+	defer b.statusMutex.Unlock()
+	return b.status
+}
+
+func (b *Bot) SetStatus(status int) {
+	b.statusMutex.Lock()
+	b.status = status
+	b.statusMutex.Unlock()
 }

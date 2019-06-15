@@ -73,6 +73,7 @@ type Game struct {
 	name            string
 	process         *process.Process
 	manager         *Manager
+	statusMutex     sync.Mutex
 	status          status
 	autoRestart     int
 	autoStart       bool
@@ -81,6 +82,18 @@ type Game struct {
 	controlChannels channelPair
 	chatBridge      chatBridge
 	allowForwards   bool
+}
+
+func (g *Game) setInternalStatus(status status) {
+	g.statusMutex.Lock()
+	g.status = status
+	g.statusMutex.Unlock()
+}
+
+func (g *Game) getInternalStatus() status {
+	g.statusMutex.Lock()
+	defer g.statusMutex.Unlock()
+	return g.status
 }
 
 var errAlreadyRunning = errors.New("game is already running")
@@ -98,7 +111,7 @@ func (g *Game) Run() {
 			shouldBreak = true
 		}
 
-		if shouldBreak || g.status == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
+		if shouldBreak || g.getInternalStatus() == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
 			break
 		}
 
@@ -118,13 +131,13 @@ func (g *Game) runGame() (bool, error) {
 	}
 
 	g.sendToMsgChan("starting")
-	g.status = normal
+	g.setInternalStatus(normal)
 	if err := g.process.Start(); err != nil {
 		return false, err
 	}
 	g.monitorStdIO()
 
-	if err := g.process.WaitForCompletion(); err != nil && g.status != killed {
+	if err := g.process.WaitForCompletion(); err != nil && g.getInternalStatus() != killed {
 		return true, err
 	}
 
@@ -258,7 +271,7 @@ func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 		return nil
 	}
 	g.sendToMsgChan("stopping")
-	g.status = killed
+	g.setInternalStatus(killed)
 	return g.process.StopOrKillTimeout(timeout)
 }
 
