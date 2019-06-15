@@ -42,6 +42,7 @@ type StopOrKiller interface {
 
 type Runner interface {
 	Run()
+	IsRunning() bool
 }
 
 type AutoStarter interface {
