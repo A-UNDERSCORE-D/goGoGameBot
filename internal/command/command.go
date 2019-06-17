@@ -98,7 +98,7 @@ func (s *SubCommandList) Fire(data *Data) {
 
 	newData := &Data{
 		IsFromIRC:    data.IsFromIRC,
-		Args:         data.Args[0:],
+		Args:         data.Args[1:],
 		OriginalArgs: data.OriginalArgs,
 		Source:       data.Source,
 		Target:       data.Target,
