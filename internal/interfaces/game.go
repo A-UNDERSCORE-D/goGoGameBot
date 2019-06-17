@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -24,6 +25,8 @@ type Game interface {
 	Runner
 	AutoStarter
 	Statuser
+	io.Writer
+	io.StringWriter
 
 	OnPrivmsg(source, target, msg string)
 	OnJoin(source, channel string)
