@@ -149,7 +149,7 @@ func (g *Game) runGame() (bool, error) {
 	return true, nil
 }
 
-func (g *Game) validateConfig(conf config.Game) error {
+func (g *Game) validateConfig(conf *config.Game) error {
 	if conf.Name != g.GetName() {
 		g.Warn("attempt to reload game with a config who's name does not match ours! bailing out of reload")
 		return fmt.Errorf("invalid config name")
@@ -164,7 +164,7 @@ func (g *Game) validateConfig(conf config.Game) error {
 		return fmt.Errorf("could not update regepxs from config: %s", err)
 	}
 
-	if err := g.CompileFormats(&conf); err != nil {
+	if err := g.CompileFormats(conf); err != nil {
 		return fmt.Errorf("could not compile formats: %s", err)
 	}
 	return nil
@@ -174,7 +174,7 @@ func (g *Game) validateConfig(conf config.Game) error {
 func (g *Game) UpdateFromConfig(conf config.Game) error {
 	// Do as many of our checks as we can first before actually changing data, meaning that we can (hopefully)
 	// prevent weird state in the case of an error
-	if err := g.validateConfig(conf); err != nil {
+	if err := g.validateConfig(&conf); err != nil {
 		return err
 	}
 
