@@ -11,9 +11,12 @@ steps:
     event:
       - push
       - pull-request
-
+    branch:
+      - master
+      - feature/*
+      - cleanup-interfaces
 ---
 kind: signature
-hmac: 1984e3acf5cc7e4c5944f777126dc556ed97997a3a9ff719f6eeb42b53c5159f
+hmac: 768b129a682b66fce2a0195743de4629b9c20a32c95978e1fda559e2bf497ff4
 
 ...
