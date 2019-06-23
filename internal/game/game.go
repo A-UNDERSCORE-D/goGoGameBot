@@ -100,6 +100,11 @@ var errAlreadyRunning = errors.New("game is already running")
 
 func (g *Game) Run() {
 	for {
+		if err := g.process.Reset(); err != nil {
+			g.manager.Error(fmt.Errorf("error occurred while resetting process. not restarting: %s", err))
+			break
+		}
+
 		shouldBreak := false
 		cleanExit, err := g.runGame()
 		if err == errAlreadyRunning {
@@ -116,10 +121,6 @@ func (g *Game) Run() {
 		}
 
 		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
-		if err := g.process.Reset(); err != nil {
-			g.manager.Error(fmt.Errorf("error occurred while resetting process. not restarting: %s", err))
-			break
-		}
 		time.Sleep(time.Second * (time.Duration)(g.autoRestart))
 	}
 }
