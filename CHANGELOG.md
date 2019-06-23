@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Stats command now shows the current goroutine count and the current go runtime version
+- reimplemented command system, subcommands are now supported (one level only) as well as help for commands
+- reimplemented game config, and game system in general.
+- game templates are now linked and can reference eachother, additionally an arbitrary number of additional templates
+may be defined for reference in automatically called ones
 
 ### Fixed
 - SASL authentication no longer sends an additional `\x00` in the PLAIN auth string

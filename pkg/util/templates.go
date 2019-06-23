@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"errors"
-	"strings"
 	"text/template"
 
 	"github.com/goshuirc/irc-go/ircfmt"
@@ -17,27 +16,9 @@ var TemplateUtilFuncs = template.FuncMap{
 }
 
 type Format struct {
-	FormatString    string             `xml:",chardata"`
-	StripNewlines   bool               `xml:"strip_newlines,attr"`
-	StripWhitespace bool               `xml:"strip_whitespace,attr"`
-	CompiledFormat  *template.Template `xml:"-"`
-	compiled        bool
-}
-
-var newlinesReplacer = strings.NewReplacer("\n", "", "\r", "", "\t", "")
-
-func (f *Format) doFmtStringCleanup() {
-	if f.StripWhitespace {
-		var toSet []string
-		for _, l := range strings.Split(f.FormatString, "\n") {
-			toSet = append(toSet, strings.Trim(l, " "))
-		}
-		f.FormatString = strings.Join(toSet, "\n")
-	}
-
-	if f.StripNewlines {
-		f.FormatString = newlinesReplacer.Replace(f.FormatString)
-	}
+	FormatString   string             `xml:",chardata"`
+	CompiledFormat *template.Template `xml:"-"`
+	compiled       bool
 }
 
 var (
@@ -46,16 +27,22 @@ var (
 
 // Compile compiles the given format string into a text.template, evaluating IRC colours if requested, and adding the
 // default functions plus any passed to the template. if the template is invalid or the format has already been compiled,
-// Compile errors
-func (f *Format) Compile(name string, evalColour bool, funcMaps ...template.FuncMap) error {
+// Compile errors. An optional root text/template can be passed, and if so, the compiled format's internal template will
+// be associated with the passed root
+func (f *Format) Compile(name string, evalColour bool, root *template.Template, funcMaps ...template.FuncMap) error {
 	if f.compiled {
 		return errors.New("format: cannot compile a format twice")
 	}
-	f.doFmtStringCleanup()
+
 	if f.FormatString == "" {
 		return ErrEmptyFormat
 	}
-	toSet := template.New(name)
+	var toSet *template.Template
+	if root == nil {
+		toSet = template.New(name)
+	} else {
+		toSet = root.New(name)
+	}
 	toSet.Funcs(TemplateUtilFuncs)
 	for _, entry := range funcMaps {
 		toSet.Funcs(entry)

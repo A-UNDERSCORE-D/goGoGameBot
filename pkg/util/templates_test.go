@@ -6,94 +6,6 @@ import (
 	"text/template"
 )
 
-var fmtStringCleanupTests = []struct {
-	name            string
-	stripWhitespace bool
-	stripNewlines   bool
-	formatString    string
-	want            string
-}{
-	{
-		"no stripping, single line",
-		false,
-		false,
-		"test string",
-		"test string",
-	},
-	{
-		"no stripping, multiline",
-		false,
-		false,
-		"test string\nwith newlines",
-		"test string\nwith newlines",
-	},
-	{
-		"all stripping stripping, single line",
-		true,
-		true,
-		"test string",
-		"test string",
-	},
-	{
-		"newline stripping, single line",
-		false,
-		true,
-		"test string",
-		"test string",
-	},
-	{
-		"whitespace stripping, single line",
-		true,
-		false,
-		"test string",
-		"test string",
-	},
-	{
-		"newline stripping, multiline",
-		false,
-		true,
-		"    test\n string\n with\nnewlines",
-		"    test string withnewlines",
-	},
-	{
-		"all stripping, multiline with whitespace",
-		true,
-		true,
-		"test \n     string\n with newlines\n and\n spaces",
-		"teststringwith newlinesandspaces",
-	},
-}
-
-func TestFormat_doFmtStringCleanup(t *testing.T) {
-	for _, tt := range fmtStringCleanupTests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Format{
-				FormatString:    tt.formatString,
-				StripWhitespace: tt.stripWhitespace,
-				StripNewlines:   tt.stripNewlines,
-			}
-			f.doFmtStringCleanup()
-			if f.FormatString != tt.want {
-				t.Errorf("Format.doFmtStringCleanup() = %q, want %q", f.FormatString, tt.want)
-			}
-		})
-	}
-}
-
-func Benchmark_doFmtStringCleanup(b *testing.B) {
-	for _, tt := range fmtStringCleanupTests {
-		b.Run(tt.name, func(b *testing.B) {
-			f := &Format{}
-			for i := 0; i < b.N; i++ {
-				f.FormatString = tt.formatString
-				f.StripWhitespace = tt.stripWhitespace
-				f.StripNewlines = tt.stripNewlines
-				f.doFmtStringCleanup()
-			}
-		})
-	}
-}
-
 var compileColourTests = []struct {
 	name string
 	f    *Format
@@ -119,7 +31,7 @@ var compileColourTests = []struct {
 func TestFormat_CompileColour(t *testing.T) {
 	for _, tt := range compileColourTests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.f.Compile("test", true, tt.args...); err != nil {
+			if err := tt.f.Compile("test", true, nil, tt.args...); err != nil {
 				t.Errorf("Format.Compile(evalColour = true) error = %v", err)
 			} else if tt.f.FormatString != tt.want {
 				t.Errorf("Format.Compile(evalColour = true) formatString = %q, want %q", tt.f.FormatString, tt.want)
@@ -133,12 +45,11 @@ func BenchmarkFormat_CompileColour(b *testing.B) {
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				tt.f.compiled = false
-				_ = tt.f.Compile(tt.name, true, tt.args...)
+				_ = tt.f.Compile(tt.name, true, nil, tt.args...)
 			}
 		})
 	}
 }
-
 
 var formatCompileTests = []struct {
 	name    string
@@ -183,7 +94,7 @@ var formatCompileTests = []struct {
 func TestFormat_Compile(t *testing.T) {
 	for _, tt := range formatCompileTests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.f.Compile("test", false, tt.args...); (err != nil) != tt.wantErr {
+			if err := tt.f.Compile("test", false, nil, tt.args...); (err != nil) != tt.wantErr {
 				t.Errorf("Format.Compile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -195,7 +106,7 @@ func BenchmarkFormat_Compile(b *testing.B) {
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				tt.f.compiled = false
-				_ = tt.f.Compile(tt.name, false, tt.args...)
+				_ = tt.f.Compile(tt.name, false, nil, tt.args...)
 			}
 		})
 	}
@@ -256,7 +167,7 @@ func TestFormat_ExecuteBytes(t *testing.T) {
 	cleanExecuteTests()
 	for _, tt := range testsForExecute {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.f.Compile("test_"+tt.name, false); err != nil {
+			if err := tt.f.Compile("test_"+tt.name, false, nil); err != nil {
 				t.Error(err)
 				return
 			}
@@ -282,7 +193,7 @@ func BenchmarkFormat_ExecuteBytes(b *testing.B) {
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()
 			if !tt.f.compiled {
-				_ = tt.f.Compile("test_"+tt.name, false)
+				_ = tt.f.Compile("test_"+tt.name, false, nil)
 			}
 			b.StartTimer()
 			for i := 0; i < b.N; i++ {
@@ -296,7 +207,7 @@ func TestFormat_Execute(t *testing.T) {
 	cleanExecuteTests()
 	for _, tt := range testsForExecute {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.f.Compile("test_"+tt.name, false); err != nil {
+			if err := tt.f.Compile("test_"+tt.name, false, nil); err != nil {
 				t.Error(err)
 				return
 			}
@@ -318,7 +229,7 @@ func BenchmarkFormat_Execute(b *testing.B) {
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()
 			if !tt.f.compiled {
-				_ = tt.f.Compile("test_"+tt.name, false)
+				_ = tt.f.Compile("test_"+tt.name, false, nil)
 			}
 			b.StartTimer()
 			for i := 0; i < b.N; i++ {

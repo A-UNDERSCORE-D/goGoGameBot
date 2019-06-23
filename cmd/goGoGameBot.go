@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/chzyer/readline"
+	"github.com/goshuirc/irc-go/ircutils"
 	"github.com/spf13/pflag"
 	"golang.org/x/sys/unix"
 
@@ -25,7 +26,7 @@ const (
 | |_| | |_| | |_| | |_) |
  \____|\____|\____|____/
 `
-	version = "0.2.3"
+	version = "0.3.0"
 )
 
 var (
@@ -44,13 +45,12 @@ func main() {
 
 	conf, err := config.GetConfig(*configFile)
 	if err != nil {
-		if err == config.ErrConfNotExist {
-			l.Infof("Config file %s not found. Placing a default config there. Please set the configuration to your liking and restart gggb", *configFile)
-			return
-		}
-		l.Panicf("could not read config file: %s", err)
+		l.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
 	}
-	b := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
+	b, err := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
+	if err != nil {
+		l.Critf("error while creating bot: %s", err)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
@@ -63,7 +63,7 @@ func main() {
 		l.Warnf("Got an error from bot on exit: %s", err)
 	}
 
-	b.StopAllGames()
+	b.GameManager.StopAllGames()
 	if err == bot.ErrRestart {
 		ExecSelf()
 	}
@@ -101,12 +101,6 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
 	}()
 
 	for line := range lineChan {
-		splitLine := strings.Split(line, " ")
-
-		b.CmdHandler.FireCommand(&bot.CommandData{
-			Command:   splitLine[0],
-			Args:      splitLine[1:],
-			IsFromIRC: false,
-		})
+		b.CommandManager.ParseLine(line, false, ircutils.UserHost{}, "")
 	}
 }

@@ -9,6 +9,14 @@ import (
 // This is a reimplementation of eventmgr found at github.com/goshuirc/eventmgr with an ID system added.
 // The original idea is theirs.
 
+const (
+	PriHighest = 16
+	PriHigh    = 32
+	PriNorm    = 48
+	PriLow     = 64
+	PriLowest  = 80
+)
+
 // HandlerList is a slice of handlers with functions added to allow the slice to be sorted
 type HandlerList []Handler
 
@@ -26,6 +34,7 @@ func (h HandlerList) Swap(i, j int) {
 
 // Map is a map of string to HandlerList, it exists as a type alias for ease of use
 type Map map[string]HandlerList
+
 // ArgMap is a map of string to interface, it exists as a type alias for ease of use
 type ArgMap map[string]interface{}
 

@@ -53,7 +53,7 @@ type Process struct {
 }
 
 // UpdateCmd sets the command and arguments to be used when creating the exec.Cmd used internally.
-// It is safe for concurrent use
+// It is safe for concurrent use. Note that this will only take effect on the next reset of the Process object
 func (p *Process) UpdateCmd(command string, args []string, workingDir string) {
 	p.commandMutex.Lock()
 	defer p.commandMutex.Unlock()
@@ -134,7 +134,7 @@ func (p *Process) GetReturnCode() int {
 func (p *Process) GetStatus() string {
 	out := strings.Builder{}
 	if !p.IsRunning() {
-		out.WriteString("$c[red]$b Not running$r")
+		out.WriteString("$c[red]$bNot running$r")
 		return out.String()
 	}
 
