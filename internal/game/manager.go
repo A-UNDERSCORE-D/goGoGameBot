@@ -1,11 +1,11 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
-	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
@@ -49,6 +49,9 @@ func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger)
 		games = append(games, ng)
 	}
 	m.games = games
+	if err := m.setupCommands(); err != nil {
+		return nil, err
+	}
 
 	return m, nil
 }
@@ -162,6 +165,10 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 	}
 }
 
+var (
+	ErrGameNotExist = errors.New("requested game does not exist")
+)
+
 // StopAllGames stops all the games on the manager, blocking until they all close or are killed
 func (m *Manager) StopAllGames() {
 	m.status = shutdown
@@ -177,10 +184,26 @@ func (m *Manager) StartAutoStartGames() {
 
 func (m *Manager) StartGame(name string) error {
 	if g := m.GetGameFromName(name); g != nil {
+		if g.IsRunning() {
+			return ErrAlreadyRunning
+		}
 		go g.Run()
 		return nil
 	}
-	return fmt.Errorf("game %q does not exist", name)
+	return ErrGameNotExist
+}
+
+func (m *Manager) StopGame(name string) error {
+	if g := m.GetGameFromName(name); g != nil {
+		if !g.IsRunning() {
+			return ErrGameNotRunning
+		}
+
+		if err := g.StopOrKill(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Error is a helper function that returns the passed error to the manager's bot instance
@@ -188,17 +211,24 @@ func (m *Manager) Error(err error) {
 	m.bot.Error(fmt.Errorf("game.Manager: %s", err))
 }
 
-func (m *Manager) setupCommands() {
-	_ = m.bot.HookCommand("STARTGAME", 2, "starts the specified game",
-		func(fromIRC bool, args []string, source ircutils.UserHost, target string, resp interfaces.CommandResponder) {
-			if len(args) < 1 {
-				resp.ReturnNotice("you must provide at least one game to start")
-				return
-			}
-			for _, name := range args {
-				if err := m.StartGame(name); err != nil {
-					resp.ReturnNotice(err.Error())
-				}
-			}
-		})
+func (m *Manager) setupCommands() error {
+	const (
+		gamectl     = "gamectl"
+		startHelp   = "starts the provided games"
+		stopHelp    = "stops the provided games, killing them if needed"
+		restartHelp = "restarts the specified games, as with stop, games may be killed if a stop times out"
+		rawHelp     = "sends the arguments provided directly to the standard in of the running game"
+	)
+	var err error
+	err = m.bot.HookSubCommand(gamectl, "start", 2, startHelp, m.startGameCmd)
+	err = m.bot.HookSubCommand(gamectl, "stop", 2, stopHelp, m.stopGameCmd)
+	err = m.bot.HookSubCommand(gamectl, "raw", 2, rawHelp, m.rawGameCmd)
+	err = m.bot.HookSubCommand(gamectl, "restart", 2, restartHelp, m.restartGameCmd)
+
+	if err != nil {
+		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", err)
+		return err
+	}
+
+	return nil
 }
