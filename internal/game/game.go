@@ -96,7 +96,10 @@ func (g *Game) getInternalStatus() status {
 	return g.status
 }
 
-var errAlreadyRunning = errors.New("game is already running")
+var (
+	ErrAlreadyRunning = errors.New("game is already running")
+	ErrGameNotRunning = errors.New("game is not running")
+)
 
 func (g *Game) Run() {
 	for {
@@ -107,11 +110,12 @@ func (g *Game) Run() {
 
 		shouldBreak := false
 		cleanExit, err := g.runGame()
-		if err == errAlreadyRunning {
+		if err == ErrAlreadyRunning {
 			shouldBreak = true
 		} else if err != nil {
 			g.manager.Error(err)
 		}
+
 		if !cleanExit {
 			shouldBreak = true
 		}
@@ -128,7 +132,7 @@ func (g *Game) Run() {
 func (g *Game) runGame() (bool, error) {
 	if g.IsRunning() {
 		g.sendToMsgChan("cannot start an already running game")
-		return false, errAlreadyRunning
+		return false, ErrAlreadyRunning
 	}
 
 	g.sendToMsgChan("starting")
@@ -145,8 +149,7 @@ func (g *Game) runGame() (bool, error) {
 	return true, nil
 }
 
-// UpdateFromConfig updates the game object with the data from the config object.
-func (g *Game) UpdateFromConfig(conf config.Game) error {
+func (g *Game) validateConfig(conf config.Game) error {
 	if conf.Name != g.GetName() {
 		g.Warn("attempt to reload game with a config who's name does not match ours! bailing out of reload")
 		return fmt.Errorf("invalid config name")
@@ -157,23 +160,33 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
 
+	if err := g.regexpManager.UpdateFromConf(conf.Regexps); err != nil {
+		return fmt.Errorf("could not update regepxs from config: %s", err)
+	}
+
+	if err := g.CompileFormats(&conf); err != nil {
+		return fmt.Errorf("could not compile formats: %s", err)
+	}
+	return nil
+}
+
+// UpdateFromConfig updates the game object with the data from the config object.
+func (g *Game) UpdateFromConfig(conf config.Game) error {
+	// Do as many of our checks as we can first before actually changing data, meaning that we can (hopefully)
+	// prevent weird state in the case of an error
+	if err := g.validateConfig(conf); err != nil {
+		return err
+	}
+
 	var wd string
 	if conf.WorkingDir == "" {
 		wd = path.Dir(conf.Path)
 		g.Logger.Infof("game %q's working directory inferred to %q from binary path %q", g.GetName(), wd, conf.Path)
 	}
 
-	if err := g.regexpManager.UpdateFromConf(conf.Regexps); err != nil {
-		return fmt.Errorf("could not update regepxs from config: %s", err)
-	}
-
 	cm, err := util.MakeColourMap(conf.ColourMap.ToMap())
 	if err != nil {
 		return fmt.Errorf("could not create colour map for game %s from config: %s", g, err)
-	}
-
-	if err := g.CompileFormats(&conf); err != nil {
-		return fmt.Errorf("could not compile formats: %s", err)
 	}
 
 	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
