@@ -42,7 +42,7 @@ steps:
   settings:
     api_key:
       from_secret: gitea_token
-    base_url: https://git.ferricyanide.solotions
+    base_url: https://git.ferricyanide.solutions
     checksum:
     - md5
     - sha256
@@ -50,9 +50,9 @@ steps:
     files:
     - /build/goGoGameBot
     title: /build/releaseTitle
-    when:
-      event:
-      - tag
+  when:
+    event:
+    - tag
   volumes:
   - name: go
     path: /root/.cache/go-build
@@ -67,6 +67,6 @@ volumes:
 
 ---
 kind: signature
-hmac: cfdfe0643ce7008bb849830b46f2274983511e399542263ce2f1461d893be221
+hmac: 73b1c99ef3434bb7609f3df1d387d6f5f4bcbe21d4ef1585cc6ad4d0fc3234ea
 
 ...
