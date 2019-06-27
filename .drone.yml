@@ -2,21 +2,71 @@
 kind: pipeline
 name: default
 
+platform:
+  os: linux
+  arch: amd64
+
 steps:
 - name: run-tests
   image: golang
   commands:
-    - go test ./...
+  - go test ./...
+  volumes:
+  - name: go
+    path: /root/.cache/go-build
+  when:
+    branch:
+    - master
+    - "feature/*"
+    - cleanup-interfaces
+    event:
+    - push
+    - pull-request
+
+- name: build
+  image: golang
+  commands:
+  - go build -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go
+  - "echo \"goGoGameBot version $DRONE_TAG\" > /build/releaseTitle"
+  volumes:
+  - name: go
+    path: /root/.cache/go-build
+  - name: build
+    path: /tmp/build
   when:
     event:
-      - push
-      - pull-request
-    branch:
-      - master
-      - feature/*
-      - cleanup-interfaces
+    - tag
+
+- name: do-release
+  image: plugins/gitea-release
+  settings:
+    api_key:
+      from_secret: gitea_token
+    base_url: https://git.ferricyanide.solotions
+    checksum:
+    - md5
+    - sha256
+    draft: true
+    files:
+    - /build/goGoGameBot
+    title: /build/releaseTitle
+    when:
+      event:
+      - tag
+  volumes:
+  - name: go
+    path: /root/.cache/go-build
+  - name: build
+    path: /tmp/build
+
+volumes:
+- name: go
+  temp: {}
+- name: build
+  temp: {}
+
 ---
 kind: signature
-hmac: 768b129a682b66fce2a0195743de4629b9c20a32c95978e1fda559e2bf497ff4
+hmac: cfdfe0643ce7008bb849830b46f2274983511e399542263ce2f1461d893be221
 
 ...
