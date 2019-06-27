@@ -22,12 +22,13 @@ steps:
     event:
     - push
     - pull-request
+    - tag
 
 - name: build
   image: golang
   commands:
   - go build -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go
-  - "echo \"goGoGameBot version $DRONE_TAG\" > /build/releaseTitle"
+  - "echo \"goGoGameBot version $DRONE_TAG\" > /tmp/build/releaseTitle"
   volumes:
   - name: go
     path: /root/.cache/go-build
@@ -48,16 +49,16 @@ steps:
     - sha256
     draft: true
     files:
-    - /build/goGoGameBot
-    title: /build/releaseTitle
-  when:
-    event:
-    - tag
+    - /tmp/build/goGoGameBot
+    title: /tmp/build/releaseTitle
   volumes:
   - name: go
     path: /root/.cache/go-build
   - name: build
     path: /tmp/build
+  when:
+    event:
+    - tag
 
 volumes:
 - name: go
@@ -67,6 +68,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 73b1c99ef3434bb7609f3df1d387d6f5f4bcbe21d4ef1585cc6ad4d0fc3234ea
+hmac: d733fcdde1eda987551e6d763ed77f246204b0e123d4c4cc5901c85c964ef106
 
 ...
