@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [0.3.0] - 2019-06-27
 ### Added
 - Stats command now shows the current goroutine count and the current go runtime version
 - reimplemented command system, subcommands are now supported (one level only) as well as help for commands
@@ -88,6 +89,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.3.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/e150762e9da3b0c48f4688610fe78c17aee1595d...cb2ad2488fdb8c2ff69080a567777bdc113dd780
 [0.2.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/3b8f793144078472c44c4874e3ab0db1c6d6ffe4...e150762e9da3b0c48f4688610fe78c17aee1595d
 [0.2.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/d7bd61c31ff1bfb051c527866b0e64d3b434dac4...3b8f793144078472c44c4874e3ab0db1c6d6ffe4
 [0.2.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/05443765e782d1b7aa0220fc9309755b28ffa11e...d7bd61c31ff1bfb051c527866b0e64d3b434dac4
