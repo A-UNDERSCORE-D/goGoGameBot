@@ -156,16 +156,19 @@ func (r *RegexpManager) String() string {
 
 func (r *RegexpManager) UpdateFromConf(res []config.Regexp) error {
 	var reList RegexpList
+	r.game.Debug("regex manager reloading")
 	for _, reConf := range res {
 		re, err := NewRegexp(reConf, r)
 		if err != nil {
 			return err
 		}
+		r.game.Debugf("adding regexp %#v", re)
 		reList = append(reList, re)
 	}
 	sort.Sort(reList)
 	r.Lock()
 	r.regexps = reList
 	r.Unlock()
+	r.game.Debug("regexp manager reload complete")
 	return nil
 }
