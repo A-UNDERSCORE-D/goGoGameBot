@@ -21,7 +21,7 @@ type Game struct {
 	WorkingDir      string    `xml:"working_dir"`
 	Args            string    `xml:"args"`
 	Commands        []Command `xml:"command"`
-	Regexps         []Regexp  `xml:"regexp"`
+	Regexps         []Regexp  `xml:"stdio_regexps"`
 	ControlChannels struct {
 		Admin string `xml:"admin"`
 		Msg   string `xml:"msg"`
@@ -63,11 +63,11 @@ type Command struct {
 
 type Regexp struct {
 	XMLName     xml.Name    `xml:"regexp"`
-	Priority    int         `xml:"priority"`
-	Name        string      `xml:"name"`
+	Priority    int         `xml:"priority,attr"`
+	Name        string      `xml:"name,attr"`
 	Regexp      string      `xml:"regexp"`
 	Format      util.Format `xml:"format"`
-	DontEat     bool        `xml:"dont_eat"`
-	DontSend    bool        `xml:"dont_send_to_chan"`
-	DontForward bool        `xml:"dont_forward"`
+	DontEat     bool        `xml:"dont_eat,attr"`
+	DontSend    bool        `xml:"dont_send_to_chan,attr"`
+	DontForward bool        `xml:"dont_forward,attr"`
 }

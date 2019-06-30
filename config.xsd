@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           version="1.1">
+  <xs:element name="bot" type="botType"/>
+
+  <xs:simpleType name="channelNameType">
+    <xs:restriction>
+      <xs:pattern value="#[^\s]*"/>
+    </xs:restriction>
+
+  </xs:simpleType>
+
+  <xs:complexType name="channelType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="channelNameType" name="name" use="required"/>
+        <xs:attribute type="xs:string" name="key" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="channelList">
+    <xs:sequence>
+      <xs:element name="channel" type="channelType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="nickservType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="nick" use="required"/>
+        <xs:attribute type="xs:string" name="password" use="required"/>
+        <xs:attribute type="xs:boolean" name="sasl" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="authType">
+    <xs:sequence>
+      <xs:element type="nickservType" name="nickserv"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="connect_commandsType">
+    <xs:sequence>
+      <xs:element name="command" type="xs:string" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="commandPrefixType">
+    <xs:restriction>
+      <xs:length value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="bot_configType">
+    <!--BotConfig-->
+    <xs:all>
+      <xs:element type="channelType" name="admin_chan"/>
+      <xs:element type="connect_commandsType" name="connect_commands" minOccurs="0"/>
+      <xs:element type="channelList" name="autojoin_channels" minOccurs="0"/>
+      <xs:element type="authType" name="auth"/>
+    </xs:all>
+
+    <xs:attribute type="xs:string" name="nick" use="required"/>
+    <xs:attribute type="xs:string" name="ident" use="required"/>
+    <xs:attribute type="xs:string" name="gecos" use="required"/>
+    <xs:attribute type="xs:string" name="host" use="required"/>
+    <xs:attribute type="xs:positiveInteger" name="port" use="required"/>
+    <xs:attribute type="xs:boolean" name="ssl" use="required"/>
+    <xs:attribute type="commandPrefixType" name="command_prefix" default="~"/>
+  </xs:complexType>
+
+  <xs:complexType name="permissionType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="mask"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="permissionsType">
+    <xs:sequence>
+      <xs:element type="permissionType" name="permission" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="strip_masksType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="mask"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="commandType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="format"/>
+      <xs:element type="xs:string" name="help"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="name"/>
+    <xs:attribute type="xs:positiveInteger" name="requires_admin"/>
+  </xs:complexType>
+  <xs:complexType name="extraType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="name"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="formatsType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="message"/>
+      <xs:element type="xs:string" name="join"/>
+      <xs:element type="xs:string" name="part"/>
+      <xs:element type="xs:string" name="nick"/>
+      <xs:element type="xs:string" name="quit"/>
+      <xs:element type="xs:string" name="kick"/>
+      <xs:element type="xs:string" name="external"/>
+      <xs:element type="extraType" name="extra" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="chatType">
+    <!-- Game.Chat -->
+    <xs:sequence>
+      <xs:element type="xs:string" name="strip_mask" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="xs:string" name="bridged_channel" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="formatsType" name="formats"/>
+    </xs:sequence>
+    <xs:attribute type="xs:boolean" name="dont_bridge"/>
+    <xs:attribute type="xs:boolean" name="dont_allow_forwards"/>
+    <xs:attribute type="xs:boolean" name="dump_stdout"/>
+    <xs:attribute type="xs:boolean" name="dump_stderr"/>
+  </xs:complexType>
+  <xs:complexType name="game_control_channelsType">
+    <xs:all>
+      <xs:element type="channelNameType" name="admin"/>
+      <xs:element type="channelNameType" name="msg"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="regexpType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="regexp"/>
+      <xs:element type="xs:string" name="format"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="name"/>
+    <xs:attribute type="xs:integer" name="priority"/>
+    <xs:attribute type="xs:boolean" name="dont_eat"/>
+    <xs:attribute type="xs:boolean" name="dont_send_to_chan"/>
+    <xs:attribute type="xs:boolean" name="dont_forward"/>
+  </xs:complexType>
+
+  <xs:complexType name="gameType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="binary"/>
+      <xs:element type="xs:string" name="working_dir" minOccurs="0"/>
+      <xs:element type="xs:string" name="args"/>
+      <xs:element type="game_control_channelsType" name="status_channels"/>
+      <xs:element type="chatType" name="chat"/>
+      <xs:element type="commandType" name="command" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="regexpType" name="regexp" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+
+    <xs:attribute type="xs:string" name="name" use="required"/>
+    <xs:attribute type="xs:string" name="auto_restart"/>
+    <xs:attribute type="xs:string" name="auto_start"/>
+  </xs:complexType>
+
+  <xs:complexType name="gamesType">
+    <xs:sequence>
+      <xs:element type="strip_masksType" name="strip_masks" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="gameType" name="game" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="botType">
+    <xs:all>
+      <xs:element type="bot_configType" name="bot_config"/>
+      <xs:element type="xs:string" name="strip_mask"/>
+      <xs:element type="permissionsType" name="permissions"/>
+      <xs:element type="gamesType" name="games"/>
+    </xs:all>
+  </xs:complexType>
+</xs:schema>

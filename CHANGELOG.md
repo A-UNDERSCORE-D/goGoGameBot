@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commandline interface commands no longer require a command prefix to be executed
 - Game inter-communication no longer tries to send messages to games that are not running
 
+### Changed
+- `<regexp>` in game is now `<stdio_regexp>`, and the control elements other than `<regexp>` and `<format>` have been moved
+to attributes.
+
 ## [0.3.2] - 2019-06-30
 ### Fixed
 - Regexps for games were incorrectly named in the config
