@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The reload command has returned. It allows for runtime game config reloading
 
+### Fixed
+- Commandline interface commands no longer require a command prefix to be executed
 
 ## [0.3.2] - 2019-06-30
 ### Fixed

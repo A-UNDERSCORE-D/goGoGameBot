@@ -359,7 +359,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "normal call but not from IRC",
 			args: args{
-				line:    "~testNoAccess",
+				line:    "testNoAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "huzzah!"}}, // It tries to send a message anyway, but thats not our fault.
@@ -388,7 +388,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "privileged call not from IRC",
 			args: args{
-				line:    "~testAccess",
+				line:    "testAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "admin!"}},
@@ -426,7 +426,7 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested privileged access non IRC",
 			args: args{
-				line:    "~test cmdAccess",
+				line:    "test cmdAccess",
 				fromIRC: false,
 			},
 			expectedMessages: [][2]string{{"", "HI! Im a subcommand that requires admin!"}},

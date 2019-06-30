@@ -206,10 +206,14 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	if len(line) == 0 {
 		return
 	}
-	var ok bool
-	if line, ok = m.stripPrefix(line); !ok {
-		return
+
+	if fromIRC {
+		var ok bool
+		if line, ok = m.stripPrefix(line); !ok {
+			return
+		}
 	}
+
 	lineSplit := strings.Split(line, " ")
 	if len(lineSplit) < 1 {
 		return
@@ -218,6 +222,9 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	cmdName := lineSplit[0]
 	cmd := m.getCommandByName(cmdName)
 	if cmd == nil {
+		if !fromIRC {
+			m.Logger.Infof("unknown command %q", cmdName)
+		}
 		return
 	}
 	m.Logger.Debugf("firing command %q (original line %q)", cmdName, line)
