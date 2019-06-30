@@ -21,7 +21,7 @@ type Game struct {
 	WorkingDir      string    `xml:"working_dir"`
 	Args            string    `xml:"args"`
 	Commands        []Command `xml:"command"`
-	Regexps         []Regexp
+	Regexps         []Regexp  `xml:"regexp"`
 	ControlChannels struct {
 		Admin string `xml:"admin"`
 		Msg   string `xml:"msg"`
