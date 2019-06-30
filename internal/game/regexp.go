@@ -26,7 +26,7 @@ func (gl RegexpList) Swap(i, j int) {
 	gl[i], gl[j] = gl[j], gl[i]
 }
 
-func NewRegexp(conf config.Regexp, manager *RegexpManager) (*Regexp, error) {
+func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Template) (*Regexp, error) {
 	compiledRe, err := regexp.Compile(conf.Regexp)
 	if err != nil {
 		return nil, fmt.Errorf("could not compile regexp %s for mannager %s: %s", conf.Name, manager, err)
@@ -38,7 +38,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager) (*Regexp, error) {
 		"sendPrivmsg":     manager.game.templSendPrivmsg,
 	}
 	var templ *util.Format = nil
-	if err := conf.Format.Compile(conf.Name, true, nil, funcs); err != nil {
+	if err := conf.Format.Compile("regexp_"+conf.Name, true, root, funcs); err != nil {
 		if err != util.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}
@@ -154,11 +154,11 @@ func (r *RegexpManager) String() string {
 	return fmt.Sprintf("game.RegexpManager at %p attached to %s", r, r.game)
 }
 
-func (r *RegexpManager) UpdateFromConf(res []config.Regexp) error {
+func (r *RegexpManager) UpdateFromConf(res []config.Regexp, root *template.Template) error {
 	var reList RegexpList
 	r.game.Debug("regex manager reloading")
 	for _, reConf := range res {
-		re, err := NewRegexp(reConf, r)
+		re, err := NewRegexp(reConf, r, root)
 		if err != nil {
 			return err
 		}

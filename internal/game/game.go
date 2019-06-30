@@ -160,12 +160,12 @@ func (g *Game) validateConfig(conf *config.Game) error {
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
 
-	if err := g.regexpManager.UpdateFromConf(conf.Regexps); err != nil {
-		return fmt.Errorf("could not update regepxs from config: %s", err)
-	}
-
 	if err := g.CompileFormats(conf); err != nil {
 		return fmt.Errorf("could not compile formats: %s", err)
+	}
+
+	if err := g.regexpManager.UpdateFromConf(conf.Regexps, conf.Chat.Formats.Message.CompiledFormat); err != nil {
+		return fmt.Errorf("could not update regepxs from config: %s", err)
 	}
 	return nil
 }

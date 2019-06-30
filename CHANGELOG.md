@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - The reload command has returned. It allows for runtime game config reloading
+- Formats on `<stdio_regexp>` entries now have access to the above defined templates
 
 ### Fixed
 - Commandline interface commands no longer require a command prefix to be executed
