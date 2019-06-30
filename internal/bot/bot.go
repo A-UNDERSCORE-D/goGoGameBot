@@ -145,10 +145,23 @@ func (b *Bot) stopCmd(data *command.Data) {
 func (b *Bot) restartCmd(_ *command.Data) {
 	b.Stop("restarting", true)
 }
+
 func panicNotNil(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (b *Bot) reloadCmd(d *command.Data) {
+	d.ReturnMessage("reloading config")
+	c, err := config.GetConfig(b.Config.ConfigPath)
+	if err != nil {
+		b.Error(err)
+		d.ReturnNotice("error occurred while attempting to reload. reload aborted")
+	}
+
+	b.GameManager.ReloadGames(c.GameManager.Games)
+	d.ReturnMessage("reload complete")
 }
 
 // Init sets up the default handlers and otherwise preps the bot to run
@@ -183,6 +196,7 @@ func (b *Bot) Init() {
 
 	panicNotNil(b.CommandManager.AddCommand("STOP", 3, b.stopCmd, "stops all games on the bot and quits the bot"))
 	panicNotNil(b.CommandManager.AddCommand("RESTART", 3, b.restartCmd, "stops all games on the bot and restarts the bot"))
+	panicNotNil(b.CommandManager.AddCommand("RELOAD", 3, b.reloadCmd, "reloads the config"))
 }
 
 // connect opens a socket to the IRC server specified and handles basic registration and SASL auth
