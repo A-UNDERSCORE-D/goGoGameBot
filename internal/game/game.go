@@ -178,8 +178,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		return err
 	}
 
-	var wd string
-	if conf.WorkingDir == "" {
+	wd := conf.WorkingDir
+	if wd == "" {
 		wd = path.Dir(conf.Path)
 		g.Logger.Infof("game %q's working directory inferred to %q from binary path %q", g.GetName(), wd, conf.Path)
 	}
