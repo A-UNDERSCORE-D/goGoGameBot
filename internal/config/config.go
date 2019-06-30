@@ -15,42 +15,7 @@ type Config struct {
 	Strips      []string     `xml:"strip_mask"`
 	//Games       []GameConfig `xml:"game"`
 	GameManager GameManager
-}
-
-var defaultConfig = Config{
-	Irc: BotConfig{
-		CommandPrefix:   "~",
-		Nick:            "goGoGameBot",
-		Ident:           "GGGB",
-		Gecos:           "Go Game Manager",
-		Host:            "irc.snoonet.org",
-		Port:            "6697",
-		SSL:             true,
-		ConnectCommands: []string{"PING :Teststuff"},
-		JoinChans:       []IrcChan{{Name: "#ferricyanide"}, {Name: "#someOtherChan"}},
-		NSAuth:          NSAuth{"goGoGameBot", "goGoSuperSecurePasswd", true},
-	},
-
-	Permissions: []Permission{{Mask: "*!*@snoonet/staff/A_D"}},
-	/*
-		Games: []GameConfig{
-			{
-				Name:         "echo",
-				AutoStart:    false,
-				Path:         "/bin/echo",
-				Args:         "test command is testy",
-				LogChan:      "#ferricyanide",
-				AdminLogChan: "#ferricyanide",
-
-				Regexps: []GameRegexpConfig{{
-					Name:      "test",
-					Priority:  0,
-					ShouldEat: true,
-					Regexp:    "(.*)",
-					Format:    util.Format{FormatString: "test"},
-				}},
-			},
-		},*/
+	ConfigPath  string `xml:"-"`
 }
 
 func readAllFromFile(name string) ([]byte, error) {
@@ -104,6 +69,6 @@ func GetConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	conf.ConfigPath = filename
 	return conf, nil
 }
