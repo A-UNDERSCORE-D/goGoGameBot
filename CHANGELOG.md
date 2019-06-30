@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Commandline interface commands no longer require a command prefix to be executed
+- Game inter-communication no longer tries to send messages to games that are not running
 
 ## [0.3.2] - 2019-06-30
 ### Fixed

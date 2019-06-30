@@ -45,6 +45,9 @@ func (g *Game) sendToAdminChan(args ...interface{}) {
 func (g *Game) writeToAllOthers(msg string) {
 	msg = strings.ReplaceAll(msg, "\u200b", "")
 	g.manager.ForEachGame(func(game interfaces.Game) {
+		if !g.IsRunning() {
+			return
+		}
 		g.checkError(game.WriteExternalMessage(msg))
 	}, []interfaces.Game{g})
 }
