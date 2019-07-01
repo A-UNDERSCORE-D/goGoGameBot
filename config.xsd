@@ -155,7 +155,7 @@
       <xs:element type="game_control_channelsType" name="status_channels"/>
       <xs:element type="chatType" name="chat"/>
       <xs:element type="commandType" name="command" minOccurs="0" maxOccurs="unbounded"/>
-      <xs:element type="regexpType" name="regexp" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="regexpType" name="stdio_regexp" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
 
     <xs:attribute type="xs:string" name="name" use="required"/>
