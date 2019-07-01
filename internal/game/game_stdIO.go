@@ -31,14 +31,6 @@ func (g *Game) WriteString(s string) (n int, err error) {
 	return g.Write([]byte(s))
 }
 
-func (g *Game) WriteExternalMessage(msg string) error {
-	if g.chatBridge.allowForwards {
-		_, err := g.WriteString(msg)
-		return err
-	}
-	return nil
-}
-
 func (g *Game) monitorStdIO() {
 	if !g.IsRunning() {
 		g.manager.Error(errors.New(g.prefixMsg("cannot watch stdio on a non-running game")))

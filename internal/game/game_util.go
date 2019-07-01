@@ -48,7 +48,7 @@ func (g *Game) writeToAllOthers(msg string) {
 		if !g.IsRunning() {
 			return
 		}
-		g.checkError(game.WriteExternalMessage(msg))
+		game.SendLineFromOtherGame(msg, g)
 	}, []interfaces.Game{g})
 }
 

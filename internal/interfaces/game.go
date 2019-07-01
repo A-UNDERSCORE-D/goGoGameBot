@@ -20,7 +20,6 @@ type GameManager interface {
 type Game interface {
 	GetName() string
 	UpdateFromConfig(config config.Game) error
-	WriteExternalMessage(msg string) error
 	StopOrKiller
 	Runner
 	AutoStarter
