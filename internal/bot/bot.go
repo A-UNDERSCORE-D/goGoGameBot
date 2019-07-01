@@ -178,6 +178,7 @@ func (b *Bot) reloadCmd(d *command.Data) {
 	if err != nil {
 		b.Error(err)
 		d.ReturnNotice("error occurred while attempting to reload. reload aborted")
+		return
 	}
 
 	b.GameManager.ReloadGames(c.GameManager.Games)
