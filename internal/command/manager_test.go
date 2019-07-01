@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	baseLogger = log.New(log.FTimestamp|log.FShowFile, os.Stdout, "TEST", log.TRACE)
+	baseLogger = log.New(log.FTimestamp|log.FShowFile, os.Stdout, "TEST", log.INFO)
 )
 
 type mockMessager struct {
