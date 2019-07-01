@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [0.3.5] - 2019-07-01
+### Fixed
+- Messages from other games are no longer sent directly to stdin on the target game without going through the external formatter
+
+
 ## [0.3.4] - 2019-07-01
 ### Fixed
 - `stdio_regexp` incorrectly named `stdio_regexps`
@@ -121,6 +126,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.3.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/88f7d651928e613dc57fa0e8d5b0de2cc970fc6d...9ab227b07856945179e05159c48fc0bb08025efa
 [0.3.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/b38b8c345c4f614ff167ceff17ea75a3d477aca0...88f7d651928e613dc57fa0e8d5b0de2cc970fc6d
 [0.3.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3...b38b8c345c4f614ff167ceff17ea75a3d477aca0
 [0.3.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/059e4fc266c88b2b877892ff6fe3c27703c28428...7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3
