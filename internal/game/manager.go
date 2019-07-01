@@ -75,10 +75,12 @@ func (m *Manager) String() string {
 // found in the config are added, rather than reloaded
 func (m *Manager) ReloadGames(configs []config.Game) {
 	// No need to hold the games mutex as of yet as we're not iterating the games list itself
+	m.Debug("reloading games")
 	for _, conf := range configs {
 		switch i := m.gameIdxFromName(conf.Name); i {
 		case -1: // Game does not exist
 			g, err := NewGame(conf, m)
+			m.Debugf("adding a new game during reload: %s", conf.Name)
 			if err != nil {
 				m.Error(err)
 				continue
@@ -88,6 +90,7 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 				continue
 			}
 		default:
+			m.Debugf("updating config on %s", conf.Name)
 			m.gamesMutex.RLock()
 			g := m.games[i]
 			if err := g.UpdateFromConfig(conf); err != nil {
