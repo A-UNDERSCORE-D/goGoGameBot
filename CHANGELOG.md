@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The reload command has returned. It allows for runtime game config reloading
 - Formats on `<stdio_regexp>` entries now have access to the above defined templates
+- Channels that games reference will be automatically joined when the bot is started. 
+Note that this does not apply to reloaded configs. Any channels added after a reload will need to be manually joined
 
 ### Fixed
 - Commandline interface commands no longer require a command prefix to be executed

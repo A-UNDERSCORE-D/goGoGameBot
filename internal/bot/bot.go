@@ -91,6 +91,26 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 		}
 	}
 
+	addIfNotExist := func(c string) {
+		for _, cn := range b.IrcConf.JoinChans {
+			if cn.Name == c {
+				return
+			}
+		}
+		b.IrcConf.JoinChans = append(b.IrcConf.JoinChans, config.IrcChan{Name: c})
+	}
+
+	for _, g := range conf.GameManager.Games {
+		addIfNotExist(g.ControlChannels.Admin)
+		addIfNotExist(g.ControlChannels.Msg)
+		for _, c := range g.Chat.BridgedChannels {
+			if c == "*" {
+				continue
+			}
+			addIfNotExist(c)
+		}
+	}
+
 	b.capManager = &CapabilityManager{bot: b}
 	b.Init()
 	return b, nil
