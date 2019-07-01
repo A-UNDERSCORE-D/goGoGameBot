@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+## [0.3.3] - 2019-07-01
 ### Added
 - The reload command has returned. It allows for runtime game config reloading
 - Formats on `<stdio_regexp>` entries now have access to the above defined templates
@@ -17,6 +19,9 @@ Note that this does not apply to reloaded configs. Any channels added after a re
 ### Changed
 - `<regexp>` in game is now `<stdio_regexp>`, and the control elements other than `<regexp>` and `<format>` have been moved
 to attributes.
+
+### Removed
+- Vendored dependancies
 
 ## [0.3.2] - 2019-06-30
 ### Fixed
@@ -112,6 +117,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.3.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3...b38b8c345c4f614ff167ceff17ea75a3d477aca0
 [0.3.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/059e4fc266c88b2b877892ff6fe3c27703c28428...7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3
 [0.3.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/cb2ad2488fdb8c2ff69080a567777bdc113dd780...059e4fc266c88b2b877892ff6fe3c27703c28428
 [0.3.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/e150762e9da3b0c48f4688610fe78c17aee1595d...cb2ad2488fdb8c2ff69080a567777bdc113dd780
