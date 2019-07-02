@@ -13,6 +13,13 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
+func idxOrEmpty(slice []string, idx int) string {
+	if len(slice) > idx {
+		return slice[idx]
+	}
+	return ""
+}
+
 func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
 		bot:    bot,
@@ -22,20 +29,28 @@ func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger)
 	m.bot.HookPrivmsg(func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot) {
 		m.ForEachGame(func(game interfaces.Game) { game.OnPrivmsg(source, target, message) }, nil)
 	})
+
 	m.bot.HookRaw("JOIN", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
 		m.ForEachGame(func(game interfaces.Game) { game.OnJoin(message.Prefix, message.Params[0]) }, nil)
 	}, event.PriNorm)
+
 	m.bot.HookRaw("PART", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnPart(message.Prefix, message.Params[0], message.Params[1]) }, nil)
+		partMsg := idxOrEmpty(message.Params, 1)
+		m.ForEachGame(func(game interfaces.Game) { game.OnPart(message.Prefix, message.Params[0], partMsg) }, nil)
 	}, event.PriNorm)
+
 	m.bot.HookRaw("QUIT", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnQuit(message.Prefix, message.Params[0]) }, nil)
+		quitMsg := idxOrEmpty(message.Params, 0)
+		m.ForEachGame(func(game interfaces.Game) { game.OnQuit(message.Prefix, quitMsg) }, nil)
 	}, event.PriNorm)
+
 	m.bot.HookRaw("KICK", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
+		kickMsg := idxOrEmpty(message.Params, 2)
 		m.ForEachGame(func(game interfaces.Game) {
-			game.OnKick(message.Prefix, message.Params[0], message.Params[1], message.Params[2])
+			game.OnKick(message.Prefix, message.Params[0], message.Params[1], kickMsg)
 		}, nil)
 	}, event.PriNorm)
+
 	m.bot.HookRaw("NICK", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
 		m.ForEachGame(func(game interfaces.Game) { game.OnNick(message.Prefix, message.Params[0]) }, nil)
 	}, event.PriNorm)
