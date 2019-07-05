@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+## Added
+- A new bool is available on game regexps that sends the result of the regex to the local
+game as well as any other options. Note that these strings are sent through the `external`
+formatter already available on the game. 
+
 ## Fixed
 - Various (recovered) panics caused by parting/quitting/kicking users without a message
 

@@ -127,7 +127,12 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if !g.chatBridge.allowForwards {
 		return
 	}
-	fmtData := dataForOtherGameFmt{msg, source.GetName()}
+	name := "LOCAL"
+	if source != g {
+		name = source.GetName()
+	}
+
+	fmtData := dataForOtherGameFmt{msg, name}
 	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
 }
 

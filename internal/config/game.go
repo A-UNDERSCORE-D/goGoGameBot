@@ -70,4 +70,5 @@ type Regexp struct {
 	DontEat     bool        `xml:"dont_eat,attr"`
 	DontSend    bool        `xml:"dont_send_to_chan,attr"`
 	DontForward bool        `xml:"dont_forward,attr"`
+	SendToLocal bool        `xml:"send_to_local,attr"`
 }

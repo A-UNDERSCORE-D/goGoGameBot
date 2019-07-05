@@ -54,6 +54,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		eat:              !conf.DontEat,
 		sendToChan:       !conf.DontSend,
 		sendToOtherGames: !conf.DontForward,
+		sendToLocalGame:  conf.SendToLocal,
 	}, nil
 
 }
@@ -67,6 +68,7 @@ type Regexp struct {
 	eat              bool
 	sendToChan       bool
 	sendToOtherGames bool
+	sendToLocalGame  bool // TODO
 }
 
 func (r *Regexp) matchToMap(line string) (map[string]string, bool) {
@@ -124,6 +126,11 @@ func (r *Regexp) checkAndExecute(line string, stdout bool) (bool, error) {
 	if r.sendToOtherGames {
 		r.manager.game.writeToAllOthers(resp)
 	}
+
+	if r.sendToLocalGame {
+		r.manager.game.SendLineFromOtherGame(resp, r.manager.game)
+	}
+
 	return true, nil
 }
 

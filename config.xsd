@@ -145,6 +145,7 @@
     <xs:attribute type="xs:boolean" name="dont_eat"/>
     <xs:attribute type="xs:boolean" name="dont_send_to_chan"/>
     <xs:attribute type="xs:boolean" name="dont_forward"/>
+    <xs:attribute type="xs:boolean" name="send_to_local"/>
   </xs:complexType>
 
   <xs:complexType name="gameType">
