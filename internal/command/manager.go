@@ -267,7 +267,7 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 func (m *Manager) String() string {
 	var cmds []string
 	m.cmdMutex.RLock()
-	for k, _ := range m.commands {
+	for k := range m.commands {
 		cmds = append(cmds, k)
 	}
 	m.cmdMutex.RUnlock()
