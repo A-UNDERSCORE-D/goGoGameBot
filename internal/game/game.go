@@ -20,6 +20,7 @@ const (
 	shutdown
 )
 
+// NewGame creates a new game from the given config
 func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	if conf.Name == "" {
 		return nil, errors.New("cannot have an empty game name")
@@ -68,6 +69,7 @@ type channelPair struct {
 	msg   string
 }
 
+// Game represents a game server and its process
 type Game struct {
 	*log.Logger
 	name            string
@@ -234,29 +236,30 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	return nil
 }
 
-func (g *Game) compileFormats(gameConf *config.Game) error {
+func (*Game) compileFormats(gameConf *config.Game) error {
 	fmts := &gameConf.Chat.Formats
+	const cantCompile = "could not compile format %s: %s"
 	if err := fmts.Message.Compile("message", false, nil); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "message", err)
+		return fmt.Errorf(cantCompile, "message", err)
 	}
 	root := fmts.Message.CompiledFormat
 	if err := fmts.Join.Compile("join", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "join", err)
+		return fmt.Errorf(cantCompile, "join", err)
 	}
 	if err := fmts.Part.Compile("part", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "part", err)
+		return fmt.Errorf(cantCompile, "part", err)
 	}
 	if err := fmts.Nick.Compile("nick", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "nick", err)
+		return fmt.Errorf(cantCompile, "nick", err)
 	}
 	if err := fmts.Quit.Compile("quit", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "quit", err)
+		return fmt.Errorf(cantCompile, "quit", err)
 	}
 	if err := fmts.Kick.Compile("kick", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "kick", err)
+		return fmt.Errorf(cantCompile, "kick", err)
 	}
 	if err := fmts.External.Compile("external", false, root); err != nil {
-		return fmt.Errorf("could not compile format %s: %s", "external", err)
+		return fmt.Errorf(cantCompile, "external", err)
 	}
 	for _, v := range fmts.Extra {
 		if err := v.Compile(v.Name, false, root); err != nil {

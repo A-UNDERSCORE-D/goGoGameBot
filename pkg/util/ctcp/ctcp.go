@@ -13,6 +13,7 @@ func IsCTCP(s string) bool {
 	return len(s) > 1 && s[0] == ctcpChar
 }
 
+// CTCP represents a CTCP command and argument
 type CTCP struct {
 	Command string
 	Arg     string

@@ -2,6 +2,7 @@ package command
 
 import "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 
+// Admin represents a mask with a level of admin access
 type Admin struct {
 	Level int
 	Mask  string

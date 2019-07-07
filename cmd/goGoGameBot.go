@@ -65,7 +65,7 @@ func main() {
 
 	b.GameManager.StopAllGames()
 	if err == bot.ErrRestart {
-		ExecSelf()
+		execSelf()
 	}
 
 	go func() {
@@ -77,7 +77,7 @@ func main() {
 	_ = rl.Close()
 }
 
-func ExecSelf() {
+func execSelf() {
 	executable, err := os.Executable()
 	if err != nil {
 		panic(err) // This should never fail and if it does we should explode violently
@@ -86,7 +86,6 @@ func ExecSelf() {
 }
 
 func runCLI(b *bot.Bot, rl *readline.Instance) {
-
 	lineChan := make(chan string)
 	go func() {
 		for {

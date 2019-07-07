@@ -23,22 +23,16 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
 
+// status states for the Bot
 const (
-	// Connected means the bot has completed a connection to an IRC server
 	CONNECTED = iota
-
-	// Disconnected means the bot is not currently connected, could come from either a DC while connected or before the
-	// connection is first made
 	DISCONNECTED
-	// Errored indicates that the bot has errored
 	ERRORED
-
-	// Connecting means the bot is in progress of connecting and negotiating with the target IRC server
 	CONNECTING
-	// Restarting indicates that the bot intends restarting
 	RESTARTING
 )
 
+// Errors returned by various functions
 var (
 	ErrNotConnected = errors.New("not connected to IRC")
 	ErrRestart      = errors.New("restart me")
@@ -380,12 +374,12 @@ func (b *Bot) sendToRawChans(upperCommand string, line ircmsg.IrcMessage) {
 
 // GetRawChan returns a pair of channels, the first of which will receive ircmsg.IrcMessage as they come in
 // and the second of which will
-func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool) {
+func (b *Bot) GetRawChan(cmd string) (<-chan ircmsg.IrcMessage, chan<- bool) {
 	if b.rawChans == nil {
 		b.rawChans = make(map[string][]RawChanPair)
 	}
 
-	command = strings.ToUpper(command)
+	cmd = strings.ToUpper(cmd)
 	chanPair := RawChanPair{make(chan ircmsg.IrcMessage), make(chan bool)}
 	b.rawchansMutex.Lock()
 	defer b.rawchansMutex.Unlock()
@@ -398,7 +392,7 @@ func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool)
 		close(chanPair.writeChan)
 		b.rawchansMutex.Lock()
 		defer b.rawchansMutex.Unlock()
-		chanPairList := b.rawChans[command]
+		chanPairList := b.rawChans[cmd]
 
 		for i, p := range chanPairList {
 			if p == chanPair {
@@ -408,14 +402,14 @@ func (b *Bot) GetRawChan(command string) (<-chan ircmsg.IrcMessage, chan<- bool)
 		}
 	}()
 
-	b.rawChans[command] = append(b.rawChans[command], chanPair)
+	b.rawChans[cmd] = append(b.rawChans[cmd], chanPair)
 
 	return chanPair.writeChan, chanPair.doneChan
 }
 
 // WaitForRaw waits for a single command and returns the line
-func (b *Bot) WaitForRaw(command string) ircmsg.IrcMessage {
-	w, d := b.GetRawChan(command)
+func (b *Bot) WaitForRaw(cmd string) ircmsg.IrcMessage {
+	w, d := b.GetRawChan(cmd)
 	out := <-w
 	close(d)
 	return out

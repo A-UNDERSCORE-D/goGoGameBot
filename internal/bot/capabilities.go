@@ -174,7 +174,7 @@ func (cm *CapabilityManager) requestCaps() error {
 }
 
 // parseCapStr takes a cap string and splits it into the cap name and the arguments to that cap
-func parseCapStr(capStr string) (string, string) {
+func parseCapStr(capStr string) (name string, arg string) {
 	split := strings.SplitN(capStr, "=", 1)
 	if len(split) < 2 {
 		split = append(split, "")

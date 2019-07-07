@@ -7,6 +7,7 @@ import (
 	"github.com/goshuirc/irc-go/ircutils"
 )
 
+// Data represents all the data available for a command call
 type Data struct {
 	IsFromIRC    bool
 	Args         []string

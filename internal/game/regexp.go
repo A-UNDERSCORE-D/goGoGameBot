@@ -40,7 +40,8 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		"sendToAdminChan": manager.game.templSendToAdminChan,
 		"sendPrivmsg":     manager.game.templSendPrivmsg,
 	}
-	var templ *util.Format = nil
+
+	var templ *util.Format
 	if err := conf.Format.Compile("regexp_"+conf.Name, true, root, funcs); err != nil {
 		if err != util.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
@@ -59,7 +60,6 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		sendToOtherGames: !conf.DontForward,
 		sendToLocalGame:  conf.SendToLocal,
 	}, nil
-
 }
 
 // Regexp is a representation of a regex and a util.Format pair that is applied to stdout lines of a game
@@ -143,6 +143,7 @@ func NewRegexpManager(game *Game) *RegexpManager {
 	return &RegexpManager{game: game}
 }
 
+// RegexpManager manages regexps for a game
 type RegexpManager struct {
 	sync.RWMutex
 	regexps RegexpList

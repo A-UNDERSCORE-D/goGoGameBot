@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Callback is a function that can be attached to a command
 type Callback func(data *Data)
 
 // Command represents a fireable command
@@ -25,15 +26,21 @@ type SingleCommand struct {
 	name          string
 }
 
+// Fire executes the callback on the command if the caller has the permissions required
 func (c *SingleCommand) Fire(data *Data) {
 	if data.CheckPerms(c.adminRequired) {
 		c.callback(data)
 	}
 }
 
+// AdminRequired is a getter for the admin required on the command
 func (c *SingleCommand) AdminRequired() int { return c.adminRequired }
-func (c *SingleCommand) Help() string       { return c.help }
-func (c *SingleCommand) Name() string       { return c.name }
+
+// Help is a getter for the help string for the command
+func (c *SingleCommand) Help() string { return c.help }
+
+// Name is a getter for the name of the command
+func (c *SingleCommand) Name() string { return c.name }
 
 // SubCommandList is an implementation of Command that holds a list of subCommands that it can fire
 type SubCommandList struct {
@@ -42,6 +49,7 @@ type SubCommandList struct {
 	subCommands map[string]Command
 }
 
+// Help returns the help message for the command. For SubCommandLists, this returns the available subcommands
 func (s *SubCommandList) Help() string {
 	out := strings.Builder{}
 	out.WriteString("Available subcommands are: ")
@@ -86,6 +94,7 @@ func (s *SubCommandList) removeSubcmd(name string) error {
 	return nil
 }
 
+// Fire executes the callback on the command if the caller has the permissions required
 func (s *SubCommandList) Fire(data *Data) {
 	if len(data.Args) < 1 {
 		data.SendSourceNotice("Not enough arguments")

@@ -51,7 +51,6 @@ func (g *Game) shouldBridge(target string) bool {
 		}
 	}
 	return false
-
 }
 
 type dataForPrivmsg struct {

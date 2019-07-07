@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/shirou/gopsutil/process"
+	psutilProc "github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/unix"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -138,7 +138,7 @@ func (p *Process) GetStatus() string {
 		return out.String()
 	}
 
-	ps, err := process.NewProcess(int32(p.cmd.Process.Pid))
+	ps, err := psutilProc.NewProcess(int32(p.cmd.Process.Pid))
 
 	if err != nil {
 		return fmt.Sprintf("$b$c[red]ERROR:$b %s", err)

@@ -72,6 +72,7 @@ func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger)
 	return m, nil
 }
 
+// Manager manages games, and communication between them, eachother, and an interfaces.Bot
 type Manager struct {
 	games      []interfaces.Game
 	gamesMutex sync.RWMutex

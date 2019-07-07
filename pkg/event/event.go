@@ -9,6 +9,7 @@ import (
 // This is a reimplementation of eventmgr found at github.com/goshuirc/eventmgr with an ID system added.
 // The original idea is theirs.
 
+// Priority levels
 const (
 	PriHighest = 16
 	PriHigh    = 32
@@ -40,6 +41,8 @@ type ArgMap map[string]interface{}
 
 // HandlerFunc represents an event handler callback
 type HandlerFunc func(string, ArgMap)
+
+// Handler represents an event handler
 type Handler struct {
 	Func     HandlerFunc // The callback that this Handler refers to
 	Priority int         // The priority of this callback, lower is higher

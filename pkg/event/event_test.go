@@ -173,7 +173,6 @@ func TestManager_Dispatch(t *testing.T) {
 				}
 
 				if tt.expectedResults[count] != s {
-
 					t.Errorf(
 						"Manager.Dispatch() callback returned invalid data = %q, want %q",
 						s,
