@@ -213,17 +213,17 @@ func (p *Process) SendSignal(sig os.Signal) error {
 	return nil
 }
 
-// sends SIGTERM to the process if it is running
+// Stop sends SIGTERM to the process if it is running
 func (p *Process) Stop() error {
 	return p.SendSignal(unix.SIGTERM)
 }
 
-// sends SIGKILL to the process if it is running
+// Kill sends SIGKILL to the process if it is running
 func (p *Process) Kill() error {
 	return p.SendSignal(unix.SIGKILL)
 }
 
-// asks the process to stop and waits for the configured timeout, after which it kills the process
+// StopOrKillTimeout asks the process to stop and waits for the configured timeout, after which it kills the process
 func (p *Process) StopOrKillTimeout(timeout time.Duration) error {
 	if !p.IsRunning() {
 		return nil

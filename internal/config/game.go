@@ -6,12 +6,14 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
+// GameManager represents a config for a game.Manager instance
 type GameManager struct {
 	XMLName    xml.Name `xml:"games"`
 	StripMasks []string `xml:"strip_masks>mask"`
 	Games      []Game   `xml:"game"`
 }
 
+// Game represents a config for a game.Game instance. It has embedded structs for organisation
 type Game struct {
 	XMLName         xml.Name  `xml:"game"`
 	Name            string    `xml:"name,attr"`
@@ -48,11 +50,13 @@ type Game struct {
 	ColourMap ColourMap `xml:"colour_map"`
 }
 
+// ExtraFormat represents an additional format found in config.Game.Chat.Format
 type ExtraFormat struct {
 	util.Format
 	Name string `xml:"name,attr"`
 }
 
+// Command represents a command that translates to input on the game's stdin
 type Command struct {
 	XMLName       xml.Name    `xml:"command"`
 	Name          string      `xml:"name,attr"`
@@ -61,6 +65,8 @@ type Command struct {
 	Format        util.Format `xml:"format"`
 }
 
+// Regexp represents a format and a regex that are used together to forward specific lines formatted a specific way
+// from the game's stdout to chat, other games, and itself
 type Regexp struct {
 	XMLName     xml.Name    `xml:"stdio_regexp"`
 	Priority    int         `xml:"priority,attr"`

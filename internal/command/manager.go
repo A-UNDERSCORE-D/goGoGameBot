@@ -14,6 +14,8 @@ import (
 
 const noAdmin = 0
 
+// NewManager creates a Manager with the provided logger and messager. The prefixes vararg sets the prefixes for the
+// commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
 func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes ...string) *Manager {
 	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: prefixes}
 	_ = m.AddCommand("help", 0, func(data *Data) {
@@ -50,6 +52,8 @@ func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes .
 	return m
 }
 
+// Manager is a frontend that manages commands and the firing thereof. It is intended to be a completely self contained
+// system for managing commands on arbitrary lines
 type Manager struct {
 	admins          []Admin
 	cmdMutex        sync.RWMutex
@@ -59,10 +63,13 @@ type Manager struct {
 	messenger       interfaces.IRCMessager
 }
 
+// AddPrefix adds a prefix to the command manager. It is not safe for concurrent use
 func (m *Manager) AddPrefix(name string) {
 	m.commandPrefixes = append(m.commandPrefixes, name)
 }
 
+// RemovePrefix removes a prefix from the Manager, it is not safe for concurrent use. If the prefix does not exist, the
+// method is a noop
 func (m *Manager) RemovePrefix(name string) {
 	toRemove := -1
 	for i, pfx := range m.commandPrefixes {
@@ -76,8 +83,10 @@ func (m *Manager) RemovePrefix(name string) {
 	}
 }
 
+// AddCommand adds the callback as a simple (SingleCommand) to the Manager. It is safe for concurrent use. It returns
+// various errors
 func (m *Manager) AddCommand(name string, requiresAdmin int, callback Callback, help string) error {
-	return m.addCommand(&SingleCommand{
+	return m.internalAddCommand(&SingleCommand{
 		adminRequired: requiresAdmin,
 		callback:      callback,
 		help:          help,
@@ -85,6 +94,8 @@ func (m *Manager) AddCommand(name string, requiresAdmin int, callback Callback, 
 	})
 }
 
+// RemoveCommand removes the command referenced by the given string. If the command does not exist, RemoveCommand
+// returns an error.
 func (m *Manager) RemoveCommand(name string) error {
 	if m.getCommandByName(name) == nil {
 		return fmt.Errorf("command %q does not exist on %v", name, m)
@@ -96,7 +107,8 @@ func (m *Manager) RemoveCommand(name string) error {
 	return nil
 }
 
-func (m *Manager) addCommand(cmd Command) error {
+// internalAddCommand adds the actual Command to the manager, it is used by both of the exported command addition methods
+func (m *Manager) internalAddCommand(cmd Command) error {
 	if strings.Contains(cmd.Name(), " ") {
 		return errors.New("commands cannot contain spaces")
 	}
@@ -111,6 +123,8 @@ func (m *Manager) addCommand(cmd Command) error {
 	return nil
 }
 
+// AddAdmin adds an admin level with the given mask to the Manager. Masks cannot be duplicated, and the level may not
+// be below 0
 func (m *Manager) AddAdmin(mask string, level int) error {
 	if level <= 0 {
 		return fmt.Errorf("admin level cannot be below 1 (0 is no access)")
@@ -133,9 +147,12 @@ func (m *Manager) getCommandByName(name string) Command {
 	return nil
 }
 
+// AddSubCommand adds the given callback as a subcommand to the given root name. If the root name does not exist on
+// the Manager, it is automatically added. Otherwise, if it DOES exist but is of the wrong type, AddSubCommand returns
+// an error
 func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callback Callback, help string) error {
 	if m.getCommandByName(rootName) == nil {
-		err := m.addCommand(&SubCommandList{
+		err := m.internalAddCommand(&SubCommandList{
 			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: strings.ToUpper(rootName)},
 			subCommands:   make(map[string]Command),
 		})
@@ -152,6 +169,8 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 	return cmd.addSubcommand(&SingleCommand{name: name, adminRequired: requiresAdmin, callback: callback, help: help})
 }
 
+// RemoveSubCommand removes the command referenced by name on rootName, if rootName is not a command with sub commands,
+// or name does not exist on rootName, RemoveSubCommand errors
 func (m *Manager) RemoveSubCommand(rootName, name string) error {
 	var cmd Command
 	if cmd = m.getCommandByName(rootName); cmd == nil {
@@ -178,6 +197,9 @@ func (m *Manager) adminFromMask(mask string) int {
 
 const notAllowed = "You are not permitted to use this command"
 
+// CheckAdmin compares the admin level for mask on the Data object to the required level, it returns true if the level
+// is at or above the required level. It will also send a notice to the source stating that they do not have the
+// required access if the check fails
 func (m *Manager) CheckAdmin(data *Data, requiredLevel int) bool {
 	if !data.IsFromIRC {
 		return true // Non IRC users have direct access
@@ -202,6 +224,7 @@ func (m *Manager) stripPrefix(line string) (string, bool) {
 	return out, hasPrefix
 }
 
+// ParseLine checks the given string for a valid command. If it finds one, it fires that command.
 func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost, target string) {
 	if len(line) == 0 {
 		return
@@ -240,6 +263,7 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	cmd.Fire(data)
 }
 
+// String implements the stringer interface
 func (m *Manager) String() string {
 	var cmds []string
 	m.cmdMutex.RLock()

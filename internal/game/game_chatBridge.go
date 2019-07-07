@@ -59,6 +59,7 @@ type dataForPrivmsg struct {
 	IsAction bool
 }
 
+// OnPrivmsg is a callback that is fired when a PRIVMSG is received from IRC
 func (g *Game) OnPrivmsg(source, target, msg string) {
 	if !g.shouldBridge(target) {
 		return
@@ -76,6 +77,7 @@ func (g *Game) OnPrivmsg(source, target, msg string) {
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.message))
 }
 
+// OnJoin is a callback that is fired when a user joins any channel
 func (g *Game) OnJoin(source, channel string) {
 	if !g.shouldBridge(channel) {
 		return
@@ -83,6 +85,7 @@ func (g *Game) OnJoin(source, channel string) {
 	g.checkError(g.SendFormattedLine(g.makeDataForFormat(source, channel, ""), g.chatBridge.format.join))
 }
 
+// OnPart is a callback that is fired when a user leaves a channel
 func (g *Game) OnPart(source, target, message string) {
 	if !g.shouldBridge(target) {
 		return
@@ -95,11 +98,13 @@ type dataForNick struct {
 	NewNick string
 }
 
+// OnNick is a callback that is fired when a user changes their nickname
 func (g *Game) OnNick(source, newnick string) {
 	data := dataForNick{g.makeDataForFormat(source, "", ""), newnick}
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.nick))
 }
 
+// OnQuit is a callback that is fired when a user quits from IRC
 func (g *Game) OnQuit(source, message string) {
 	data := g.makeDataForFormat(source, "", message)
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.quit))
@@ -110,6 +115,7 @@ type dataForKick struct {
 	Kickee string
 }
 
+// OnKick is a callback that is fired when a user kicks another user from the channel
 func (g *Game) OnKick(source, channel, kickee, message string) {
 	if !g.shouldBridge(channel) {
 		return
@@ -123,6 +129,8 @@ type dataForOtherGameFmt struct {
 	SourceGame string
 }
 
+// SendLineFromOtherGame Is a frontend for sending messages to a game from other games. If the game in source is the
+// same as the current game, the name is switched to "LOCAL"
 func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if !g.chatBridge.allowForwards {
 		return

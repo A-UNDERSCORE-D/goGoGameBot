@@ -1,3 +1,4 @@
+// Package log provides a level based logger in place of go's standard logger
 package log
 
 import (
@@ -11,11 +12,13 @@ import (
 	"time"
 )
 
+// Log flags
 const (
 	FTimestamp = 1 << iota
 	FShowFile  // Maybe some other time.
 )
 
+// Log levels
 const (
 	TRACE = 10 * iota
 	DEBUG
@@ -55,24 +58,29 @@ type Logger struct {
 	minLevel int
 }
 
+// Flags is a getter for the flags the logger currently has
 func (l *Logger) Flags() int {
 	return l.flags
 }
 
+// SetFlags is a setter for the logger's flags. It returns the same Logger it was run on for use in call chains
 func (l *Logger) SetFlags(flags int) *Logger {
 	l.flags = flags
 	return l
 }
 
+// Prefix is a getter for the prefix the logger currently has
 func (l *Logger) Prefix() string {
 	return l.prefix
 }
 
+// SetPrefix is a setter for the logger's flags. It returns the same Logger it was run on for use in call chains
 func (l *Logger) SetPrefix(prefix string) *Logger {
 	l.prefix = prefix
 	return l
 }
 
+// MinLevel is a getter for the minimum log level on the logger
 func (l *Logger) MinLevel() int {
 	return l.minLevel
 }
@@ -217,6 +225,7 @@ func (l *Logger) Panicf(format string, args ...interface{}) {
 	panic(msg)
 }
 
+// Clone duplicates the logger it is run on, returning a clean version that can be modified
 func (l Logger) Clone() *Logger {
 	return &l
 }

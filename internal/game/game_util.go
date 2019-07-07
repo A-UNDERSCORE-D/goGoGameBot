@@ -73,6 +73,7 @@ func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
 	return msg, nil
 }
 
+// Status returns the status of the game's process as a string
 func (g *Game) Status() string {
 	return g.process.GetStatus()
 }

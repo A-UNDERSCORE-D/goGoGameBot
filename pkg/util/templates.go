@@ -8,6 +8,7 @@ import (
 	"github.com/goshuirc/irc-go/ircfmt"
 )
 
+// TemplateUtilFuncs is a standard set of functions added to all Format's template.Template
 var TemplateUtilFuncs = template.FuncMap{
 	"zwsp":        AddZwsp,
 	"wordEOL":     WordEol,
@@ -15,13 +16,15 @@ var TemplateUtilFuncs = template.FuncMap{
 	"stripColour": ircfmt.Strip,
 }
 
+// Format represents a wrapped template.Template
 type Format struct {
-	FormatString   string             `xml:",chardata"`
-	CompiledFormat *template.Template `xml:"-"`
-	compiled       bool
+	FormatString   string             `xml:",chardata"` // The original format string
+	CompiledFormat *template.Template `xml:"-"`         // Our internal template
+	compiled       bool               // Have we been compiled yet
 }
 
 var (
+	// ErrEmptyFormat Is returned when the format is empty
 	ErrEmptyFormat = errors.New("format: cannot compile an empty format")
 )
 

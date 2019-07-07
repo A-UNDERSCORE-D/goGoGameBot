@@ -20,6 +20,7 @@ func idxOrEmpty(slice []string, idx int) string {
 	return ""
 }
 
+// NewManager creates a Manager and configures it using the given data.
 func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
 		bot:    bot,
@@ -106,7 +107,7 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 			}
 		default:
 			m.Debugf("updating config on %s", conf.Name)
-			m.gamesMutex.RLock()
+			m.gamesMutex.RLock() // use RLock here because we're only reading the slice, and mutating an index on that slice
 			g := m.games[i]
 			if err := g.UpdateFromConfig(conf); err != nil {
 				m.Error(fmt.Errorf("reloading game %s errored: %s", g, err))
@@ -184,6 +185,7 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 }
 
 var (
+	// ErrGameNotExist is returned by various methods when the game requested does not exist
 	ErrGameNotExist = errors.New("requested game does not exist")
 )
 
@@ -200,6 +202,7 @@ func (m *Manager) StartAutoStartGames() {
 	m.ForEachGame(func(game interfaces.Game) { game.AutoStart() }, nil)
 }
 
+// StartGame starts the game named if it exists on the manager and is not already running
 func (m *Manager) StartGame(name string) error {
 	if g := m.GetGameFromName(name); g != nil {
 		if g.IsRunning() {
@@ -211,6 +214,7 @@ func (m *Manager) StartGame(name string) error {
 	return ErrGameNotExist
 }
 
+// StopGame stops the named game on the manager if it exists and is already running
 func (m *Manager) StopGame(name string) error {
 	if g := m.GetGameFromName(name); g != nil {
 		if !g.IsRunning() {

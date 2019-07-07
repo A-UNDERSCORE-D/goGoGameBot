@@ -96,11 +96,14 @@ func (g *Game) getInternalStatus() status {
 	return g.status
 }
 
+//noinspection GoExportedElementShouldHaveComment
 var (
 	ErrAlreadyRunning = errors.New("game is already running")
 	ErrGameNotRunning = errors.New("game is not running")
 )
 
+// Run starts the given game if it is not already running. Note that this method blocks until the game exits, meaning
+// you will probably want to use it in a goroutine
 func (g *Game) Run() {
 	for {
 		if err := g.process.Reset(); err != nil {
@@ -160,7 +163,7 @@ func (g *Game) validateConfig(conf *config.Game) error {
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
 
-	if err := g.CompileFormats(conf); err != nil {
+	if err := g.compileFormats(conf); err != nil {
 		return fmt.Errorf("could not compile formats: %s", err)
 	}
 
@@ -231,7 +234,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	return nil
 }
 
-func (g *Game) CompileFormats(gameConf *config.Game) error {
+func (g *Game) compileFormats(gameConf *config.Game) error {
 	fmts := &gameConf.Chat.Formats
 	if err := fmts.Message.Compile("message", false, nil); err != nil {
 		return fmt.Errorf("could not compile format %s: %s", "message", err)
@@ -263,10 +266,13 @@ func (g *Game) CompileFormats(gameConf *config.Game) error {
 	return nil
 }
 
+// GetName is a getter required by the interfaces.Game interface
 func (g *Game) GetName() string {
 	return g.name
 }
 
+// AutoStart checks if the game is marked as auto-starting, and if so, starts the game by starting Game.Run in a
+// goroutine
 func (g *Game) AutoStart() {
 	if g.autoStart {
 		go g.Run()

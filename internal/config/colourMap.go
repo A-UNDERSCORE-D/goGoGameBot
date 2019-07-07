@@ -1,5 +1,6 @@
 package config
 
+// ColourMap is map to convert IRC colours to other formats
 type ColourMap struct {
 	Bold          string `xml:"bold,omitempty"`
 	Italic        string `xml:"italic,omitempty"`
@@ -26,6 +27,7 @@ type ColourMap struct {
 	LightGrey     string `xml:"light_grey,omitempty"`
 }
 
+// ToMap converts the ColourMap struct to a map of string to string. It additionally adds a mapping of "$$" -> "$"
 func (c *ColourMap) ToMap() map[string]string {
 	return map[string]string{
 		"$$":              "$",

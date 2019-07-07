@@ -10,7 +10,8 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 )
 
-//noinspection ALL
+// IRC SASL numerics
+// noinspection ALL
 const (
 	//revive:disable:var-naming
 	RPL_LOGGEDIN    = "900"
@@ -80,6 +81,7 @@ func AnyMaskMatch(toCheck string, masks []string) bool {
 	return false
 }
 
+// AddZwsp adds a zero width space to the given string if its length is greater than two
 func AddZwsp(s string) string {
 	if len(s) < 2 {
 		return s

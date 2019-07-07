@@ -13,7 +13,6 @@ type Config struct {
 	Permissions []Permission `xml:"permissions>permission"`
 	Ignores     []string     `xml:"ignore_mask"`
 	Strips      []string     `xml:"strip_mask"`
-	//Games       []GameConfig `xml:"game"`
 	GameManager GameManager
 	ConfigPath  string `xml:"-"`
 }
@@ -32,17 +31,6 @@ func readAllFromFile(name string) ([]byte, error) {
 	return data, nil
 }
 
-//func (c *Config) runIncludes() error {
-//	for i, g := range c.Games {
-//		newG, err := g.doInclude()
-//		if err != nil {
-//			return err
-//		}
-//		c.Games[i] = *newG
-//	}
-//	return nil
-//}
-
 func getXMLConf(filename string) (*Config, error) {
 	data, err := readAllFromFile(filename)
 	if err != nil {
@@ -54,11 +42,6 @@ func getXMLConf(filename string) (*Config, error) {
 	if err = xml.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
-
-	//if err = conf.runIncludes(); err != nil {
-	//	return nil, err
-	//}
-
 	return conf, nil
 }
 

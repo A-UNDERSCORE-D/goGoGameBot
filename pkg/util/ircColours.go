@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// MakeColourMap converts a map of string -> string to a strings.Replacer. If creation of the replacer errors, the error
+// is returned
 func MakeColourMap(mapIn map[string]string) (ret *strings.Replacer, err error) {
 	defer func() {
 		if res := recover(); res != nil {

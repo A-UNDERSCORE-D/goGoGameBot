@@ -16,6 +16,7 @@ func CleanSplitOnSpace(s string) []string {
 	return out
 }
 
+// WordEol returns the given string with wordIdx words (space separations) removed
 func WordEol(s string, wordIdx int) string {
 	split := strings.Split(s, " ")
 	if wordIdx > -1 && len(split) >= wordIdx {
@@ -26,6 +27,7 @@ func WordEol(s string, wordIdx int) string {
 
 var escapeReplacer = strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`)
 
+// EscapeString escapes commonly (ab)used strings
 func EscapeString(s string) string {
 	return escapeReplacer.Replace(s)
 }

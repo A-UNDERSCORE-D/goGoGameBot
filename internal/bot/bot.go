@@ -65,10 +65,12 @@ type Bot struct {
 	rawchansMutex  sync.Mutex               // Mutex protecting the rawChans map
 	rawChans       map[string][]RawChanPair // rawChans holds channel pairs for use in blocking waits for lines
 	capManager     *CapabilityManager       // Manager for IRCv3 capabilities
-	CommandManager *command.Manager
-	GameManager    *game.Manager
+	CommandManager *command.Manager         // Manager for all IRC and commandline commands
+	GameManager    *game.Manager            // Manager for all games, and intercommunication thereof
 }
 
+// NewBot creates a new instance of Bot, using the provided configs and logger. Bot cannot be instantiated in any
+// other way, as this constructor creates internal data structures that are required for the correct operation of Bot.
 func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 	b := &Bot{
 		Config:   conf,
@@ -97,7 +99,7 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 				return
 			}
 		}
-		b.IrcConf.JoinChans = append(b.IrcConf.JoinChans, config.IrcChan{Name: c})
+		b.IrcConf.JoinChans = append(b.IrcConf.JoinChans, config.IRCChan{Name: c})
 	}
 
 	for _, g := range conf.GameManager.Games {
@@ -115,8 +117,6 @@ func NewBot(conf config.Config, logger *log.Logger) (*Bot, error) {
 	b.Init()
 	return b, nil
 }
-
-/***Start of funcs for upper level control***************************************************************************/
 
 // Run starts the bot and lets it connect to IRC. It blocks until the IRC server connection is closed
 func (b *Bot) Run() error {
@@ -256,8 +256,6 @@ func (b *Bot) connect() error {
 	return nil
 }
 
-/***start of write- functions for accessing the socket*****************************************************************/
-
 // WriteRaw writes bytes directly to the IRC server's socket, it also handles synchronisation and logging of outgoing
 // lines
 func (b *Bot) writeRaw(line []byte) (int, error) {
@@ -267,6 +265,7 @@ func (b *Bot) writeRaw(line []byte) (int, error) {
 	return b.sock.Write(line)
 }
 
+// WriteString is the same as WriteRaw, but it accepts a string instead
 func (b *Bot) WriteString(line string) error {
 	_, err := b.writeRaw([]byte(line))
 	return err
@@ -289,8 +288,6 @@ func (b *Bot) WriteIRCLine(line ircmsg.IrcMessage) error {
 	}
 	return nil
 }
-
-/***start of read oriented functions for accessing the socket**********************************************************/
 
 // readLoop is the main listener loop for lines coming from the socket
 func (b *Bot) readLoop() {
@@ -322,17 +319,19 @@ func (b *Bot) HandleLine(line ircmsg.IrcMessage) {
 	go b.sendToRawChans(upperCommand, line)
 }
 
-/***start of util functions********************************************************************************************/
-
 // Error dispatches an error event across the event manager with the given error
 func (b *Bot) Error(err error) {
 	b.EventMgr.Dispatch("ERR", event.ArgMap{"Error": err, "trace": debug.Stack()})
 }
 
-/***start of hook oriented functions***********************************************************************************/
+type (
+	// HookFunc is a callback to be attached to a hook
+	HookFunc = func(ircmsg.IrcMessage, interfaces.Bot)
 
-// HookFunc is a callback to be attached to a hook
-type HookFunc = func(ircmsg.IrcMessage, interfaces.Bot)
+	// PrivmsgFunc is a specific kind of callback for hooking on PRIVMSG, it gets rid of some of the boilerplate that would
+	// otherwise be required for a PRIVMSG hook
+	PrivmsgFunc = func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot)
+)
 
 // HookRaw hooks a callback function onto a raw line. The callback given is launched in a goroutine.
 func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
@@ -344,10 +343,6 @@ func (b *Bot) HookRaw(cmd string, f HookFunc, priority int) {
 		priority,
 	)
 }
-
-// PrivmsgFunc is a specific kind of callback for hooking on PRIVMSG, it gets rid of some of the boilerplate that would
-// otherwise be required for a PRIVMSG hook
-type PrivmsgFunc = func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot)
 
 // HookPrivmsg hooks a callback to all PRIVMSG lines. The callback is launched in a goroutine.
 func (b *Bot) HookPrivmsg(f PrivmsgFunc) {
@@ -451,8 +446,6 @@ func (b *Bot) GetMultiRawChan(commands ...string) (<-chan ircmsg.IrcMessage, cha
 	return aggChan, doneChan
 }
 
-/***start of send- style functions*************************************************************************************/
-
 // SendPrivmsg sends a standard IRC message to the target. The target can be either a channel or a nickname
 func (b *Bot) SendPrivmsg(target, msg string) {
 	for _, v := range strings.Split(msg, "\n") {
@@ -472,6 +465,7 @@ func wrapCommand(callback interfaces.CmdFunc) command.Callback {
 	return func(data *command.Data) { callback(data.IsFromIRC, data.Args, data.Source, data.Target, data) }
 }
 
+// HookCommand wraps adding a command to the bot's command manager
 func (b *Bot) HookCommand(name string, adminRequired int, help string, callback interfaces.CmdFunc) error {
 	return b.CommandManager.AddCommand(
 		name,
@@ -481,6 +475,7 @@ func (b *Bot) HookCommand(name string, adminRequired int, help string, callback 
 	)
 }
 
+// HookSubCommand is the same as HookCommand but it wraps adding a SubCommand to the bot's command manager
 func (b *Bot) HookSubCommand(rootCommand, name string, adminRequired int, help string, callback interfaces.CmdFunc) error {
 	return b.CommandManager.AddSubCommand(
 		rootCommand,
@@ -491,20 +486,24 @@ func (b *Bot) HookSubCommand(rootCommand, name string, adminRequired int, help s
 	)
 }
 
+// UnhookCommand is a helper method to access the same method on the bot's CommandManager
 func (b *Bot) UnhookCommand(name string) error {
 	return b.CommandManager.RemoveCommand(name)
 }
 
+// UnhookSubCommand is a helper method to access the same method on the bot's CommandManager
 func (b *Bot) UnhookSubCommand(rootName, name string) error {
 	return b.CommandManager.RemoveSubCommand(rootName, name)
 }
 
+// Status is a getter for the status field on Bot, it makes use of the status field safe for concurrent access
 func (b *Bot) Status() int {
 	b.statusMutex.Lock()
 	defer b.statusMutex.Unlock()
 	return b.status
 }
 
+// SetStatus is a getter for the status field on Bot, it makes use of the status field safe for concurrent access
 func (b *Bot) SetStatus(status int) {
 	b.statusMutex.Lock()
 	b.status = status

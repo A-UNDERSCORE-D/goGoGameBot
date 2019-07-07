@@ -126,8 +126,8 @@ func TestManager_getCommandByName(t *testing.T) {
 		SingleCommand: SingleCommand{0, nil, "test is not doing, allah is doing", "test"},
 		subCommands:   map[string]Command{"test": &SingleCommand{0, nil, "lol", "test"}},
 	}
-	_ = m.addCommand(existingCommand)
-	_ = m.addCommand(existingSubCommand)
+	_ = m.internalAddCommand(existingCommand)
+	_ = m.internalAddCommand(existingSubCommand)
 	tests := []struct {
 		name    string
 		cmdName string
@@ -160,9 +160,9 @@ func TestManager_getCommandByName(t *testing.T) {
 
 func TestManager_AddSubCommand(t *testing.T) {
 	sCmdManager := NewManager(baseLogger, &mockMessager{})
-	_ = sCmdManager.addCommand(&SingleCommand{0, nil, "single_command", "single"})
+	_ = sCmdManager.internalAddCommand(&SingleCommand{0, nil, "single_command", "single"})
 	mCmdManager := NewManager(baseLogger, &mockMessager{})
-	_ = mCmdManager.addCommand(&SubCommandList{
+	_ = mCmdManager.internalAddCommand(&SubCommandList{
 		SingleCommand: SingleCommand{0, nil, "baseCmd", "baseCmd"},
 		subCommands:   make(map[string]Command)},
 	)

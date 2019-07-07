@@ -12,6 +12,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
+// RegexpList is a slice of pointers to regexps that exists simply to implement the sort interface
 type RegexpList []*Regexp
 
 func (gl RegexpList) Len() int {
@@ -26,6 +27,8 @@ func (gl RegexpList) Swap(i, j int) {
 	gl[i], gl[j] = gl[j], gl[i]
 }
 
+// NewRegexp instantiates a regexp object from a config.Regexp. the root may be nil, otherwise everything passed must
+// exist
 func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Template) (*Regexp, error) {
 	compiledRe, err := regexp.Compile(conf.Regexp)
 	if err != nil {
@@ -59,6 +62,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 
 }
 
+// Regexp is a representation of a regex and a util.Format pair that is applied to stdout lines of a game
 type Regexp struct {
 	priority int
 	regexp   *regexp.Regexp
@@ -68,7 +72,7 @@ type Regexp struct {
 	eat              bool
 	sendToChan       bool
 	sendToOtherGames bool
-	sendToLocalGame  bool // TODO
+	sendToLocalGame  bool
 }
 
 func (r *Regexp) matchToMap(line string) (map[string]string, bool) {
@@ -134,6 +138,7 @@ func (r *Regexp) checkAndExecute(line string, stdout bool) (bool, error) {
 	return true, nil
 }
 
+// NewRegexpManager creates a new RegexpManager with reference to the passed Game
 func NewRegexpManager(game *Game) *RegexpManager {
 	return &RegexpManager{game: game}
 }
@@ -161,6 +166,8 @@ func (r *RegexpManager) String() string {
 	return fmt.Sprintf("game.RegexpManager at %p attached to %s", r, r.game)
 }
 
+// UpdateFromConf updates the regexps on the RegexpManager. During the update, the Regexp list is sorted. UpdateFromConf
+// only applies changes if none of the regexps failed to be created with NewRegexp. It is safe for concurrent use
 func (r *RegexpManager) UpdateFromConf(res []config.Regexp, root *template.Template) error {
 	var reList RegexpList
 	r.game.Debug("regex manager reloading")

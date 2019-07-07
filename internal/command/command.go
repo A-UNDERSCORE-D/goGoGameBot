@@ -9,12 +9,15 @@ import (
 
 type Callback func(data *Data)
 
+// Command represents a fireable command
 type Command interface {
 	AdminRequired() int
 	Fire(data *Data)
 	Help() string
 	Name() string
 }
+
+// SingleCommand represents a Command with no special subcommand magic. It implements the Command interface
 type SingleCommand struct {
 	adminRequired int
 	callback      Callback
@@ -32,6 +35,7 @@ func (c *SingleCommand) AdminRequired() int { return c.adminRequired }
 func (c *SingleCommand) Help() string       { return c.help }
 func (c *SingleCommand) Name() string       { return c.name }
 
+// SubCommandList is an implementation of Command that holds a list of subCommands that it can fire
 type SubCommandList struct {
 	SingleCommand
 	sync.RWMutex
