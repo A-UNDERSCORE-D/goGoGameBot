@@ -11,6 +11,8 @@ formatter already available on the game.
 
 ## Fixed
 - Various (recovered) panics caused by parting/quitting/kicking users without a message
+- Control codes being shared between games without being stripped when sent over the external
+line interface
 
 ## [0.3.5] - 2019-07-01
 ### Fixed

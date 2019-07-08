@@ -26,15 +26,16 @@ type dataForFmt struct {
 
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 	uh := ircutils.ParseUserhost(source)
+	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
 		SourceNick:   uh.Nick,
 		SourceUser:   uh.User,
 		SourceHost:   uh.Host,
 		Target:       target,
 		MsgRaw:       msg,
-		MsgEscaped:   ircfmt.Escape(msg),
-		MsgMapped:    g.MapColours(msg),
-		MsgStripped:  ircfmt.Strip(msg),
+		MsgEscaped:   ircfmt.Escape(deZwsp),
+		MsgMapped:    g.MapColours(deZwsp),
+		MsgStripped:  ircfmt.Strip(deZwsp),
 		MatchesStrip: util.AnyMaskMatch(source, g.chatBridge.stripMasks),
 		ExtraData:    make(map[string]string),
 	}
@@ -138,8 +139,9 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if source != g {
 		name = source.GetName()
 	}
-
-	fmtData := dataForOtherGameFmt{msg, name}
+	// Lets make sure to at least strip weird control characters when crossing games
+	cleanMsg := strings.ReplaceAll(msg, "\u200b", "")
+	fmtData := dataForOtherGameFmt{ircfmt.Strip(cleanMsg), name}
 	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
 }
 
