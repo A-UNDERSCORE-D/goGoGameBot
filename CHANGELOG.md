@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new bool is available on game regexps that sends the result of the regex to the local
 game as well as any other options. Note that these strings are sent through the `external`
 formatter already available on the game. 
+- A new function called stripAll is available in all format strings. This function allows 
+you to strip **all** control codes from a string, both IRC control codes and ASCII control
+codes (namely those below ascii `0x20`)
 
 ## Fixed
 - Various (recovered) panics caused by parting/quitting/kicking users without a message

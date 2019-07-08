@@ -14,6 +14,7 @@ var TemplateUtilFuncs = template.FuncMap{
 	"wordEOL":     WordEol,
 	"escape":      EscapeString,
 	"stripColour": ircfmt.Strip,
+	"stripAll":    StripAll,
 }
 
 // Format represents a wrapped template.Template

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -174,4 +175,30 @@ func BenchmarkEscapeString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		EscapeString(`\!asd"''"some normal text / `)
 	}
+}
+
+func TestStripAll(t *testing.T) {
+	tests := []struct {
+		name     string
+		stringIn string
+		want     string
+	}{
+		{"normal", "test string", "test string"},
+		{"empty", "", ""},
+		{"control codes", "test \x01 string \x02", "test  string "},
+		{"zwsp", "test s\u200btring", "test string"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripAll(tt.stringIn); got != tt.want {
+				t.Errorf("StripAll() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleStripAll() {
+	fmt.Println(StripAll("Some string with \x01 control characters\u200b in it"))
+	// output:
+	// Some string with  control characters in it
 }

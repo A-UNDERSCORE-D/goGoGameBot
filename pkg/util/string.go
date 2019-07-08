@@ -1,6 +1,10 @@
 package util
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/goshuirc/irc-go/ircfmt"
+)
 
 // CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array for
 // repeated spaces
@@ -30,4 +34,17 @@ var escapeReplacer = strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`)
 // EscapeString escapes commonly (ab)used strings
 func EscapeString(s string) string {
 	return escapeReplacer.Replace(s)
+}
+
+const zwsp = '\u200b'
+
+// StripAll strips both IRC control codes and any extra weird ascii control codes
+func StripAll(s string) string {
+	s = ircfmt.Strip(s)
+	return strings.Map(func(r rune) rune {
+		if r < ' ' || r == zwsp {
+			return -1
+		}
+		return r
+	}, s)
 }
