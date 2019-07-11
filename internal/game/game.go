@@ -12,6 +12,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 const (
@@ -55,13 +56,13 @@ type chatBridge struct {
 }
 
 type formatSet struct {
-	message  util.Format
-	join     util.Format
-	part     util.Format
-	nick     util.Format
-	quit     util.Format
-	kick     util.Format
-	external util.Format
+	message  format.Format
+	join     format.Format
+	part     format.Format
+	nick     format.Format
+	quit     format.Format
+	kick     format.Format
+	external format.Format
 }
 
 type channelPair struct {

@@ -7,10 +7,10 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
-func (g *Game) createCommandCallback(fmt util.Format) interfaces.CmdFunc {
+func (g *Game) createCommandCallback(fmt format.Format) interfaces.CmdFunc {
 	return func(fromIRC bool, args []string, source ircutils.UserHost, target string, _ interfaces.CommandResponder) {
 		res, err := fmt.ExecuteBytes(struct {
 			FromIRC bool

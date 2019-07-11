@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 // RegexpList is a slice of pointers to regexps that exists simply to implement the sort interface
@@ -41,9 +41,9 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		"sendPrivmsg":     manager.game.templSendPrivmsg,
 	}
 
-	var templ *util.Format
+	var templ *format.Format
 	if err := conf.Format.Compile("regexp_"+conf.Name, true, root, funcs); err != nil {
-		if err != util.ErrEmptyFormat {
+		if err != format.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}
 	} else {
@@ -66,7 +66,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 type Regexp struct {
 	priority int
 	regexp   *regexp.Regexp
-	template *util.Format
+	template *format.Format
 	manager  *RegexpManager
 
 	eat              bool

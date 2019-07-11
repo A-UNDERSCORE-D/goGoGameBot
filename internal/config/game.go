@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/xml"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 // GameManager represents a config for a game.Manager instance
@@ -37,13 +37,13 @@ type Game struct {
 		StripMasks        []string `xml:"strip_mask"`
 		BridgedChannels   []string `xml:"bridged_channel"`
 		Formats           struct {
-			Message  util.Format   `xml:"message"`
-			Join     util.Format   `xml:"join"`
-			Part     util.Format   `xml:"part"`
-			Nick     util.Format   `xml:"nick"`
-			Quit     util.Format   `xml:"quit"`
-			Kick     util.Format   `xml:"kick"`
-			External util.Format   `xml:"external"`
+			Message  format.Format `xml:"message"`
+			Join     format.Format `xml:"join"`
+			Part     format.Format `xml:"part"`
+			Nick     format.Format `xml:"nick"`
+			Quit     format.Format `xml:"quit"`
+			Kick     format.Format `xml:"kick"`
+			External format.Format `xml:"external"`
 			Extra    []ExtraFormat `xml:"extra"`
 		} `xml:"formats"`
 	} `xml:"chat"`
@@ -52,29 +52,29 @@ type Game struct {
 
 // ExtraFormat represents an additional format found in config.Game.Chat.Format
 type ExtraFormat struct {
-	util.Format
+	format.Format
 	Name string `xml:"name,attr"`
 }
 
 // Command represents a command that translates to input on the game's stdin
 type Command struct {
-	XMLName       xml.Name    `xml:"command"`
-	Name          string      `xml:"name,attr"`
-	RequiresAdmin int         `xml:"requires_admin,attr"`
-	Help          string      `xml:"help"`
-	Format        util.Format `xml:"format"`
+	XMLName       xml.Name      `xml:"command"`
+	Name          string        `xml:"name,attr"`
+	RequiresAdmin int           `xml:"requires_admin,attr"`
+	Help          string        `xml:"help"`
+	Format        format.Format `xml:"format"`
 }
 
 // Regexp represents a format and a regex that are used together to forward specific lines formatted a specific way
 // from the game's stdout to chat, other games, and itself
 type Regexp struct {
-	XMLName     xml.Name    `xml:"stdio_regexp"`
-	Priority    int         `xml:"priority,attr"`
-	Name        string      `xml:"name,attr"`
-	Regexp      string      `xml:"regexp"`
-	Format      util.Format `xml:"format"`
-	DontEat     bool        `xml:"dont_eat,attr"`
-	DontSend    bool        `xml:"dont_send_to_chan,attr"`
-	DontForward bool        `xml:"dont_forward,attr"`
-	SendToLocal bool        `xml:"send_to_local,attr"`
+	XMLName     xml.Name      `xml:"stdio_regexp"`
+	Priority    int           `xml:"priority,attr"`
+	Name        string        `xml:"name,attr"`
+	Regexp      string        `xml:"regexp"`
+	Format      format.Format `xml:"format"`
+	DontEat     bool          `xml:"dont_eat,attr"`
+	DontSend    bool          `xml:"dont_send_to_chan,attr"`
+	DontForward bool          `xml:"dont_forward,attr"`
+	SendToLocal bool          `xml:"send_to_local,attr"`
 }

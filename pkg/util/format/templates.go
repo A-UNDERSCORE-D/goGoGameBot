@@ -1,4 +1,4 @@
-package util
+package format
 
 import (
 	"bytes"
@@ -6,15 +6,17 @@ import (
 	"text/template"
 
 	"github.com/goshuirc/irc-go/ircfmt"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
-// TemplateUtilFuncs is a standard set of functions added to all Format's template.Template
-var TemplateUtilFuncs = template.FuncMap{
-	"zwsp":        AddZwsp,
-	"wordEOL":     WordEol,
-	"escape":      EscapeString,
+// UtilFuncs is a standard set of functions added to all Format's template.Template
+var UtilFuncs = template.FuncMap{
+	"zwsp":        util.AddZwsp,
+	"wordEOL":     util.WordEol,
+	"escape":      util.EscapeString,
 	"stripColour": ircfmt.Strip,
-	"stripAll":    StripAll,
+	"stripAll":    util.StripAll,
 }
 
 // Format represents a wrapped template.Template
@@ -47,7 +49,7 @@ func (f *Format) Compile(name string, evalColour bool, root *template.Template, 
 	} else {
 		toSet = root.New(name)
 	}
-	toSet.Funcs(TemplateUtilFuncs)
+	toSet.Funcs(UtilFuncs)
 	for _, entry := range funcMaps {
 		toSet.Funcs(entry)
 	}

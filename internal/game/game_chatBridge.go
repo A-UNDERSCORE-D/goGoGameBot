@@ -9,6 +9,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 type dataForFmt struct {
@@ -146,7 +147,7 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 }
 
 // SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
-func (g *Game) SendFormattedLine(d interface{}, format util.Format) error {
+func (g *Game) SendFormattedLine(d interface{}, format format.Format) error {
 	if !g.IsRunning() {
 		return nil
 	}
