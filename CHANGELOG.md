@@ -11,6 +11,8 @@ formatter already available on the game.
 - A new function called stripAll is available in all format strings. This function allows 
 you to strip **all** control codes from a string, both IRC control codes and ASCII control
 codes (namely those below ascii `0x20`)
+- A new function called `eat` is available on all format strings. It will eat any number of
+arguments of any type, and return an empty string
 
 ## Fixed
 - Various (recovered) panics caused by parting/quitting/kicking users without a message

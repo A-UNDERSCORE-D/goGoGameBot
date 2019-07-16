@@ -17,6 +17,7 @@ var UtilFuncs = template.FuncMap{
 	"escape":      util.EscapeString,
 	"stripColour": ircfmt.Strip,
 	"stripAll":    util.StripAll,
+	"eat":         func(...interface{}) string { return "" },
 }
 
 // Format represents a wrapped template.Template
