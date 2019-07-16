@@ -89,6 +89,12 @@ var formatCompileTests = []struct {
 		nil,
 		false,
 	},
+	{
+		"already compiled format",
+		&Format{FormatString: "test", compiled: true},
+		nil,
+		true,
+	},
 }
 
 func TestFormat_Compile(t *testing.T) {
