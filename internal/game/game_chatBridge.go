@@ -23,6 +23,7 @@ type dataForFmt struct {
 	Target       string
 	MatchesStrip bool
 	ExtraData    map[string]string
+	Storage      *format.Storage
 }
 
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
@@ -39,6 +40,7 @@ func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 		MsgStripped:  ircfmt.Strip(deZwsp),
 		MatchesStrip: util.AnyMaskMatch(source, g.chatBridge.stripMasks),
 		ExtraData:    make(map[string]string),
+		Storage:      g.chatBridge.format.storage,
 	}
 }
 

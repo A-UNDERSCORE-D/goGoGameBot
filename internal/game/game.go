@@ -63,6 +63,7 @@ type formatSet struct {
 	quit     format.Format
 	kick     format.Format
 	external format.Format
+	storage  *format.Storage
 }
 
 type channelPair struct {
@@ -233,6 +234,10 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	gf.quit = f.Quit
 	gf.kick = f.Kick
 	gf.external = f.External
+	if gf.storage == nil {
+		gf.storage = new(format.Storage)
+	}
+
 	g.Info("reload completed successfully")
 	return nil
 }

@@ -13,6 +13,8 @@ you to strip **all** control codes from a string, both IRC control codes and ASC
 codes (namely those below ascii `0x20`)
 - A new function called `eat` is available on all format strings. It will eat any number of
 arguments of any type, and return an empty string
+- `Storage` is now available on most message formatters, (any that accept a `dataForFmt`).
+It allows for cross-invocation storage of values. For use in formatters
 
 ## Fixed
 - Various (recovered) panics caused by parting/quitting/kicking users without a message
