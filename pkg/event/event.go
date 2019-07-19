@@ -15,37 +15,45 @@ type Event interface {
 	// TODO: ID?
 }
 
+// BaseEvent implements parts of the Event interface in order to reduce boilerplate. Its expected that BaseEvent
+// is embedded in simple implementations of Event
+type BaseEvent struct {
+	m         sync.RWMutex
+	cancelled bool
+	Name_     string
+}
+
+// IsCancelled returns the cancellation state of the BaseEvent
+func (b *BaseEvent) IsCancelled() bool {
+	b.m.RLock()
+	defer b.m.RUnlock()
+	return b.cancelled
+}
+
+// SetCancelled sets the cancellation state of the BaseEvent
+func (b *BaseEvent) SetCancelled(c bool) bool {
+	b.m.Lock()
+	old := b.cancelled
+	b.cancelled = c
+	b.m.Unlock()
+	return old
+}
+
+// Name returns the name of the event this BaseEvent represents
+func (b *BaseEvent) Name() string {
+	return b.Name_
+}
+
 // DefaultEvent is the base event implementation
 type DefaultEvent struct {
-	m         *sync.RWMutex
-	cancelled bool
-	ArgMap    ArgMap
-	name      string
+	BaseEvent
+	ArgMap ArgMap
 }
 
 // EventType returns the type of this event, For the Default event, this is always "Default"
 func (DefaultEvent) EventType() string { return "Default" }
 
-// Name Returns the name of this specific version of DefaultEvent
-func (d *DefaultEvent) Name() string { return d.name }
-
-// IsCancelled returns the cancellation state of the event
-func (d *DefaultEvent) IsCancelled() bool {
-	d.m.RLock()
-	defer d.m.RUnlock()
-	return d.cancelled
-}
-
-// SetCancelled sets the cancellation state of the event
-func (d *DefaultEvent) SetCancelled(toSet bool) bool {
-	d.m.Lock()
-	defer d.m.Unlock()
-	old := d.cancelled
-	d.cancelled = toSet
-	return old
-}
-
 // NewDefaultEvent creates a new DefaultEvent and sets its name and Argmap to the provided values
 func NewDefaultEvent(name string, argMap ArgMap) *DefaultEvent {
-	return &DefaultEvent{name: name, ArgMap: argMap}
+	return &DefaultEvent{BaseEvent: BaseEvent{Name_: name}, ArgMap: argMap}
 }
