@@ -4,6 +4,15 @@ import (
 	"testing"
 )
 
+type testEvent struct {
+	DefaultEvent
+	Chan chan string
+}
+
+func (testEvent) EventType() string {
+	return "testEvent"
+}
+
 func TestManager_HasEvent(t *testing.T) {
 	tests := []struct {
 		name string
@@ -65,7 +74,7 @@ func TestManager_Attach(t *testing.T) {
 func TestManager_Detach(t *testing.T) {
 	tests := []struct {
 		name string
-		args int64
+		args int
 		want bool
 	}{
 		{
@@ -124,8 +133,8 @@ func TestManager_Dispatch(t *testing.T) {
 			[]string{"test"},
 			[]Handler{
 				{
-					func(s string, maps ArgMap) {
-						maps["chan"].(chan string) <- "test"
+					func(event Event) {
+						event.(*testEvent).Chan <- "test"
 					},
 					1,
 					0,
@@ -159,7 +168,7 @@ func TestManager_Dispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dataChan := make(chan string, 10)
 			m := createManagerWithEvent(tt.eventName, tt.handlers...)
-			m.Dispatch(tt.eventName, ArgMap{"chan": dataChan})
+			m.Dispatch(&testEvent{DefaultEvent{name: tt.eventName}, dataChan})
 			count := 0
 
 			for s := range dataChan {
@@ -189,6 +198,19 @@ func TestManager_Dispatch(t *testing.T) {
 	}
 }
 
+func TestManager_AttachOneShot(t *testing.T) {
+	m := new(Manager)
+	callCount := 0
+	m.AttachOneShot("test", func(event Event) { callCount++ }, PriHighest)
+	for i := 0; i < 5; i++ {
+		m.Dispatch(NewDefaultEvent("test", nil))
+	}
+	if callCount != 1 {
+		t.Errorf("Manager.AttachOneShot based hook called more than once: %d", callCount)
+	}
+
+}
+
 func createManagerWithEvent(name string, handlers ...Handler) *Manager {
 	m := Manager{}
 	for _, h := range handlers {
@@ -198,7 +220,7 @@ func createManagerWithEvent(name string, handlers ...Handler) *Manager {
 }
 
 func createTestFunc(sendToChan string) HandlerFunc {
-	return func(s string, maps ArgMap) {
-		maps["chan"].(chan string) <- sendToChan
+	return func(event Event) {
+		event.(*testEvent).Chan <- sendToChan
 	}
 }
