@@ -5,7 +5,7 @@ import (
 )
 
 type testEvent struct {
-	DefaultEvent
+	SimpleEvent
 	Chan chan string
 }
 
@@ -168,7 +168,7 @@ func TestManager_Dispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dataChan := make(chan string, 10)
 			m := createManagerWithEvent(tt.eventName, tt.handlers...)
-			m.Dispatch(&testEvent{DefaultEvent{name: tt.eventName}, dataChan})
+			m.Dispatch(&testEvent{SimpleEvent{BaseEvent{Name_: tt.eventName}}, dataChan})
 			count := 0
 
 			for s := range dataChan {
@@ -203,7 +203,7 @@ func TestManager_AttachOneShot(t *testing.T) {
 	callCount := 0
 	m.AttachOneShot("test", func(event Event) { callCount++ }, PriHighest)
 	for i := 0; i < 5; i++ {
-		m.Dispatch(NewDefaultEvent("test", nil))
+		m.Dispatch(NewSimpleEvent("test"))
 	}
 	if callCount != 1 {
 		t.Errorf("Manager.AttachOneShot based hook called more than once: %d", callCount)

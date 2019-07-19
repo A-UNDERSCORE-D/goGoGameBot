@@ -44,16 +44,15 @@ func (b *BaseEvent) Name() string {
 	return b.Name_
 }
 
-// DefaultEvent is the base event implementation
-type DefaultEvent struct {
+// SimpleEvent is a basic Event implementation, its useful to provide a notification but not pass any data
+type SimpleEvent struct {
 	BaseEvent
-	ArgMap ArgMap
 }
 
 // EventType returns the type of this event, For the Default event, this is always "Default"
-func (DefaultEvent) EventType() string { return "Default" }
+func (SimpleEvent) EventType() string { return "SimpleEvent" }
 
-// NewDefaultEvent creates a new DefaultEvent and sets its name and Argmap to the provided values
-func NewDefaultEvent(name string, argMap ArgMap) *DefaultEvent {
-	return &DefaultEvent{BaseEvent: BaseEvent{Name_: name}, ArgMap: argMap}
+// NewSimpleEvent creates a new SimpleEvent and sets its name and Argmap to the provided values
+func NewSimpleEvent(name string) *SimpleEvent {
+	return &SimpleEvent{BaseEvent: BaseEvent{Name_: name}}
 }
