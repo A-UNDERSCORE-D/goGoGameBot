@@ -127,6 +127,7 @@ loop:
 
 	if targetIdx != -1 {
 		// TODO: these are pointers (because they're functions) which means that doing this this way is a memory leak
+		// 		 See the golang SliceTricks wiki for more info
 		m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
 		return true
 	}
@@ -147,4 +148,21 @@ func (m *Manager) Dispatch(event Event) {
 	for _, h := range toIterate {
 		h.Func(event)
 	}
+}
+
+// WaitForChan returns a channel that will receive exactly one dispatch of the named event. The Event object is sent
+// over the channel. The channel has a buffer, to prevent blocking of the event's dispatch
+func (m *Manager) WaitForChan(name string) <-chan Event {
+	c := make(chan Event, 1)
+	m.AttachOneShot(name, func(event Event) {
+		c <- event
+		close(c)
+	}, PriNorm)
+	return c
+}
+
+// WaitFor is like WaitForChan but instead of returning a channel, it blocks until the event is fired, and will return
+// the Event object used to fire the event
+func (m *Manager) WaitFor(name string) Event {
+	return <-m.WaitForChan(name)
 }
