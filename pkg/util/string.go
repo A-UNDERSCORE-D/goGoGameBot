@@ -48,3 +48,11 @@ func StripAll(s string) string {
 		return r
 	}, s)
 }
+
+// IdxOrEmpty returns the given slice index, or an empty string
+func IdxOrEmpty(slice []string, idx int) string {
+	if len(slice) > idx {
+		return slice[idx]
+	}
+	return ""
+}

@@ -202,3 +202,34 @@ func ExampleStripAll() {
 	// output:
 	// Some string with  control characters in it
 }
+
+func TestIdxOrEmpty(t *testing.T) {
+	type args struct {
+		slice []string
+		idx   int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"good", args{[]string{"test", "string"}, 1}, "string"},
+		{"bad", args{[]string{"test", "string"}, 1337}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IdxOrEmpty(tt.args.slice, tt.args.idx); got != tt.want {
+				t.Errorf("IdxOrEmpty() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleIdxOrEmpty() {
+	s := []string{"test", "string", "is", "testy"}
+	fmt.Printf("%q\n", IdxOrEmpty(s, 0))
+	fmt.Printf("%q\n", IdxOrEmpty(s, 5))
+	// output:
+	// "test"
+	// ""
+}
