@@ -56,3 +56,33 @@ func IdxOrEmpty(slice []string, idx int) string {
 	}
 	return ""
 }
+
+// JoinToMaxLength takes a string slice and joins it on sep until the joined string cannot be made larger without
+// crossing maxLength length. If any entry in the slice to be joined is larger than maxLength, it will be added on its
+// own to an entry in the resulting slice
+func JoinToMaxLength(toJoin []string, sep string, maxLength int) []string {
+	var out []string
+	curBuilder := strings.Builder{}
+	curBuilder.Grow(maxLength)
+	for _, s := range toJoin {
+		entryLen := len(s)
+		if curBuilder.Len() == 0 && entryLen > maxLength {
+			out = append(out, s)
+			continue
+		}
+
+		if curBuilder.Len() > 0 && curBuilder.Len()+len(sep)+entryLen > maxLength {
+			out = append(out, curBuilder.String())
+			curBuilder.Reset()
+		}
+		if curBuilder.Len() != 0 {
+			curBuilder.WriteString(sep)
+		}
+		curBuilder.WriteString(s)
+
+	}
+	if curBuilder.Len() > 0 {
+		out = append(out, curBuilder.String())
+	}
+	return out
+}
