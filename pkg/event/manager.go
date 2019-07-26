@@ -51,9 +51,10 @@ type Handler struct {
 // Manager is an event bus. It allows you to hook callbacks onto string based event names, and fire them later. Use
 // of Manager objects from multiple goroutines is permitted
 type Manager struct {
-	events Map
-	m      sync.RWMutex
-	curId  int
+	events        Map
+	m             sync.RWMutex
+	curId         int
+	multiAttaches map[int][]int
 }
 
 func (m *Manager) nextID() int {
@@ -110,10 +111,9 @@ func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, coun
 
 // Detach removes a given ID from the event Manager. If the event is not found, Detach returns False
 func (m *Manager) Detach(id int) bool {
-	m.m.Lock()
-	defer m.m.Unlock()
 	var targetName string
 	targetIdx := -1 // Dont mutate while iterating--fun things happen
+	m.m.Lock()
 loop:
 	for name, hl := range m.events {
 		for i, handler := range hl {
@@ -124,11 +124,22 @@ loop:
 			}
 		}
 	}
+	m.m.Unlock()
 
 	if targetIdx != -1 {
 		// TODO: these are pointers (because they're functions) which means that doing this this way is a memory leak
 		// 		 See the golang SliceTricks wiki for more info
+		m.m.Lock()
 		m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
+		m.m.Unlock()
+		return true
+	}
+
+	if ids, ok := m.multiAttaches[id]; ok {
+		for _, id := range ids {
+			m.Detach(id)
+		}
+		delete(m.multiAttaches, id)
 		return true
 	}
 
@@ -165,4 +176,19 @@ func (m *Manager) WaitForChan(name string) <-chan Event {
 // the Event object used to fire the event
 func (m *Manager) WaitFor(name string) Event {
 	return <-m.WaitForChan(name)
+}
+
+// AttachMany attaches the given function to all events specified by names
+func (m *Manager) AttachMany(f HandlerFunc, priority int, names ...string) int {
+	rootId := m.nextID()
+	m.m.Lock()
+	if m.multiAttaches == nil {
+		m.multiAttaches = make(map[int][]int)
+	}
+	m.m.Unlock()
+
+	for _, name := range names {
+		m.multiAttaches[rootId] = append(m.multiAttaches[rootId], m.Attach(name, f, priority))
+	}
+	return rootId
 }
