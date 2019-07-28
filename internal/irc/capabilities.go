@@ -218,3 +218,11 @@ func (c *capabilityManager) requestCaps() {
 		c.irc.writeLine("CAP", "REQ", capSet)
 	}
 }
+
+func (c *capabilityManager) capEnabled(name string) bool {
+	capab := c.getCapByName(name)
+	if capab == nil {
+		return false
+	}
+	return capab.supported && capab.enabled
+}
