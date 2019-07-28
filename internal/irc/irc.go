@@ -35,11 +35,12 @@ type IRC struct {
 	user         string
 	password     string
 
-	m            sync.RWMutex
-	socket       net.Conn
-	log          *log.Logger
-	RawEvents    *event.Manager
-	ParsedEvents *event.Manager
+	m                 sync.RWMutex
+	socket            net.Conn
+	log               *log.Logger
+	RawEvents         *event.Manager
+	ParsedEvents      *event.Manager
+	capabilityManager *capabilityManager
 }
 
 // TODO: rename config.BotConfig config.IRCConfig
@@ -71,13 +72,23 @@ func New(conf config.BotConfig, logger *log.Logger) *IRC {
 		ParsedEvents: new(event.Manager),
 	}
 	out.setupParsers()
+	out.capabilityManager = newCapabilityManager(out)
+	out.capabilityManager.supportCap("userhost-in-names")
+	out.capabilityManager.supportCap("server-time")
 
 	return out
 }
 
 func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("RAW_PRIVMSG", i.dispatchMessage, event.PriHighest)
-	i.RawEvents.Attach("RAW_NOTICE", i.dispatchMessage, event.PriHighest)
+}
+
+func (i *IRC) Run() {
+	if err := i.connect(); err != nil {
+		panic(err)
+	}
+
+	i.RawEvents.WaitFor("ERROR")
 }
 
 // LineHandler is a function that is called on every raw Line
@@ -92,11 +103,12 @@ func (i *IRC) write(toSend []byte) (int, error) {
 }
 
 func (i *IRC) writeLine(command string, args ...string) (int, error) {
-	l, err := util.MakeSimpleIRCLine(command, args...).LineBytes()
+	l := util.MakeSimpleIRCLine(command, args...)
+	lBytes, err := l.LineBytes()
 	if err != nil {
 		return -1, err
 	}
-	return i.write(l)
+	return i.write(lBytes)
 }
 
 func (i *IRC) connect() error {
@@ -113,11 +125,12 @@ func (i *IRC) connect() error {
 		return fmt.Errorf("IRC.Connect(): could not open socket: %s", err)
 	}
 	i.socket = s
+	go i.readLoop()
 
 	if i.hostPassword != "" {
 		i.writeLine("PASS", i.hostPassword)
 	}
-
+	i.capabilityManager.negotiateCaps()
 	i.writeLine("USER", i.ident, "*", "*", i.gecos)
 	i.writeLine("NICK", i.nick)
 	return nil
@@ -141,11 +154,22 @@ func (i *IRC) readLoop() {
 
 		}
 
+		i.handleLine(line)
 	}
 }
 
-func (i *IRC) handleLine(line *ircmsg.IrcMessage) error {
-	t := time.Now() // TODO: When server time is supported, use that
+func (i *IRC) handleLine(line ircmsg.IrcMessage) {
+	t := time.Now()
+	if i.capabilityManager.capEnabled("server-time") && line.HasTag("time") {
+		_, timeFromServer := line.GetTag("time")
+		serverTime, err := time.Parse(time.RFC3339, timeFromServer)
+		if err != nil {
+			i.log.Warnf("server offered server-time %q which does not fit RFC 3339 format")
+		} else {
+			t = serverTime
+		}
+	}
+
 	i.RawEvents.Dispatch(NewRawEvent(line.Command, line, t))
 	i.RawEvents.Dispatch(NewRawEvent("*", line, t))
 	return nil
