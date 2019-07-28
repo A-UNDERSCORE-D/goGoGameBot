@@ -17,13 +17,18 @@ type capability struct {
 	supported bool // Do we locally support this?
 }
 
+type capEvent struct {
+	event.BaseEvent
+	cap *capability
+}
+
 type capabilityManager struct {
 	sync.RWMutex
-	caps    []*capability
-	irc     *IRC
-	capChan chan *RawEvent
-	counter int
-
+	caps      []*capability
+	irc       *IRC
+	capChan   chan *RawEvent
+	counter   int
+	CapEvents *event.Manager
 	// for use during negotiation
 	doingInitialNegotiation bool
 	waitingForMoreCaps      bool
@@ -32,7 +37,7 @@ type capabilityManager struct {
 }
 
 func newCapabilityManager(irc *IRC) *capabilityManager {
-	return &capabilityManager{irc: irc, capChan: make(chan *RawEvent)}
+	return &capabilityManager{irc: irc, capChan: make(chan *RawEvent), CapEvents: &event.Manager{}}
 }
 
 func (c *capabilityManager) supportCap(name string) {
@@ -64,7 +69,6 @@ func (c *capabilityManager) negotiateCaps() {
 	welcomeID := c.irc.RawEvents.AttachOneShot("001", c.onLine, event.PriHighest)
 	defer c.irc.RawEvents.Detach(capID)
 	defer c.irc.RawEvents.Detach(welcomeID)
-
 	_, err := c.irc.writeLine("CAP", "LS", "302")
 	if err != nil {
 		c.irc.log.Warn("could not write CAP LS command. Capability negotiation aborted")
@@ -92,6 +96,14 @@ func (c *capabilityManager) negotiateCaps() {
 			c.handleNEW(args)
 		}
 	}
+
+	for _, capab := range c.caps {
+		if !capab.enabled || !capab.supported {
+			continue
+		}
+		c.CapEvents.Dispatch(&capEvent{BaseEvent: event.BaseEvent{Name_: capab.name}, cap: capab})
+	}
+
 	c.irc.writeLine("CAP", "END")
 }
 
