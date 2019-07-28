@@ -6,8 +6,9 @@ import "sync"
 type Event interface {
 	// Name refers to the Name of the specific event this Event represents. It should be based on the data within the Event
 	Name() string
-	// EventType refers to the type of this Event, its should be static for all instances of an implementation of Event
-	EventType() string
+	// TODO: EventType may be useful here for hooking on all uses of a given event on the Manager.
+	//       Something like Manager.AttachAll(eventType, callback), where callback is a func(Event)
+
 	// IsCancelled returns whether or not this Event has been Cancelled
 	IsCancelled() bool
 	// SetCancelled sets the cancelled state of the Event
@@ -46,13 +47,10 @@ func (b *BaseEvent) Name() string {
 
 // SimpleEvent is a basic Event implementation, its useful to provide a notification but not pass any data
 type SimpleEvent struct {
-	BaseEvent
+	*BaseEvent
 }
-
-// EventType returns the type of this event, For the Default event, this is always "Default"
-func (SimpleEvent) EventType() string { return "SimpleEvent" }
 
 // NewSimpleEvent creates a new SimpleEvent and sets its name and Argmap to the provided values
 func NewSimpleEvent(name string) *SimpleEvent {
-	return &SimpleEvent{BaseEvent: BaseEvent{Name_: name}}
+	return &SimpleEvent{BaseEvent: &BaseEvent{Name_: name}}
 }
