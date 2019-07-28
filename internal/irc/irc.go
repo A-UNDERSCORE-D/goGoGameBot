@@ -32,7 +32,7 @@ type IRC struct {
 	// TODO: Cert based auth? (via SASL)
 	authenticate bool
 	sasl         bool
-	user         string
+	authUser     string
 	password     string
 
 	m                 sync.RWMutex
@@ -65,7 +65,7 @@ func New(conf config.BotConfig, logger *log.Logger) *IRC {
 		gecos:        conf.Gecos,
 		authenticate: !(conf.NSAuth.Nick == "" || conf.NSAuth.Password == ""),
 		sasl:         conf.NSAuth.SASL,
-		user:         conf.NSAuth.Nick,
+		authUser:     conf.NSAuth.Nick,
 		password:     conf.NSAuth.Password,
 		log:          logger,
 		RawEvents:    new(event.Manager),
@@ -75,6 +75,9 @@ func New(conf config.BotConfig, logger *log.Logger) *IRC {
 	out.capabilityManager = newCapabilityManager(out)
 	out.capabilityManager.supportCap("userhost-in-names")
 	out.capabilityManager.supportCap("server-time")
+
+	out.capabilityManager.supportCap("sasl")
+	out.capabilityManager.CapEvents.Attach("sasl", out.authenticateWithSasl, event.PriNorm)
 
 	return out
 }
@@ -172,5 +175,68 @@ func (i *IRC) handleLine(line ircmsg.IrcMessage) {
 
 	i.RawEvents.Dispatch(NewRawEvent(line.Command, line, t))
 	i.RawEvents.Dispatch(NewRawEvent("*", line, t))
-	return nil
+}
+
+func (i *IRC) authenticateWithSasl(e event.Event) {
+	const authenticate = "AUTHENTICATE"
+	capab := e.(*capEvent).cap
+	_ = capab
+	capChan := make(chan event.Event, 1)
+	exiting := make(chan struct{})
+	id := i.RawEvents.AttachMany(func(e event.Event) {
+		select {
+		case capChan <- e:
+		case _, _ = <-exiting:
+		}
+	}, event.PriNorm,
+		authenticate,
+		util.RPL_LOGGEDIN,
+		util.RPL_LOGGEDOUT,
+		util.RPL_NICKLOCKED,
+		util.RPL_SASLSUCCESS,
+		util.RPL_SASLFAIL,
+		util.RPL_SASLTOOLONG,
+		util.RPL_SASLABORTED,
+		util.RPL_SASLALREADY,
+		util.RPL_SASLMECHS,
+	)
+	defer close(exiting)
+	defer i.RawEvents.Detach(id)
+
+	if _, err := i.writeLine(authenticate, "PLAIN"); err != nil {
+		i.log.Warn("authenticateWithSasl(): could not send SASL authentication request. Aborting SASL")
+		i.sasl = false
+		return
+	}
+
+	for e := range capChan {
+		raw := event2RawEvent(e)
+		if raw == nil {
+			i.log.Warn("authenticateWithSasl(): got an unexpected event over the event channel: ", e)
+			continue
+		}
+		switch raw.Line.Command {
+		case authenticate:
+			if raw.Line.Params[0] == "+" {
+				_, err := i.writeLine(authenticate, util.GenerateSASLString(i.nick, i.authUser, i.password))
+				if err != nil {
+					i.log.Warn("authenticateWithSasl(): could not send SASL authentication. Aborting")
+					i.sasl = false
+					return
+				}
+			}
+
+		case util.RPL_NICKLOCKED, util.RPL_SASLFAIL, util.RPL_SASLTOOLONG, util.RPL_SASLABORTED,
+			util.RPL_SASLALREADY, util.RPL_SASLMECHS:
+			i.log.Warn("authenticateWithSasl(): SASL negotiation failed. Aborting")
+			i.sasl = false
+			return
+		case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
+			// it worked \o/
+			return
+		default:
+			i.log.Warn("authenticateWithSasl(): got an unexpected command over the event channel: ", raw)
+		}
+	}
+
 }
