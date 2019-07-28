@@ -12,10 +12,13 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
+
+var test interfaces.Bot = &IRC{}
 
 // IRC Represents a connection to an IRC server
 type IRC struct {
@@ -76,22 +79,19 @@ func New(conf config.BotConfig, logger *log.Logger) *IRC {
 	out.capabilityManager.supportCap("userhost-in-names")
 	out.capabilityManager.supportCap("server-time")
 
-	out.capabilityManager.supportCap("sasl")
-	out.capabilityManager.CapEvents.Attach("sasl", out.authenticateWithSasl, event.PriNorm)
+	if out.ssl {
+		out.capabilityManager.supportCap("sasl")
+		out.capabilityManager.CapEvents.Attach("sasl", out.authenticateWithSasl, event.PriNorm)
+	} else if out.sasl {
+		out.sasl = false
+		out.log.Warn("SASL disabled as the connection is not SSL")
+	}
 
 	return out
 }
 
 func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("RAW_PRIVMSG", i.dispatchMessage, event.PriHighest)
-}
-
-func (i *IRC) Run() {
-	if err := i.connect(); err != nil {
-		panic(err)
-	}
-
-	i.RawEvents.WaitFor("ERROR")
 }
 
 // LineHandler is a function that is called on every raw Line
@@ -114,7 +114,9 @@ func (i *IRC) writeLine(command string, args ...string) (int, error) {
 	return i.write(lBytes)
 }
 
-func (i *IRC) connect() error {
+// Connect connects to IRC and does the required negotiation for registering on the network and any capabilities
+// that have been requested
+func (i *IRC) Connect() error {
 	target := net.JoinHostPort(i.host, i.port)
 	var s net.Conn
 	var err error
@@ -131,11 +133,18 @@ func (i *IRC) connect() error {
 	go i.readLoop()
 
 	if i.hostPassword != "" {
-		i.writeLine("PASS", i.hostPassword)
+		if _, err := i.writeLine("PASS", i.hostPassword); err != nil {
+			return err
+		}
 	}
+
 	i.capabilityManager.negotiateCaps()
-	i.writeLine("USER", i.ident, "*", "*", i.gecos)
-	i.writeLine("NICK", i.nick)
+	if _, err := i.writeLine("USER", i.ident, "*", "*", i.gecos); err != nil {
+		return err
+	}
+	if _, err := i.writeLine("NICK", i.nick); err != nil {
+		return err
+	}
 	return nil
 }
 
