@@ -6,18 +6,18 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goshuirc/irc-go/ircutils"
-
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
 const noAdmin = 0
 
+// TODO: have this require a function to use to check for admin level -- that way interfaces.bots can implement
+//		 that on their own, and we just need to ask them what level a given source string has
+
 // NewManager creates a Manager with the provided logger and messager. The prefixes vararg sets the prefixes for the
 // commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
-func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes ...string) *Manager {
-	m := &Manager{Logger: logger, messenger: messenger, commands: make(map[string]Command), commandPrefixes: prefixes}
+func NewManager(logger *log.Logger, prefixes ...string) *Manager {
+	m := &Manager{Logger: logger, commands: make(map[string]Command), commandPrefixes: prefixes}
 	_ = m.AddCommand("help", 0, func(data *Data) {
 		var toSend string
 		if len(data.Args) == 0 {
@@ -55,12 +55,10 @@ func NewManager(logger *log.Logger, messenger interfaces.IRCMessager, prefixes .
 // Manager is a frontend that manages commands and the firing thereof. It is intended to be a completely self contained
 // system for managing commands on arbitrary lines
 type Manager struct {
-	admins          []Admin
 	cmdMutex        sync.RWMutex
 	commands        map[string]Command
 	commandPrefixes []string
 	Logger          *log.Logger
-	messenger       interfaces.IRCMessager
 }
 
 // AddPrefix adds a prefix to the command manager. It is not safe for concurrent use
@@ -123,21 +121,6 @@ func (m *Manager) internalAddCommand(cmd Command) error {
 	return nil
 }
 
-// AddAdmin adds an admin level with the given mask to the Manager. Masks cannot be duplicated, and the level may not
-// be below 0
-func (m *Manager) AddAdmin(mask string, level int) error {
-	if level <= 0 {
-		return fmt.Errorf("admin level cannot be below 1 (0 is no access)")
-	}
-	for _, v := range m.admins {
-		if v.Mask == mask {
-			return fmt.Errorf("admin with mask %q already exists", mask)
-		}
-	}
-	m.admins = append(m.admins, Admin{level, mask})
-	return nil
-}
-
 func (m *Manager) getCommandByName(name string) Command {
 	m.cmdMutex.RLock()
 	defer m.cmdMutex.RUnlock()
@@ -185,32 +168,6 @@ func (m *Manager) RemoveSubCommand(rootName, name string) error {
 	return realCmd.removeSubcmd(name)
 }
 
-func (m *Manager) adminFromMask(mask string) int {
-	max := 0
-	for _, admin := range m.admins {
-		if admin.MatchesMask(mask) && admin.Level > max {
-			max = admin.Level
-		}
-	}
-	return max
-}
-
-const notAllowed = "You are not permitted to use this command"
-
-// CheckAdmin compares the admin level for mask on the Data object to the required level, it returns true if the level
-// is at or above the required level. It will also send a notice to the source stating that they do not have the
-// required access if the check fails
-func (m *Manager) CheckAdmin(data *Data, requiredLevel int) bool {
-	if !data.IsFromIRC {
-		return true // Non IRC users have direct access
-	}
-	if m.adminFromMask(data.SourceMask()) >= requiredLevel {
-		return true
-	}
-	m.messenger.SendNotice(data.Source.Nick, notAllowed)
-	return false
-}
-
 func (m *Manager) stripPrefix(line string) (string, bool) {
 	hasPrefix := false
 	var out string
@@ -225,12 +182,12 @@ func (m *Manager) stripPrefix(line string) (string, bool) {
 }
 
 // ParseLine checks the given string for a valid command. If it finds one, it fires that command.
-func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost, target string) {
+func (m *Manager) ParseLine(line string, fromTerminal bool, source, target string, util dataUtil) {
 	if len(line) == 0 {
 		return
 	}
 
-	if fromIRC {
+	if !fromTerminal {
 		var ok bool
 		if line, ok = m.stripPrefix(line); !ok {
 			return
@@ -245,20 +202,20 @@ func (m *Manager) ParseLine(line string, fromIRC bool, source ircutils.UserHost,
 	cmdName := lineSplit[0]
 	cmd := m.getCommandByName(cmdName)
 	if cmd == nil {
-		if !fromIRC {
+		if fromTerminal {
 			m.Logger.Infof("unknown command %q", cmdName)
 		}
 		return
 	}
-	m.Logger.Debugf("firing command %q (original line %q)", cmdName, line)
 
 	data := &Data{
-		IsFromIRC:    fromIRC,
+		IsFromIRC:    !fromTerminal,
 		Args:         lineSplit[1:],
 		OriginalArgs: line,
 		Source:       source,
 		Target:       target,
 		Manager:      m,
+		util:         util,
 	}
 	cmd.Fire(data)
 }
@@ -271,9 +228,5 @@ func (m *Manager) String() string {
 		cmds = append(cmds, k)
 	}
 	m.cmdMutex.RUnlock()
-	var admins []string
-	for _, v := range m.admins {
-		admins = append(admins, fmt.Sprintf("%s: %d", v.Mask, v.Level))
-	}
-	return fmt.Sprintf("command.Manager containing commands: %s. and admins: %s", strings.Join(cmds, ", "), strings.Join(admins, ", "))
+	return fmt.Sprintf("command.Manager containing commands: %s", strings.Join(cmds, ", "))
 }

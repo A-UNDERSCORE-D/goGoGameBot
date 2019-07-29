@@ -27,7 +27,7 @@ func (m *mockMessager) WriteIRCLine(line ircmsg.IrcMessage) error {
 	return nil
 }
 
-func (m *mockMessager) SendPrivmsg(target, message string) {
+func (m *mockMessager) SendMessage(target, message string) {
 	m.lastMessages = append(m.lastMessages, [2]string{target, message})
 }
 
