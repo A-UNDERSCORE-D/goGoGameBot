@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/goshuirc/irc-go/ircfmt"
-	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
@@ -13,9 +12,10 @@ import (
 )
 
 type dataForFmt struct {
-	SourceNick   string
-	SourceUser   string
-	SourceHost   string
+	// SourceNick   string
+	// SourceUser   string
+	// SourceHost   string
+	Source       string
 	MsgRaw       string
 	MsgEscaped   string
 	MsgMapped    string
@@ -27,12 +27,15 @@ type dataForFmt struct {
 }
 
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
-	uh := ircutils.ParseUserhost(source)
+	// TODO: This needs a way to convert the source into a more human readable format. for IRC this is extracting the
+	//  	 nick. For discord this is stripping the ID etc, for slack, the same (I think)
+	// uh := ircutils.ParseUserhost(source)
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
-		SourceNick:   uh.Nick,
-		SourceUser:   uh.User,
-		SourceHost:   uh.Host,
+		// SourceNick:   uh.Nick,
+		// SourceUser:   uh.User,
+		// SourceHost:   uh.Host,
+		Source:       source,
 		Target:       target,
 		MsgRaw:       msg,
 		MsgEscaped:   ircfmt.Escape(deZwsp),
