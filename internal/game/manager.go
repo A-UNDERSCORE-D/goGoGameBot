@@ -241,12 +241,18 @@ func (m *Manager) setupCommands() error {
 		stopHelp    = "stops the provided games, killing them if needed"
 		restartHelp = "restarts the specified games, as with stop, games may be killed if a stop times out"
 		rawHelp     = "sends the arguments provided directly to the standard in of the running game"
+
+		stopMHelp    = "stops the running bot instance, disconnects all connections, and stops all games"
+		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, and then starts it all back up"
 	)
+
 	var err error
-	err = m.bot.HookSubCommand(gamectl, "start", 2, startHelp, m.startGameCmd)
-	err = m.bot.HookSubCommand(gamectl, "stop", 2, stopHelp, m.stopGameCmd)
-	err = m.bot.HookSubCommand(gamectl, "raw", 2, rawHelp, m.rawGameCmd)
-	err = m.bot.HookSubCommand(gamectl, "restart", 2, restartHelp, m.restartGameCmd)
+	err = m.cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp)
+	err = m.cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp)
+	err = m.cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp)
+	err = m.cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp)
+	err = m.cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp)
+	err = m.cmd.AddCommand("restart", 2, m.restartCmd, restartHelp)
 
 	if err != nil {
 		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", err)
@@ -254,4 +260,13 @@ func (m *Manager) setupCommands() error {
 	}
 
 	return nil
+}
+
+func (m *Manager) Stop(msg string, restart bool) {
+	m.restarting = restart
+	m.bot.SendAdminMessage(msg)
+	m.status = shutdown
+	m.StopAllGames()
+	m.bot.Disconnect("Stop requested")
+	m.done.Broadcast()
 }
