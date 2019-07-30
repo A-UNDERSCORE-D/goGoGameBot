@@ -305,3 +305,36 @@ func ExampleJoinToMaxLength() {
 	// output:
 	// []string{"this, is", "a, test"}
 }
+
+func TestReverseIdx(t *testing.T) {
+	testArr := []string{
+		"He", "just", "kept", "talking", "in", "one", "long", "incredibly", "unbroken", "sentence", "moving", "from",
+		"topic", "so", "that", "no", "one", "had", "the", "chance", "to", "interrupt", "him",
+	}
+	tests := []struct {
+		name string
+		idx  int
+		want string
+	}{
+		{"zero", 0, "He"},
+		{"negative zero", -0, "He"},
+		{"forward", 1, "just"},
+		{"backward", -1, "him"},
+		{"out of bounds", 1337, ""},
+		{"inverse out of bounds", -1337, ""},
+		{"middle idx", 7, "incredibly"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ReverseIdx(testArr, tt.idx); got != tt.want {
+				t.Errorf("ReverseIdx() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleReverseIdx() {
+	fmt.Println(ReverseIdx([]string{"have", "an", "example", "string", "slice"}, -2))
+	// output:
+	// string
+}

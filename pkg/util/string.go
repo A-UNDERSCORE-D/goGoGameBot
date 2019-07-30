@@ -86,3 +86,24 @@ func JoinToMaxLength(toJoin []string, sep string, maxLength int) []string {
 	}
 	return out
 }
+
+func abs(n int) int {
+	if n >= 0 {
+		return n
+	}
+	return -n
+}
+
+// ReverseIdx returns either the given index, or, if the given index is negative, that index starting from the end
+// of the slice. Much like a python lists behaviour when indexed with a negative number
+func ReverseIdx(toIdx []string, idx int) string {
+	if idx >= 0 {
+		return IdxOrEmpty(toIdx, idx)
+	}
+
+	if abs(idx) > len(toIdx) {
+		return ""
+	}
+
+	return IdxOrEmpty(toIdx, len(toIdx)+idx)
+}
