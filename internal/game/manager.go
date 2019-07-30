@@ -4,57 +4,50 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
-	"github.com/goshuirc/irc-go/ircmsg"
-
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
-
-func idxOrEmpty(slice []string, idx int) string {
-	if len(slice) > idx {
-		return slice[idx]
-	}
-	return ""
-}
 
 // NewManager creates a Manager and configures it using the given data.
 func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
 		bot:    bot,
 		Logger: logger.Clone().SetPrefix("GM"),
+		done:   sync.NewCond(new(sync.Mutex)),
 	}
+	m.cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), "!!")
 
-	m.bot.HookPrivmsg(func(source, target, message string, originalLine ircmsg.IrcMessage, bot interfaces.Bot) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnPrivmsg(source, target, message) }, nil)
+	m.bot.HookMessage(func(source, channel, message string) {
+		m.cmd.ParseLine(message, false, source, channel, m.bot)
 	})
 
-	m.bot.HookRaw("JOIN", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnJoin(message.Prefix, message.Params[0]) }, nil)
-	}, event.PriNorm)
+	m.bot.HookMessage(func(source, channel, message string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnPrivmsg(source, channel, message) }, nil)
+	})
 
-	m.bot.HookRaw("PART", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		partMsg := idxOrEmpty(message.Params, 1)
-		m.ForEachGame(func(game interfaces.Game) { game.OnPart(message.Prefix, message.Params[0], partMsg) }, nil)
-	}, event.PriNorm)
+	m.bot.HookJoin(func(source, channel string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnJoin(source, channel) }, nil)
+	})
 
-	m.bot.HookRaw("QUIT", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		quitMsg := idxOrEmpty(message.Params, 0)
-		m.ForEachGame(func(game interfaces.Game) { game.OnQuit(message.Prefix, quitMsg) }, nil)
-	}, event.PriNorm)
+	m.bot.HookPart(func(source, channel, message string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnPart(source, channel, message) }, nil)
+	})
 
-	m.bot.HookRaw("KICK", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		kickMsg := idxOrEmpty(message.Params, 2)
-		m.ForEachGame(func(game interfaces.Game) {
-			game.OnKick(message.Prefix, message.Params[0], message.Params[1], kickMsg)
-		}, nil)
-	}, event.PriNorm)
+	m.bot.HookQuit(func(source, message string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnQuit(source, message) }, nil)
+	})
 
-	m.bot.HookRaw("NICK", func(message ircmsg.IrcMessage, bot interfaces.Bot) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnNick(message.Prefix, message.Params[0]) }, nil)
-	}, event.PriNorm)
+	m.bot.HookKick(func(source, channel, target, message string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnKick(source, channel, target, message) }, nil)
+	})
+
+	m.bot.HookNick(func(source, newNick string) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnNick(source, newNick) }, nil)
+	})
 
 	var games []interfaces.Game
 	for _, g := range conf.Games {
@@ -77,9 +70,41 @@ type Manager struct {
 	games      []interfaces.Game
 	gamesMutex sync.RWMutex
 	bot        interfaces.Bot
+	cmd        *command.Manager
 	status     status
 	stripMasks []string
+	done       *sync.Cond
+	restarting bool
 	*log.Logger
+}
+
+// Run starts the manager, connects its bots
+func (m *Manager) Run() error {
+	go m.runBots()
+	m.done.L.Lock()
+	for m.status == normal {
+		m.done.Wait()
+	}
+	m.done.L.Unlock()
+	// Make sure we return a restart condition here if we need to
+	return nil
+}
+
+func (m *Manager) runBots() {
+	for {
+		if err := m.bot.Run(); err != nil {
+			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
+		}
+
+		if m.status == normal {
+			m.ForEachGame(func(g interfaces.Game) {
+				g.SendLineFromOtherGame("Chat is disconnected. Reconnecting in 10 seconds", g)
+			}, nil)
+			time.Sleep(time.Second * 10)
+		} else {
+			break
+		}
+	}
 }
 
 func (m *Manager) String() string {
@@ -231,6 +256,7 @@ func (m *Manager) StopGame(name string) error {
 
 // Error is a helper function that returns the passed error to the manager's bot instance
 func (m *Manager) Error(err error) {
+	// TODO: replace this with a print to the admin channel and a stacktrace dumped to the logs
 	m.bot.Error(fmt.Errorf("game.Manager: %s", err))
 }
 
