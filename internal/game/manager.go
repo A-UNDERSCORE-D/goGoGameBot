@@ -80,7 +80,8 @@ type Manager struct {
 
 // Run starts the manager, connects its bots
 func (m *Manager) Run() error {
-	go m.runBots()
+	go m.runBot()
+	m.StartAutoStartGames()
 	m.done.L.Lock()
 	for m.status == normal {
 		m.done.Wait()
@@ -90,7 +91,7 @@ func (m *Manager) Run() error {
 	return nil
 }
 
-func (m *Manager) runBots() {
+func (m *Manager) runBot() {
 	for {
 		if err := m.bot.Run(); err != nil {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
