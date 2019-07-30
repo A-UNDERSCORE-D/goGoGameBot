@@ -38,7 +38,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 	funcs := template.FuncMap{
 		"sendToMsgChan":   manager.game.templSendToMsgChan,
 		"sendToAdminChan": manager.game.templSendToAdminChan,
-		"sendPrivmsg":     manager.game.templSendPrivmsg,
+		"sendPrivmsg":     manager.game.templSendMessage, // TODO: rename this
 	}
 
 	var templ *format.Format
