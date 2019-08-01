@@ -48,6 +48,8 @@ type Conf struct {
 // IRC Represents a connection to an IRC server
 type IRC struct {
 	*Conf
+	channels          []string
+	connected         bool
 	m                 sync.RWMutex
 	socket            net.Conn
 	log               *log.Logger
@@ -86,6 +88,7 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 		out.SASL = false
 		out.log.Warn("SASL disabled as the connection is not SSL")
 	}
+	out.RawEvents.Attach("ERROR", func(event.Event) { out.m.Lock(); out.connected = false; out.m.Unlock() }, event.PriHighest)
 
 	return out, nil
 }
@@ -157,14 +160,23 @@ func (i *IRC) Connect() error {
 		}, event.PriHighest)
 	}
 
+	i.RawEvents.WaitFor("001")
+
+	for _, name := range i.channels {
+		_, _ = i.writeLine("JOIN", name)
+	}
+
+	i.m.Lock()
+	i.connected = true
+	i.m.Unlock()
 	return nil
 }
 
 func (i *IRC) Disconnect(msg string) {
 	if msg != "" {
-		i.writeLine("QUIT", msg)
+		_, _ = i.writeLine("QUIT", msg)
 	} else {
-		i.writeLine("QUIT", "Disconnecting")
+		_, _ = i.writeLine("QUIT", "Disconnecting")
 	}
 }
 
@@ -308,4 +320,15 @@ func (i *IRC) SendAdminMessage(msg string) {
 	for _, c := range i.AdminChannels {
 		i.SendMessage(c, msg)
 	}
+}
+
+// JoinChannel joins the bot to the named channel and adds it to the channel list for later autojoins
+func (i *IRC) JoinChannel(name string) {
+	if i.connected {
+		i.writeLine("JOIN", name)
+	}
+
+	i.m.Lock()
+	i.channels = append(i.channels, name)
+	i.m.Unlock()
 }
