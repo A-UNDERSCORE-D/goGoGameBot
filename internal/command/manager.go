@@ -11,9 +11,6 @@ import (
 
 const noAdmin = 0
 
-// TODO: have this require a function to use to check for admin level -- that way interfaces.bots can implement
-//		 that on their own, and we just need to ask them what level a given source string has
-
 // NewManager creates a Manager with the provided logger and messager. The prefixes vararg sets the prefixes for the
 // commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
 func NewManager(logger *log.Logger, prefixes ...string) *Manager {
