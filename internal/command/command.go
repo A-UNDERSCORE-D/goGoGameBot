@@ -116,6 +116,7 @@ func (s *SubCommandList) Fire(data *Data) {
 		Source:       data.Source,
 		Target:       data.Target,
 		Manager:      data.Manager,
+		util:         data.util,
 	}
 	c.Fire(newData)
 }

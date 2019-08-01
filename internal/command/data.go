@@ -16,11 +16,12 @@ type Data struct {
 	Source       string
 	Target       string
 	Manager      *Manager
-	util         dataUtil
+	util         DataUtil
 	// TODO: replace leveler with an interface of both Messager and AdminLeveler
 }
 
-type dataUtil interface {
+// DataUtil provides methods for Data to use when returning messages or checking admin levels
+type DataUtil interface {
 	interfaces.AdminLeveler
 	interfaces.Messager
 }
