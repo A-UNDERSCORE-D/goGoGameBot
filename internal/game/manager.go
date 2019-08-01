@@ -3,6 +3,8 @@ package game
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -257,8 +259,11 @@ func (m *Manager) StopGame(name string) error {
 
 // Error is a helper function that returns the passed error to the manager's bot instance
 func (m *Manager) Error(err error) {
-	// TODO: replace this with a print to the admin channel and a stacktrace dumped to the logs
-	m.bot.Error(fmt.Errorf("game.Manager: %s", err))
+	m.bot.SendAdminMessage(fmt.Sprintf("game.Manager: %s", err))
+	m.Logger.Warn(err)
+	for _, l := range strings.Split(string(debug.Stack()), "\n") {
+		m.Logger.Warn(l)
+	}
 }
 
 func (m *Manager) setupCommands() error {
