@@ -21,10 +21,10 @@ func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger)
 		Logger: logger.Clone().SetPrefix("GM"),
 		done:   sync.NewCond(new(sync.Mutex)),
 	}
-	m.cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), "!!")
+	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), "!!")
 
 	m.bot.HookMessage(func(source, channel, message string) {
-		m.cmd.ParseLine(message, false, source, channel, m.bot)
+		m.Cmd.ParseLine(message, false, source, channel, m.bot)
 	})
 
 	m.bot.HookMessage(func(source, channel, message string) {
@@ -72,7 +72,7 @@ type Manager struct {
 	games      []interfaces.Game
 	gamesMutex sync.RWMutex
 	bot        interfaces.Bot
-	cmd        *command.Manager
+	Cmd        *command.Manager
 	status     status
 	stripMasks []string
 	done       *sync.Cond
@@ -81,7 +81,7 @@ type Manager struct {
 }
 
 // Run starts the manager, connects its bots
-func (m *Manager) Run() error {
+func (m *Manager) Run() (bool, error) {
 	go m.runBot()
 	m.StartAutoStartGames()
 	m.done.L.Lock()
@@ -90,7 +90,7 @@ func (m *Manager) Run() error {
 	}
 	m.done.L.Unlock()
 	// Make sure we return a restart condition here if we need to
-	return nil
+	return m.restarting, nil
 }
 
 func (m *Manager) runBot() {
@@ -279,12 +279,12 @@ func (m *Manager) setupCommands() error {
 	)
 
 	var err error
-	err = m.cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp)
-	err = m.cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp)
-	err = m.cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp)
-	err = m.cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp)
-	err = m.cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp)
-	err = m.cmd.AddCommand("restart", 2, m.restartCmd, restartHelp)
+	err = m.Cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp)
+	err = m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp)
+	err = m.Cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp)
+	err = m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp)
+	err = m.Cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp)
+	err = m.Cmd.AddCommand("restart", 2, m.restartCmd, restartHelp)
 
 	if err != nil {
 		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", err)
