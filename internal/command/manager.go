@@ -43,10 +43,10 @@ func NewManager(logger *log.Logger, prefixes ...string) *Manager {
 				toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
 			}
 		}
-		if data.IsFromIRC {
-			data.SendSourceNotice(toSend)
-		} else {
+		if data.FromTerminal {
 			m.Logger.Info(toSend)
+		} else {
+			data.SendSourceNotice(toSend)
 		}
 	}, "prints command help")
 	return m
@@ -209,7 +209,7 @@ func (m *Manager) ParseLine(line string, fromTerminal bool, source, target strin
 	}
 
 	data := &Data{
-		IsFromIRC:    !fromTerminal,
+		FromTerminal: fromTerminal,
 		Args:         lineSplit[1:],
 		OriginalArgs: line,
 		Source:       source,

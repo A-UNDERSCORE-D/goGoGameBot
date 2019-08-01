@@ -10,7 +10,7 @@ import (
 
 // Data represents all the data available for a command call
 type Data struct {
-	IsFromIRC    bool
+	FromTerminal bool
 	Args         []string
 	OriginalArgs string
 	Source       string
@@ -25,10 +25,11 @@ type dataUtil interface {
 	interfaces.Messager
 }
 
+const notAllowed = "You are not permitted to use this command"
+
 // CheckPerms verifies that the admin level of the source user is at or above the requiredLevel
 func (d *Data) CheckPerms(requiredLevel int) bool {
-	const notAllowed = "You are not permitted to use this command"
-	if !d.IsFromIRC || d.util.AdminLevel(d.Source) >= requiredLevel {
+	if d.FromTerminal || d.util.AdminLevel(d.Source) >= requiredLevel {
 		return true
 	}
 	d.ReturnNotice(notAllowed)
@@ -59,10 +60,10 @@ func (d *Data) SendSourceMessage(msg string) { d.SendMessage(d.Source, msg) }
 // on the Data object. The decision on where to send the message is based on whether or not the source of the command
 // that the Data represents is IRC or not
 func (d *Data) ReturnNotice(msg string) {
-	if d.IsFromIRC {
-		d.SendSourceNotice(msg)
-	} else {
+	if d.FromTerminal {
 		d.Manager.Logger.Info(msg)
+	} else {
+		d.SendSourceNotice(msg)
 	}
 }
 
@@ -70,10 +71,10 @@ func (d *Data) ReturnNotice(msg string) {
 // Manager on the Data object. The decision on where to send the message is based on whether or not the source of
 // the command that the Data represents is IRC or not
 func (d *Data) ReturnMessage(msg string) {
-	if d.IsFromIRC {
-		d.SendTargetMessage(msg)
-	} else {
+	if d.FromTerminal {
 		d.Manager.Logger.Info(msg)
+	} else {
+		d.SendTargetMessage(msg)
 	}
 }
 
