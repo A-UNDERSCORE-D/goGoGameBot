@@ -47,7 +47,7 @@ type Conf struct {
 
 // IRC Represents a connection to an IRC server
 type IRC struct {
-	Conf
+	*Conf
 	m                 sync.RWMutex
 	socket            net.Conn
 	log               *log.Logger
@@ -56,16 +56,15 @@ type IRC struct {
 	capabilityManager *capabilityManager
 }
 
-// TODO: rename config.BotConfig config.IRCConfig
-
 // New creates a new IRC instance ready for use
 func New(conf string, logger *log.Logger) (*IRC, error) {
 	c := new(Conf)
 	if err := xml.Unmarshal([]byte(conf), c); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse config: %s", err)
 	}
 
 	out := &IRC{
+		Conf:         c,
 		log:          logger,
 		RawEvents:    new(event.Manager),
 		ParsedEvents: new(event.Manager),
@@ -206,7 +205,7 @@ func (i *IRC) handleLine(line ircmsg.IrcMessage) {
 		_, timeFromServer := line.GetTag("time")
 		serverTime, err := time.Parse(time.RFC3339, timeFromServer)
 		if err != nil {
-			i.log.Warnf("server offered server-time %q which does not fit RFC 3339 format")
+			i.log.Warnf("server offered server-time %q which does not fit RFC 3339 format: %s", timeFromServer, err)
 		} else {
 			t = serverTime
 		}
