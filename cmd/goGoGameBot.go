@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/chzyer/readline"
-	"github.com/goshuirc/irc-go/ircutils"
 	"github.com/spf13/pflag"
 	"golang.org/x/sys/unix"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/bot"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
@@ -31,12 +32,14 @@ const (
 
 var (
 	configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
+	logger     *log.Logger
 )
 
 func main() {
 	pflag.Parse()
 	rl, _ := readline.New("> ")
 	l := log.New(log.FTimestamp, rl, "MAIN", 0)
+	logger = l
 
 	for _, line := range strings.Split(asciiArt, "\n") {
 		l.Info(line)
@@ -47,24 +50,29 @@ func main() {
 	if err != nil {
 		l.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
 	}
-	b, err := bot.NewBot(*conf, l.Clone().SetPrefix("BOT"))
+
+	conn, err := getConn(conf, l)
 	if err != nil {
-		l.Critf("error while creating bot: %s", err)
+		l.Crit("could not create connection: ", err)
+	}
+
+	gm, err := game.NewManager(conf.GameManager, conn, l.Clone().SetPrefix("GM"))
+	if err != nil {
+		l.Crit("could not create GameManager: ", err)
 	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
 
-	go func() { sig := <-sigChan; b.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
+	go func() { sig := <-sigChan; gm.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
 
-	go runCLI(b, rl)
-	err = b.Run()
-	if err != nil && err != bot.ErrRestart {
+	go runCLI(gm, rl)
+	restart, err := gm.Run()
+	if err != nil {
 		l.Warnf("Got an error from bot on exit: %s", err)
 	}
 
-	b.GameManager.StopAllGames()
-	if err == bot.ErrRestart {
+	if restart {
 		execSelf()
 	}
 
@@ -85,14 +93,20 @@ func execSelf() {
 	panic(syscall.Exec(executable, os.Args, []string{})) // This should never fail and if it does we should explode violently
 }
 
-func runCLI(b *bot.Bot, rl *readline.Instance) {
-	lineChan := make(chan string)
+type terminalUtil struct{}
+
+func (r terminalUtil) AdminLevel(string) int         { return 1337 }
+func (r terminalUtil) SendMessage(_, message string) { logger.Info(message) }
+func (r terminalUtil) SendNotice(_, message string)  { logger.Info(message) }
+
+func runCLI(gm *game.Manager, rl *readline.Instance) {
+	lineChan := make(chan string, 1)
 	go func() {
 		for {
 			line, err := rl.Readline()
 			if err != nil {
 				close(lineChan)
-				b.Stop("SIGINT", false)
+				gm.Stop("SIGINT", false)
 				return
 			}
 			lineChan <- line
@@ -100,6 +114,15 @@ func runCLI(b *bot.Bot, rl *readline.Instance) {
 	}()
 
 	for line := range lineChan {
-		b.CommandManager.ParseLine(line, false, ircutils.UserHost{}, "")
+		gm.Cmd.ParseLine(line, true, "", "", terminalUtil{})
+	}
+}
+
+func getConn(conf *config.Config, logger *log.Logger) (interfaces.Bot, error) {
+	switch strings.ToLower(conf.ConnConfig.ConnType) {
+	case "irc":
+		return irc.New(conf.ConnConfig.Config, logger.Clone().SetPrefix("IRC"))
+	default:
+		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.ConnType)
 	}
 }
