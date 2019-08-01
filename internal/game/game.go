@@ -39,6 +39,9 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	if err := g.UpdateFromConfig(conf); err != nil {
 		return nil, err
 	}
+	for _, c := range g.chatBridge.channels {
+		manager.bot.JoinChannel(c)
+	}
 	return g, nil
 }
 
