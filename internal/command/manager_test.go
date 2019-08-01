@@ -3,41 +3,67 @@ package command
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
-	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 var (
 	baseLogger = log.New(log.FTimestamp|log.FShowFile, os.Stdout, "TEST", log.INFO)
 )
 
+var _ DataUtil = &mockMessager{}
+
 type mockMessager struct {
 	lastMessages [][2]string
 	lastNotices  [][2]string
 	lastRaw      []string
-	lastIRCLine  []ircmsg.IrcMessage
+	admins       map[string]int
 }
 
-func (m *mockMessager) WriteIRCLine(line ircmsg.IrcMessage) error {
-	m.lastIRCLine = append(m.lastIRCLine, line)
-	return nil
+func getNick(source string) string {
+	if strings.HasPrefix(source, "#") {
+		return source
+	}
+	return ircutils.ParseUserhost(source).Nick
 }
 
 func (m *mockMessager) SendMessage(target, message string) {
-	m.lastMessages = append(m.lastMessages, [2]string{target, message})
+	m.lastMessages = append(m.lastMessages, [2]string{getNick(target), message})
 }
 
 func (m *mockMessager) SendNotice(target, message string) {
-	m.lastNotices = append(m.lastNotices, [2]string{target, message})
+	m.lastNotices = append(m.lastNotices, [2]string{getNick(target), message})
 }
 
-func (m *mockMessager) WriteString(message string) error {
+/*func (m *mockMessager) WriteString(message string) error {
 	m.lastRaw = append(m.lastRaw, message)
 	return nil
+}*/
+
+func (m *mockMessager) checkMap() {
+	if m.admins == nil {
+		m.admins = make(map[string]int)
+	}
+}
+
+func (m *mockMessager) AdminLevel(source string) int {
+	m.checkMap()
+	for mask, level := range m.admins {
+		if util.GlobToRegexp(mask).MatchString(source) {
+			return level
+		}
+	}
+	return 0
+}
+
+func (m *mockMessager) AddAdmin(mask string, level int) {
+	m.checkMap()
+	m.admins[mask] = level
 }
 
 func cmpSlice(a, b [][2]string) bool {
@@ -61,7 +87,7 @@ func (m *mockMessager) Clear() {
 }
 
 func TestManager_AddCommand(t *testing.T) {
-	preExisting := NewManager(baseLogger, &mockMessager{})
+	preExisting := NewManager(baseLogger)
 	_ = preExisting.AddCommand("dupe", 0, nil, "dupe command is duped")
 	type args struct {
 		name          string
@@ -76,7 +102,7 @@ func TestManager_AddCommand(t *testing.T) {
 	}{
 		{
 			name: "space error",
-			m:    NewManager(baseLogger, &mockMessager{}),
+			m:    NewManager(baseLogger),
 			args: args{
 				name:          "basic test",
 				requiresAdmin: 0,
@@ -86,7 +112,7 @@ func TestManager_AddCommand(t *testing.T) {
 		},
 		{
 			name: "singlename test",
-			m:    NewManager(baseLogger, &mockMessager{}),
+			m:    NewManager(baseLogger),
 			args: args{
 				name:          "test",
 				requiresAdmin: 0,
@@ -115,7 +141,7 @@ func TestManager_AddCommand(t *testing.T) {
 }
 
 func TestManager_getCommandByName(t *testing.T) {
-	m := NewManager(baseLogger, &mockMessager{})
+	m := NewManager(baseLogger)
 	existingCommand := &SingleCommand{
 		0,
 		nil,
@@ -159,9 +185,9 @@ func TestManager_getCommandByName(t *testing.T) {
 }
 
 func TestManager_AddSubCommand(t *testing.T) {
-	sCmdManager := NewManager(baseLogger, &mockMessager{})
+	sCmdManager := NewManager(baseLogger)
 	_ = sCmdManager.internalAddCommand(&SingleCommand{0, nil, "single_command", "single"})
-	mCmdManager := NewManager(baseLogger, &mockMessager{})
+	mCmdManager := NewManager(baseLogger)
 	_ = mCmdManager.internalAddCommand(&SubCommandList{
 		SingleCommand: SingleCommand{0, nil, "baseCmd", "baseCmd"},
 		subCommands:   make(map[string]Command)},
@@ -181,7 +207,7 @@ func TestManager_AddSubCommand(t *testing.T) {
 	}{
 		{
 			name: "no existing root",
-			m:    NewManager(baseLogger, &mockMessager{}),
+			m:    NewManager(baseLogger),
 			args: args{
 				rootName: "IDontExist",
 				name:     "test",
@@ -217,15 +243,18 @@ func TestManager_AddSubCommand(t *testing.T) {
 	}
 }
 
-func makeDataWithSource(mask string) *Data {
-	return &Data{Source: ircutils.ParseUserhost(mask), IsFromIRC: true}
+func makeDataWithSourceAndUtil(mask string, util DataUtil) *Data {
+	return &Data{Source: mask, FromTerminal: false, util: util}
 }
 
+/*
+TODO: replace with TestData_checkAdmin or similar
 func TestManager_CheckAdmin(t *testing.T) {
-	m := NewManager(baseLogger, &mockMessager{})
-	_ = m.AddAdmin("*!*@someHost", 1)
-	_ = m.AddAdmin("*!test@*", 2)
-	zeroAccessUser := makeDataWithSource("unimportant!user@nowhere")
+	m := NewManager(baseLogger)
+	msg := &mockMessager{}
+	msg.AddAdmin("*!*@someHost", 1)
+	msg.AddAdmin("*!test@*", 2)
+	zeroAccessUser := makeDataWithSourceAndUtil("unimportant!user@nowhere", msg)
 	tests := []struct {
 		name             string
 		required         int
@@ -244,13 +273,13 @@ func TestManager_CheckAdmin(t *testing.T) {
 			name:            "too low a level",
 			required:        1337,
 			data:            zeroAccessUser,
-			expectedNotices: [][2]string{{zeroAccessUser.Source.Nick, notAllowed}},
+			expectedNotices: [][2]string{{zeroAccessUser.Source, notAllowed}},
 			want:            false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			realMessanger := m.messenger.(*mockMessager)
+			realMessanger := tt.data.util.(*mockMessager)
 			realMessanger.Clear()
 			if got := m.CheckAdmin(tt.data, tt.required); got != tt.want {
 				t.Errorf("Manager.CheckAdmin() = %v, want %v", got, tt.want)
@@ -263,10 +292,10 @@ func TestManager_CheckAdmin(t *testing.T) {
 			}
 		})
 	}
-}
+}*/
 
 func TestManager_ParseLine(t *testing.T) {
-	m := NewManager(baseLogger, &mockMessager{}, "~")
+	m := NewManager(baseLogger, "~")
 	_ = m.AddCommand(
 		"testNoAccess",
 		noAdmin,
@@ -294,13 +323,12 @@ func TestManager_ParseLine(t *testing.T) {
 		func(data *Data) { data.SendTargetMessage("HI! Im a subcommand that does not require admin") },
 		"test cmd",
 	)
-
-	_ = m.AddAdmin("picard!jean-luc@*", 1337)
+	messager := &mockMessager{}
 	type args struct {
-		line    string
-		fromIRC bool
-		source  ircutils.UserHost
-		target  string
+		line         string
+		fromTerminal bool
+		source       string
+		target       string
 	}
 	tests := []struct {
 		name             string
@@ -311,76 +339,76 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "empty line",
 			args: args{
-				line:    "",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 		},
 		{
 			name: "normal call",
 			args: args{
-				line:    "~testNoAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~testNoAccess",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "huzzah!"}},
 		},
 		{
 			name: "nonexistant call",
 			args: args{
-				line:    "~hi, I dont exist!",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~hi, I dont exist!",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 		},
 		{
 			name: "normal call weird case",
 			args: args{
-				line:    "~tEsTNOAcCeSs",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~tEsTNOAcCeSs",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "huzzah!"}},
 		},
 		{
 			name: "normal call with args",
 			args: args{
-				line:    "~testNoAccess except this time with arguments",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~testNoAccess except this time with arguments",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "huzzah!"}},
 		},
 		{
 			name: "normal call but not from IRC",
 			args: args{
-				line:    "testNoAccess",
-				fromIRC: false,
+				line:         "testNoAccess",
+				fromTerminal: true,
 			},
 			expectedMessages: [][2]string{{"", "huzzah!"}}, // It tries to send a message anyway, but thats not our fault.
 		},
 		{
 			name: "privileged call without access",
 			args: args{
-				line:    "~testAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~testAccess",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedNotices: [][2]string{{"test", notAllowed}},
 		},
 		{
 			name: "privileged call with access",
 			args: args{
-				line:    "~testAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
-				target:  "#test",
+				line:         "~testAccess",
+				fromTerminal: false,
+				source:       "picard!jean-luc@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "admin!"}},
 			expectedNotices:  nil,
@@ -388,56 +416,56 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "privileged call not from IRC",
 			args: args{
-				line:    "testAccess",
-				fromIRC: false,
+				line:         "testAccess",
+				fromTerminal: true,
 			},
 			expectedMessages: [][2]string{{"", "admin!"}},
 		},
 		{
 			name: "nested normal",
 			args: args{
-				line:    "~test cmdNoAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~test cmdNoAccess",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "HI! Im a subcommand that does not require admin"}},
 		},
 		{
 			name: "nested privileged no access",
 			args: args{
-				line:    "~test cmdAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("test!test@test"),
-				target:  "#test",
+				line:         "~test cmdAccess",
+				fromTerminal: false,
+				source:       "test!test@test",
+				target:       "#test",
 			},
 			expectedNotices: [][2]string{{"test", notAllowed}},
 		},
 		{
 			name: "nested privileged access",
 			args: args{
-				line:    "~test cmdAccess",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
-				target:  "#test",
+				line:         "~test cmdAccess",
+				fromTerminal: false,
+				source:       "picard!jean-luc@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "HI! Im a subcommand that requires admin!"}},
 		},
 		{
 			name: "nested privileged access non IRC",
 			args: args{
-				line:    "test cmdAccess",
-				fromIRC: false,
+				line:         "test cmdAccess",
+				fromTerminal: true,
 			},
 			expectedMessages: [][2]string{{"", "HI! Im a subcommand that requires admin!"}},
 		},
 		{
 			name: "nested nonexistent",
 			args: args{
-				line:    "~test IDontExist",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
-				target:  "#test",
+				line:         "~test IDontExist",
+				fromTerminal: false,
+				source:       "picard!jean-luc@test",
+				target:       "#test",
 			},
 			expectedNotices: [][2]string{
 				{"picard", "unknown subcommand \"IDontExist\""},
@@ -447,30 +475,30 @@ func TestManager_ParseLine(t *testing.T) {
 		{
 			name: "nested weird casing",
 			args: args{
-				line:    "~test cMdNOAcCeSs",
-				fromIRC: true,
-				source:  ircutils.ParseUserhost("picard!jean-luc@test"),
-				target:  "#test",
+				line:         "~test cMdNOAcCeSs",
+				fromTerminal: false,
+				source:       "picard!jean-luc@test",
+				target:       "#test",
 			},
 			expectedMessages: [][2]string{{"#test", "HI! Im a subcommand that does not require admin"}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			msgPtr := m.messenger.(*mockMessager)
-			msgPtr.Clear()
-			m.ParseLine(tt.args.line, tt.args.fromIRC, tt.args.source, tt.args.target)
-			if !cmpSlice(tt.expectedMessages, msgPtr.lastMessages) {
-				t.Errorf("Manager.Parse() did not send expected messages. got %v, want %v", msgPtr.lastMessages, tt.expectedMessages)
+			messager.Clear()
+			messager.AddAdmin("picard!jean-luc@*", 1337)
+			m.ParseLine(tt.args.line, tt.args.fromTerminal, tt.args.source, tt.args.target, messager)
+			if !cmpSlice(tt.expectedMessages, messager.lastMessages) {
+				t.Errorf("Manager.Parse() did not send expected messages. got %v, want %v", messager.lastMessages, tt.expectedMessages)
 			}
-			if !cmpSlice(tt.expectedNotices, msgPtr.lastNotices) {
-				t.Errorf("Manager.Parse() did not send expected notices. got %v, want %v", msgPtr.lastNotices, tt.expectedNotices)
+			if !cmpSlice(tt.expectedNotices, messager.lastNotices) {
+				t.Errorf("Manager.Parse() did not send expected notices. got %v, want %v", messager.lastNotices, tt.expectedNotices)
 			}
 		})
 	}
 }
 
-func hasAdmin(m *Manager, mask string, level int) bool {
+/*func hasAdmin(m *Manager, mask string, level int) bool {
 	for _, a := range m.admins {
 		if a.Level == level && mask == a.Mask {
 			return true
@@ -478,7 +506,9 @@ func hasAdmin(m *Manager, mask string, level int) bool {
 	}
 	return false
 }
-
+*/
+/*
+	TODO: replace with an equiv for TestData
 func TestManager_AddAdmin(t *testing.T) {
 	m := NewManager(baseLogger, &mockMessager{})
 
@@ -507,3 +537,4 @@ func TestManager_AddAdmin(t *testing.T) {
 		})
 	}
 }
+*/
