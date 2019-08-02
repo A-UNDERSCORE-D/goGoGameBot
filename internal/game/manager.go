@@ -284,7 +284,7 @@ func (m *Manager) setupCommands() error {
 	err = m.Cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp)
 	err = m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp)
 	err = m.Cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp)
-	err = m.Cmd.AddCommand("restart", 2, m.restartCmd, restartHelp)
+	err = m.Cmd.AddCommand("restart", 2, m.restartCmd, restartMHelp)
 
 	if err != nil {
 		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", err)
@@ -296,9 +296,8 @@ func (m *Manager) setupCommands() error {
 
 func (m *Manager) Stop(msg string, restart bool) {
 	m.restarting = restart
-	m.bot.SendAdminMessage(msg)
 	m.status = shutdown
 	m.StopAllGames()
-	m.bot.Disconnect("Stop requested")
+	m.bot.Disconnect(msg)
 	m.done.Broadcast()
 }
