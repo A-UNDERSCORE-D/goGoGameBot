@@ -72,18 +72,21 @@ func (m *Manager) HasEvent(name string) bool {
 	return ok
 }
 
-// Attach adds an event and a callback to the Manager, the returned int is an ID for the attached callback, and can
-// be used to detach a callback later
-func (m *Manager) Attach(name string, f HandlerFunc, priority int) int {
-	id := m.nextID()
+func (m *Manager) attachDirect(name string, f HandlerFunc, priority, id int) int {
 	m.m.Lock()
-	defer m.m.Unlock()
 	if m.events == nil {
 		m.events = make(Map)
 	}
 	m.events[name] = append(m.events[name], Handler{f, priority, id})
 	sort.Sort(m.events[name])
+	m.m.Unlock()
 	return id
+}
+
+// Attach adds an event and a callback to the Manager, the returned int is an ID for the attached callback, and can
+// be used to detach a callback later
+func (m *Manager) Attach(name string, f HandlerFunc, priority int) int {
+	return m.attachDirect(name, f, priority, m.nextID())
 }
 
 // AttachOneShot attaches the function provided to the Manager for one hook, after which the handler will be detached
@@ -95,7 +98,7 @@ func (m *Manager) AttachOneShot(name string, f HandlerFunc, priority int) int {
 // callback will be detached
 func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, count int) int {
 	callCount := 0
-	var id int
+	id := m.nextID()
 	wrapped := func(e Event) {
 		callCount++
 		defer func() {
@@ -105,8 +108,7 @@ func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, coun
 		}()
 		f(e)
 	}
-	id = m.Attach(name, wrapped, priority)
-	return id
+	return m.attachDirect(name, wrapped, priority, id)
 }
 
 // Detach removes a given ID from the event Manager. If the event is not found, Detach returns False

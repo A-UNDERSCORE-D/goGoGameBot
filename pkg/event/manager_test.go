@@ -168,7 +168,7 @@ func TestManager_Dispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dataChan := make(chan string, 10)
 			m := createManagerWithEvent(tt.eventName, tt.handlers...)
-			m.Dispatch(&testEvent{SimpleEvent{BaseEvent{Name_: tt.eventName}}, dataChan})
+			m.Dispatch(&testEvent{SimpleEvent{&BaseEvent{Name_: tt.eventName}}, dataChan})
 			count := 0
 
 			for s := range dataChan {
