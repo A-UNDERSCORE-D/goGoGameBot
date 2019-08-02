@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/goshuirc/irc-go/ircmsg"
+	"github.com/goshuirc/irc-go/ircutils"
 )
 
 // IRC SASL numerics
@@ -88,4 +89,18 @@ func AddZwsp(s string) string {
 	}
 
 	return fmt.Sprintf("%c\u200b%s", s[0], s[1:])
+}
+
+func UserHost2Canonical(uh ircutils.UserHost) string {
+	out := strings.Builder{}
+	out.WriteString(uh.Nick)
+	if uh.User != "" {
+		out.WriteRune('!')
+		out.WriteString(uh.Host)
+	}
+	if uh.Host != "" {
+		out.WriteRune('@')
+		out.WriteString(uh.Host)
+	}
+	return out.String()
 }
