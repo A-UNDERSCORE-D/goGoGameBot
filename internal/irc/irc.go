@@ -20,19 +20,19 @@ import (
 
 // Admin holds a mask level pair, for use in commands
 type Admin struct {
-	Mask  string `xml:"mask"`
-	Level int    `xml:"level"`
+	Mask  string `xml:"mask,attr"`
+	Level int    `xml:"level,attr"`
 }
 
 // Conf holds the configuration for an IRC instance
 type Conf struct {
-	Host            string `xml:"host"`
-	Port            string `xml:"port"`
-	HostPasswd      string `xml:"host_password"`
-	SSL             bool   `xml:"ssl,attr"`
-	DontVerifyCerts bool   `xml:"dont_verify_certs,attr"`
-	Admins          []Admin
-	AdminChannels   []string
+	Host            string   `xml:"host"`
+	Port            string   `xml:"port"`
+	HostPasswd      string   `xml:"host_password"`
+	SSL             bool     `xml:"ssl,attr"`
+	DontVerifyCerts bool     `xml:"dont_verify_certs,attr"`
+	Admins          []Admin  `xml:"admin"`
+	AdminChannels   []string `xml:"admin_channel"`
 
 	Nick  string `xml:"nick"`
 	Ident string `xml:"ident"`
@@ -44,6 +44,8 @@ type Conf struct {
 	AuthUser     string `xml:"auth_user"`
 	AuthPasswd   string `xml:"auth_password"`
 }
+
+// TODO: updateConf and reconnect methods
 
 // IRC Represents a connection to an IRC server
 type IRC struct {
@@ -291,16 +293,24 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 
 }
 
+func nickOrOriginal(toParse string) string {
+	parsed := ircutils.ParseUserhost(toParse)
+	if parsed.Nick != "" {
+		return parsed.Nick
+	}
+	return toParse
+}
+
 // SendMessage sends a message to the given target
 func (i *IRC) SendMessage(target, message string) {
-	if _, err := i.writeLine("PRIVMSG", ircutils.ParseUserhost(target).Nick, message); err != nil {
+	if _, err := i.writeLine("PRIVMSG", nickOrOriginal(target), message); err != nil {
 		i.log.Warnf("could not send message %q to target %q: %s", message, target, err)
 	}
 }
 
 // SendNotice sends a notice to the given notice
 func (i *IRC) SendNotice(target, message string) {
-	if _, err := i.writeLine("NOTICE", ircutils.ParseUserhost(target).Nick, message); err != nil {
+	if _, err := i.writeLine("NOTICE", nickOrOriginal(target), message); err != nil {
 		i.log.Warnf("could not send notice %q to target %q: %s", message, target, err)
 	}
 }
