@@ -10,7 +10,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/spf13/pflag"
-	"golang.org/x/sys/unix"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
@@ -62,7 +61,7 @@ func main() {
 	}
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, unix.SIGINT, unix.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt)
 
 	go func() { sig := <-sigChan; gm.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
 
@@ -95,9 +94,14 @@ func execSelf() {
 
 type terminalUtil struct{}
 
-func (r terminalUtil) AdminLevel(string) int         { return 1337 }
-func (r terminalUtil) SendMessage(_, message string) { logger.Info(message) }
-func (r terminalUtil) SendNotice(_, message string)  { logger.Info(message) }
+//noinspection GoExportedElementShouldHaveComment
+func (terminalUtil) AdminLevel(string) int { return 1337 }
+
+//noinspection GoExportedElementShouldHaveComment
+func (terminalUtil) SendMessage(_, message string) { logger.Info(message) }
+
+//noinspection GoExportedElementShouldHaveComment
+func (terminalUtil) SendNotice(_, message string) { logger.Info(message) }
 
 func runCLI(gm *game.Manager, rl *readline.Instance) {
 	lineChan := make(chan string, 1)

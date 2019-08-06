@@ -13,7 +13,6 @@ import (
 
 	"github.com/dustin/go-humanize"
 	psutilProc "github.com/shirou/gopsutil/process"
-	"golang.org/x/sys/unix"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
@@ -215,12 +214,12 @@ func (p *Process) SendSignal(sig os.Signal) error {
 
 // Stop sends SIGTERM to the process if it is running
 func (p *Process) Stop() error {
-	return p.SendSignal(unix.SIGTERM)
+	return p.SendSignal(os.Interrupt)
 }
 
 // Kill sends SIGKILL to the process if it is running
 func (p *Process) Kill() error {
-	return p.SendSignal(unix.SIGKILL)
+	return p.SendSignal(os.Kill)
 }
 
 // StopOrKillTimeout asks the process to stop and waits for the configured timeout, after which it kills the process
