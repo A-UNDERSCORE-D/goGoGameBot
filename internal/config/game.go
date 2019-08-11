@@ -9,7 +9,7 @@ import (
 // GameManager represents a config for a game.Manager instance
 type GameManager struct {
 	XMLName    xml.Name `xml:"games"`
-	StripMasks []string `xml:"strip_masks>mask"`
+	StripMasks []string `xml:"strip_mask"` // TODO: move this to conn?
 	Games      []Game   `xml:"game"`
 }
 
@@ -34,7 +34,6 @@ type Game struct {
 		DontAllowForwards bool     `xml:"dont_allow_forwards,attr"`
 		DumpStdout        bool     `xml:"dump_stdout,attr"`
 		DumpStderr        bool     `xml:"dump_stderr,attr"`
-		StripMasks        []string `xml:"strip_mask"`
 		BridgedChannels   []string `xml:"bridged_channel"`
 		Formats           struct {
 			Message  format.Format `xml:"message"`

@@ -11,8 +11,6 @@ import (
 type Config struct {
 	XMLName     xml.Name   `xml:"bot"`
 	ConnConfig  ConnConfig `xml:"conn_config"`
-	Ignores     []string   `xml:"ignore_mask"`
-	Strips      []string   `xml:"strip_mask"`
 	GameManager GameManager
 	ConfigPath  string `xml:"-"`
 }
@@ -63,6 +61,11 @@ func nameToBytes(name xml.Name) (out []byte) {
 }
 
 func attrToBytes(a xml.Attr) []byte {
+	if a.Name.Space != "" {
+		// For us this is fine because we never use name spacing, and we cant
+		// reconstruct this easily / at all because of how its parsed out
+		return nil
+	}
 	out := bytes.Buffer{}
 	out.Write(nameToBytes(a.Name))
 	out.WriteRune('=')
