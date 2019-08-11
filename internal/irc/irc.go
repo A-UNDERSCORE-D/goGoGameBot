@@ -26,21 +26,22 @@ type Admin struct {
 
 // Conf holds the configuration for an IRC instance
 type Conf struct {
-	Host            string   `xml:"host"`
-	Port            string   `xml:"port"`
-	HostPasswd      string   `xml:"host_password"`
-	SSL             bool     `xml:"ssl,attr"`
-	DontVerifyCerts bool     `xml:"dont_verify_certs,attr"`
-	Admins          []Admin  `xml:"admin"`
-	AdminChannels   []string `xml:"admin_channel"`
+	DontVerifyCerts bool `xml:"dont_verify_certs,attr"`
+	SSL             bool `xml:"ssl,attr"`
+
+	Host          string   `xml:"host"`
+	Port          string   `xml:"port"`
+	HostPasswd    string   `xml:"host_password"`
+	Admins        []Admin  `xml:"admin"`
+	AdminChannels []string `xml:"admin_channel"`
 
 	Nick  string `xml:"nick"`
 	Ident string `xml:"ident"`
 	Gecos string `xml:"gecos"`
 
 	// TODO: Cert based auth? (via SASL)
-	Authenticate bool   `xml:"authenticate,attr"`
-	SASL         bool   `xml:"sasl,attr"`
+	Authenticate bool   `xml:"authenticate"`
+	SASL         bool   `xml:"use_sasl"`
 	AuthUser     string `xml:"auth_user"`
 	AuthPasswd   string `xml:"auth_password"`
 }
