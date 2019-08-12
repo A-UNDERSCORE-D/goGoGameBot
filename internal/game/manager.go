@@ -168,8 +168,6 @@ func (m *Manager) GetGameFromName(name string) interfaces.Game {
 
 // GameExists returns whether or not the given name exists on any game found on this Manager
 func (m *Manager) GameExists(name string) bool {
-	m.gamesMutex.RLocker()
-	defer m.gamesMutex.RUnlock()
 	return m.gameIdxFromName(name) != -1
 }
 
