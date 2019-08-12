@@ -104,6 +104,7 @@ func (i *IRC) setupParsers() {
 type LineHandler func(message *ircmsg.IrcMessage, irc *IRC)
 
 func (i *IRC) write(toSend []byte) (int, error) {
+	// TODO: test for a lack of a connection, and possibly queue messages
 	if !bytes.HasSuffix(toSend, []byte{'\r', '\n'}) {
 		toSend = append(toSend, '\r', '\n')
 	}
@@ -342,4 +343,13 @@ func (i *IRC) JoinChannel(name string) {
 	i.m.Lock()
 	i.channels = append(i.channels, name)
 	i.m.Unlock()
+}
+
+func (i *IRC) String() string {
+	return fmt.Sprintf(
+		"IRC conn; Host: %s, Port: %s, Conencted: %t",
+		i.Host,
+		i.Port,
+		i.connected,
+	)
 }
