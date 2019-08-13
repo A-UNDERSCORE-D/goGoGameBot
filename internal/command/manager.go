@@ -133,7 +133,7 @@ func (m *Manager) getCommandByName(name string) Command {
 func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callback Callback, help string) error {
 	if m.getCommandByName(rootName) == nil {
 		err := m.internalAddCommand(&SubCommandList{
-			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: strings.ToUpper(rootName)},
+			SingleCommand: SingleCommand{adminRequired: noAdmin, callback: nil, help: "", name: strings.ToLower(rootName)},
 			subCommands:   make(map[string]Command),
 		})
 		if err != nil {
