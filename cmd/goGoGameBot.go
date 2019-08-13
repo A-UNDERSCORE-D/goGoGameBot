@@ -55,7 +55,7 @@ func main() {
 		l.Crit("could not create connection: ", err)
 	}
 
-	gm, err := game.NewManager(conf.GameManager, conn, l.Clone().SetPrefix("GM"))
+	gm, err := game.NewManager(conf, conn, l.Clone().SetPrefix("GM"))
 	if err != nil {
 		l.Crit("could not create GameManager: ", err)
 	}
