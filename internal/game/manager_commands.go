@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 )
 
@@ -129,4 +130,21 @@ func (m *Manager) restartCmd(data *command.Data) {
 		msg = strings.Join(data.Args, " ")
 	}
 	m.Stop(msg, true)
+}
+
+func (m *Manager) reloadCmd(data *command.Data) {
+	data.ReturnMessage("reloading config")
+	newConf, err := config.GetConfig(m.rootConf.ConfigPath)
+	if err != nil {
+		m.Error(err)
+		data.ReturnMessage("reload failed")
+		return
+	}
+
+	if err := m.reload(newConf); err != nil {
+		m.Error(err)
+		data.ReturnMessage("reload failed")
+		return
+	}
+	data.ReturnMessage("reload complete")
 }

@@ -15,13 +15,16 @@ import (
 )
 
 // NewManager creates a Manager and configures it using the given data.
-func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
+func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
-		bot:    bot,
-		Logger: logger.Clone().SetPrefix("GM"),
-		done:   sync.NewCond(new(sync.Mutex)),
+		bot:      bot,
+		Logger:   logger.Clone().SetPrefix("GM"),
+		done:     sync.NewCond(new(sync.Mutex)),
+		rootConf: conf,
 	}
+
 	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), "!!")
+	m.ReloadGames(conf.GameManager.Games)
 
 	m.bot.HookMessage(func(source, channel, message string) {
 		m.Cmd.ParseLine(message, false, source, channel, m.bot)
@@ -50,25 +53,11 @@ func NewManager(conf config.GameManager, bot interfaces.Bot, logger *log.Logger)
 	m.bot.HookNick(func(source, newNick string) {
 		m.ForEachGame(func(game interfaces.Game) { game.OnNick(source, newNick) }, nil)
 	})
-
-	var games []interfaces.Game
-	for _, g := range conf.Games {
-		ng, err := NewGame(g, m)
-		if err != nil {
-			return nil, fmt.Errorf("could not create game %s: %s", g.Name, err)
-		}
-		games = append(games, ng)
-	}
-	m.games = games
-	if err := m.setupCommands(); err != nil {
-		return nil, err
-	}
-
-	return m, nil
 }
 
 // Manager manages games, and communication between them, eachother, and an interfaces.Bot
 type Manager struct {
+	rootConf   *config.Config
 	games      []interfaces.Game
 	gamesMutex sync.RWMutex
 	bot        interfaces.Bot
@@ -298,4 +287,10 @@ func (m *Manager) Stop(msg string, restart bool) {
 	m.StopAllGames()
 	m.bot.Disconnect(msg)
 	m.done.Broadcast()
+}
+
+func (m *Manager) reload(conf *config.Config) error {
+	m.rootConf = conf
+	m.ReloadGames(conf.GameManager.Games)
+	return m.bot.Reload(conf.ConnConfig.Config)
 }
