@@ -10,6 +10,7 @@ type Bot interface {
 	Hooker
 	AdminLeveler
 	JoinChannel(string)
+	Reload(string) error
 }
 
 // Messager represents a type that can send messages to a chat system

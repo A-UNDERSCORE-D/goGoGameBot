@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -46,8 +47,6 @@ type Conf struct {
 	AuthPasswd   string `xml:"auth_password"`
 }
 
-// TODO: updateConf and reconnect methods
-
 // IRC Represents a connection to an IRC server
 type IRC struct {
 	*Conf
@@ -61,18 +60,30 @@ type IRC struct {
 	capabilityManager *capabilityManager
 }
 
+// Connected gets the connected field in a concurrent-safe manner
+func (i *IRC) Connected() bool {
+	i.m.Lock()
+	defer i.m.Unlock()
+	return i.connected
+}
+
+// SetConnected sets the connected field in a concurrent-safe manner
+func (i *IRC) SetConnected(connected bool) {
+	i.m.Lock()
+	i.connected = connected
+	i.m.Unlock()
+}
+
 // New creates a new IRC instance ready for use
 func New(conf string, logger *log.Logger) (*IRC, error) {
-	c := new(Conf)
-	if err := xml.Unmarshal([]byte(conf), c); err != nil {
-		return nil, fmt.Errorf("could not parse config: %s", err)
-	}
-
 	out := &IRC{
-		Conf:         c,
 		log:          logger,
 		RawEvents:    new(event.Manager),
 		ParsedEvents: new(event.Manager),
+	}
+
+	if err := out.Reload(conf); err != nil {
+		return nil, err
 	}
 
 	if out.DontVerifyCerts {
@@ -91,7 +102,8 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 		out.SASL = false
 		out.log.Warn("SASL disabled as the connection is not SSL")
 	}
-	out.RawEvents.Attach("ERROR", func(event.Event) { out.m.Lock(); out.connected = false; out.m.Unlock() }, event.PriHighest)
+
+	out.RawEvents.Attach("ERROR", func(event.Event) { out.SetConnected(false) }, event.PriHighest)
 
 	return out, nil
 }
@@ -103,8 +115,13 @@ func (i *IRC) setupParsers() {
 // LineHandler is a function that is called on every raw Line
 type LineHandler func(message *ircmsg.IrcMessage, irc *IRC)
 
+// ErrNotConnected returned from Write when the IRC instance is not connected to a server
+var ErrNotConnected = errors.New("cannot send a message when not connected")
+
 func (i *IRC) write(toSend []byte) (int, error) {
-	// TODO: test for a lack of a connection, and possibly queue messages
+	if !i.Connected() {
+		return 0, ErrNotConnected
+	}
 	if !bytes.HasSuffix(toSend, []byte{'\r', '\n'}) {
 		toSend = append(toSend, '\r', '\n')
 	}
@@ -137,6 +154,7 @@ func (i *IRC) Connect() error {
 		return fmt.Errorf("IRC.Connect(): could not open socket: %s", err)
 	}
 	i.socket = s
+	i.SetConnected(true)
 	go i.readLoop()
 
 	if i.HostPasswd != "" {
@@ -170,12 +188,10 @@ func (i *IRC) Connect() error {
 		_, _ = i.writeLine("JOIN", name)
 	}
 
-	i.m.Lock()
-	i.connected = true
-	i.m.Unlock()
 	return nil
 }
 
+// Disconnect disconnects the bot from IRC either with the given message, or the message "Disconnecting" when none is passed
 func (i *IRC) Disconnect(msg string) {
 	if msg != "" {
 		_, _ = i.writeLine("QUIT", msg)
@@ -336,7 +352,7 @@ func (i *IRC) SendAdminMessage(msg string) {
 
 // JoinChannel joins the bot to the named channel and adds it to the channel list for later autojoins
 func (i *IRC) JoinChannel(name string) {
-	if i.connected {
+	if i.Connected() {
 		i.writeLine("JOIN", name)
 	}
 
@@ -350,6 +366,16 @@ func (i *IRC) String() string {
 		"IRC conn; Host: %s, Port: %s, Conencted: %t",
 		i.Host,
 		i.Port,
-		i.connected,
+		i.Connected(),
 	)
+}
+
+// Reload parses and reloads the config on the IRC instance
+func (i *IRC) Reload(conf string) error {
+	newConf := new(Conf)
+	if err := xml.Unmarshal([]byte(conf), newConf); err != nil {
+		return fmt.Errorf("could not parse config: %s", err)
+	}
+	i.Conf = newConf
+	return nil
 }
