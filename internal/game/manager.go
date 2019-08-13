@@ -24,8 +24,17 @@ func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*M
 	}
 
 	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), "!!")
+	m.setupHooks()
 	m.ReloadGames(conf.GameManager.Games)
 
+	if err := m.setupCommands(); err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (m *Manager) setupHooks() {
 	m.bot.HookMessage(func(source, channel, message string) {
 		m.Cmd.ParseLine(message, false, source, channel, m.bot)
 	})
@@ -263,19 +272,30 @@ func (m *Manager) setupCommands() error {
 
 		stopMHelp    = "stops the running bot instance, disconnects all connections, and stops all games"
 		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, and then starts it all back up"
+		reloadHelp   = "reloads the config file from disk and applies it to the running bot. Note that some configuration changes require a restart of the bot"
 	)
 
-	var err error
-	err = m.Cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp)
-	err = m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp)
-	err = m.Cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp)
-	err = m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp)
-	err = m.Cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp)
-	err = m.Cmd.AddCommand("restart", 2, m.restartCmd, restartMHelp)
+	var errs []error
+	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp))
+	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp))
+	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "raw", 2, m.rawGameCmd, rawHelp))
+	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp))
+	errs = append(errs, m.Cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp))
+	errs = append(errs, m.Cmd.AddCommand("restart", 2, m.restartCmd, restartMHelp))
+	errs = append(errs, m.Cmd.AddCommand("reload", 2, m.reloadCmd, reloadHelp))
 
-	if err != nil {
-		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", err)
-		return err
+	outErr := strings.Builder{}
+
+	for _, e := range errs {
+		if e != nil {
+			outErr.WriteString(e.Error())
+			outErr.WriteString(", ")
+		}
+	}
+
+	if outErr.Len() > 0 {
+		m.Warnf("init of static commands errored. THIS IS A BUG! REPORT IT!: %s", outErr.String())
+		return errors.New(outErr.String())
 	}
 
 	return nil
