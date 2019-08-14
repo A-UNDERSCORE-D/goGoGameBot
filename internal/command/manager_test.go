@@ -243,8 +243,8 @@ func TestManager_AddSubCommand(t *testing.T) {
 	}
 }
 
-func makeDataWithSourceAndUtil(mask string, util DataUtil) *Data {
-	return &Data{Source: mask, FromTerminal: false, util: util}
+func makeDataWithSourceAndUtil(mask string, dataUtil DataUtil) *Data {
+	return &Data{Source: mask, FromTerminal: false, util: dataUtil}
 }
 
 /*

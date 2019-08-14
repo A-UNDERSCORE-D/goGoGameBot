@@ -152,12 +152,12 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 }
 
 // SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
-func (g *Game) SendFormattedLine(d interface{}, format format.Format) error {
+func (g *Game) SendFormattedLine(d interface{}, fmt format.Format) error {
 	if !g.IsRunning() {
 		return nil
 	}
 
-	res, err := format.Execute(d)
+	res, err := fmt.Execute(d)
 	if err != nil {
 		return err
 	}

@@ -31,8 +31,8 @@ func (r *RawEvent) CommandIs(names ...string) bool {
 }
 
 // NewRawEvent creates a RawEvent with the given name and Line
-func NewRawEvent(name string, line ircmsg.IrcMessage, time time.Time) *RawEvent {
-	return &RawEvent{event.BaseEvent{Name_: strings.ToUpper(name)}, line, time}
+func NewRawEvent(name string, line ircmsg.IrcMessage, tme time.Time) *RawEvent {
+	return &RawEvent{event.BaseEvent{Name_: strings.ToUpper(name)}, line, tme}
 }
 
 // MessageEvent represents an IRC authUser message, both NOTICE and PRIVMSGs
@@ -45,9 +45,9 @@ type MessageEvent struct {
 }
 
 // NewMessageEvent creates a MessageEvent with the given data.
-func NewMessageEvent(name string, line ircmsg.IrcMessage, time time.Time) *MessageEvent {
+func NewMessageEvent(name string, line ircmsg.IrcMessage, tme time.Time) *MessageEvent {
 	return &MessageEvent{
-		NewRawEvent(name, line, time),
+		NewRawEvent(name, line, tme),
 		line.Command == "NOTICE",
 		ircutils.ParseUserhost(line.Prefix),
 		util.IdxOrEmpty(line.Params, 0),
@@ -63,9 +63,9 @@ type JoinEvent struct {
 }
 
 // NewJoinEvent creates a JoinEvent with the given data
-func NewJoinEvent(name string, line ircmsg.IrcMessage, time time.Time) *JoinEvent {
+func NewJoinEvent(name string, line ircmsg.IrcMessage, tme time.Time) *JoinEvent {
 	return &JoinEvent{
-		NewRawEvent(name, line, time),
+		NewRawEvent(name, line, tme),
 		ircutils.ParseUserhost(line.Prefix),
 		util.IdxOrEmpty(line.Params, 0),
 	}
@@ -78,9 +78,9 @@ type PartEvent struct {
 }
 
 // NewPartEvent creates a PartEvent with the given data
-func NewPartEvent(name string, line ircmsg.IrcMessage, time time.Time) *PartEvent {
+func NewPartEvent(name string, line ircmsg.IrcMessage, tme time.Time) *PartEvent {
 	return &PartEvent{
-		JoinEvent: NewJoinEvent(name, line, time),
+		JoinEvent: NewJoinEvent(name, line, tme),
 		Message:   util.IdxOrEmpty(line.Params, 1),
 	}
 }
@@ -93,9 +93,9 @@ type QuitEvent struct {
 }
 
 // NewQuitEvent creates a QuitEvent from the given data
-func NewQuitEvent(name string, line ircmsg.IrcMessage, time time.Time) *QuitEvent {
+func NewQuitEvent(name string, line ircmsg.IrcMessage, tme time.Time) *QuitEvent {
 	return &QuitEvent{
-		RawEvent: NewRawEvent(name, line, time),
+		RawEvent: NewRawEvent(name, line, tme),
 		Source:   ircutils.ParseUserhost(line.Prefix),
 		Message:  util.IdxOrEmpty(line.Params, 0),
 	}
@@ -109,9 +109,9 @@ type NickEvent struct {
 }
 
 // NewNickEvent creates a NickEvent from the given data
-func NewNickEvent(name string, line ircmsg.IrcMessage, time time.Time) *NickEvent {
+func NewNickEvent(name string, line ircmsg.IrcMessage, tme time.Time) *NickEvent {
 	return &NickEvent{
-		RawEvent: NewRawEvent(name, line, time),
+		RawEvent: NewRawEvent(name, line, tme),
 		Source:   ircutils.ParseUserhost(line.Prefix),
 		NewNick:  util.IdxOrEmpty(line.Params, 0),
 	}
@@ -127,9 +127,9 @@ type KickEvent struct {
 }
 
 // NewKickEvent creates a KickEvent from the given data
-func NewKickEvent(name string, line ircmsg.IrcMessage, time time.Time) *KickEvent {
+func NewKickEvent(name string, line ircmsg.IrcMessage, tme time.Time) *KickEvent {
 	return &KickEvent{
-		RawEvent:   NewRawEvent(name, line, time),
+		RawEvent:   NewRawEvent(name, line, tme),
 		Source:     ircutils.ParseUserhost(line.Prefix),
 		Channel:    util.IdxOrEmpty(line.Params, 0),
 		KickedNick: util.IdxOrEmpty(line.Params, 1),
