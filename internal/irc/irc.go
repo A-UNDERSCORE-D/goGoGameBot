@@ -27,8 +27,9 @@ type Admin struct {
 
 // Conf holds the configuration for an IRC instance
 type Conf struct {
-	DontVerifyCerts bool `xml:"dont_verify_certs,attr"`
-	SSL             bool `xml:"ssl,attr"`
+	DontVerifyCerts bool   `xml:"dont_verify_certs,attr"`
+	SSL             bool   `xml:"ssl,attr"`
+	CmdPfx          string `xml:"command_prefix,attr"`
 
 	Host          string   `xml:"host"`
 	Port          string   `xml:"port"`
@@ -378,4 +379,10 @@ func (i *IRC) Reload(conf string) error {
 	}
 	i.Conf = newConf
 	return nil
+}
+
+// CommandPrefixes returns the valid command prefixes for the IRC instance.
+// Specifically, the configured one, and the set nick followed by a colon
+func (i *IRC) CommandPrefixes() []string {
+	return []string{i.CmdPfx, i.Nick + ": "}
 }

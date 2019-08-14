@@ -15,37 +15,9 @@ const noAdmin = 0
 // commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
 func NewManager(logger *log.Logger, prefixes ...string) *Manager {
 	m := &Manager{Logger: logger, commands: make(map[string]Command), commandPrefixes: prefixes}
-	_ = m.AddCommand("help", 0, func(data *Data) {
-		var toSend string
-		if len(data.Args) == 0 {
-			// just dump the available commands
-			var commandNames []string
-			m.cmdMutex.RLock()
-			for _, c := range m.commands {
-				commandNames = append(commandNames, c.Name())
-			}
-			m.cmdMutex.RUnlock()
-			toSend = fmt.Sprintf("Available commands are %s", strings.Join(commandNames, ", "))
-		} else {
-			// specific help on a command requested
-			var cmd Command
-			if cmd = m.getCommandByName(data.Args[0]); cmd == nil {
-				return
-			}
-
-			if realCmd, ok := cmd.(*SubCommandList); ok && len(data.Args) > 1 && realCmd.findSubcommand(data.Args[1]) != nil {
-				subCmd := realCmd.findSubcommand(data.Args[1])
-				toSend = fmt.Sprintf("%s: %s", strings.Join(data.Args[:2], " "), subCmd.Help())
-			} else {
-				toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
-			}
-		}
-		if data.FromTerminal {
-			m.Logger.Info(toSend)
-		} else {
-			data.SendSourceNotice(toSend)
-		}
-	}, "prints command help")
+	if err := m.AddCommand("help", 0, m.helpImpl, "prints command help"); err != nil {
+		panic(err)
+	}
 	return m
 }
 
@@ -77,6 +49,9 @@ func (m *Manager) RemovePrefix(name string) {
 		m.commandPrefixes = append(m.commandPrefixes[:toRemove], m.commandPrefixes[toRemove+1:]...)
 	}
 }
+
+// SetPrefixes sets the prefixes the Manager will respond to to the given slice, all other prefixes are removed
+func (m *Manager) SetPrefixes(prefixes []string) { m.commandPrefixes = prefixes }
 
 // AddCommand adds the callback as a simple (SingleCommand) to the Manager. It is safe for concurrent use. It returns
 // various errors
@@ -172,6 +147,7 @@ func (m *Manager) stripPrefix(line string) (string, bool) {
 		if strings.HasPrefix(strings.ToUpper(line), strings.ToUpper(pfx)) {
 			hasPrefix = true
 			out = line[len(pfx):]
+			break
 		}
 	}
 
@@ -226,4 +202,36 @@ func (m *Manager) String() string {
 	}
 	m.cmdMutex.RUnlock()
 	return fmt.Sprintf("command.Manager containing commands: %s", strings.Join(cmds, ", "))
+}
+
+func (m *Manager) helpImpl(data *Data) {
+	var toSend string
+	if len(data.Args) == 0 {
+		// just dump the available commands
+		var commandNames []string
+		m.cmdMutex.RLock()
+		for _, c := range m.commands {
+			commandNames = append(commandNames, c.Name())
+		}
+		m.cmdMutex.RUnlock()
+		toSend = fmt.Sprintf("Available commands are %s", strings.Join(commandNames, ", "))
+	} else {
+		// specific help on a command requested
+		var cmd Command
+		if cmd = m.getCommandByName(data.Args[0]); cmd == nil {
+			return
+		}
+
+		if realCmd, ok := cmd.(*SubCommandList); ok && len(data.Args) > 1 && realCmd.findSubcommand(data.Args[1]) != nil {
+			subCmd := realCmd.findSubcommand(data.Args[1])
+			toSend = fmt.Sprintf("%s: %s", strings.Join(data.Args[:2], " "), subCmd.Help())
+		} else {
+			toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
+		}
+	}
+	if data.FromTerminal {
+		m.Logger.Info(toSend)
+	} else {
+		data.SendSourceNotice(toSend)
+	}
 }

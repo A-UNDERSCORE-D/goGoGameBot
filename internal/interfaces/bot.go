@@ -11,6 +11,7 @@ type Bot interface {
 	AdminLeveler
 	JoinChannel(string)
 	Reload(string) error
+	CommandPrefixes() []string
 }
 
 // Messager represents a type that can send messages to a chat system
