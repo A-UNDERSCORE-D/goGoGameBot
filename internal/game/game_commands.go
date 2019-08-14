@@ -5,7 +5,7 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
 func (g *Game) createCommandCallback(fmt format.Format) command.Callback {

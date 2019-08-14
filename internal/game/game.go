@@ -10,9 +10,9 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 const (

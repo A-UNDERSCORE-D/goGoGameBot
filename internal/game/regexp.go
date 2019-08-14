@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
 // RegexpList is a slice of pointers to regexps that exists simply to implement the sort interface

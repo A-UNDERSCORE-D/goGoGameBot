@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/xml"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
 // GameManager represents a config for a game.Manager instance

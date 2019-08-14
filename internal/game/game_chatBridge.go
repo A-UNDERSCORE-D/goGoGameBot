@@ -6,9 +6,9 @@ import (
 	"github.com/goshuirc/irc-go/ircfmt"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 type dataForFmt struct {
