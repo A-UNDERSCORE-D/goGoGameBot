@@ -246,34 +246,3 @@ func BenchmarkAnyMaskMatch(b *testing.B) {
 		})
 	}
 }
-
-var addZwspTests = []struct {
-	name string
-	args string
-	want string
-}{
-	{"empty string", "", ""},
-	{"test string", "A_Dragon", "A\u200b_Dragon"},
-	{"short test", "AD", "A\u200bD"},
-	{"one char", "A", "A"},
-}
-
-func TestAddZwsp(t *testing.T) {
-	for _, tt := range addZwspTests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := AddZwsp(tt.args); got != tt.want {
-				t.Errorf("AddZwsp() = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
-func BenchmarkAddZwsp(b *testing.B) {
-	for _, tt := range addZwspTests {
-		b.Run(tt.name, func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				AddZwsp(tt.args)
-			}
-		})
-	}
-}

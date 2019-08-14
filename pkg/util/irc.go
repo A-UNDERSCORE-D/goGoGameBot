@@ -82,15 +82,7 @@ func AnyMaskMatch(toCheck string, masks []string) bool {
 	return false
 }
 
-// AddZwsp adds a zero width space to the given string if its length is greater than two
-func AddZwsp(s string) string {
-	if len(s) < 2 {
-		return s
-	}
-
-	return fmt.Sprintf("%c\u200b%s", s[0], s[1:])
-}
-
+// UserHost2Canonical returns the nickname!username@host representation of the given ircutils.UserHost
 func UserHost2Canonical(uh ircutils.UserHost) string {
 	out := strings.Builder{}
 	out.WriteString(uh.Nick)

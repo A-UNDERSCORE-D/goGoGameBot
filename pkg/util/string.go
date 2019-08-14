@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/goshuirc/irc-go/ircfmt"
@@ -106,4 +107,13 @@ func ReverseIdx(toIdx []string, idx int) string {
 	}
 
 	return IdxOrEmpty(toIdx, len(toIdx)+idx)
+}
+
+// AddZwsp adds a zero width space to the given string if its length is greater than two
+func AddZwsp(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+
+	return fmt.Sprintf("%c\u200b%s", s[0], s[1:])
 }
