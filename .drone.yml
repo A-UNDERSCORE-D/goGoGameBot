@@ -15,10 +15,6 @@ steps:
   - name: go
     path: /root/.cache/go-build
   when:
-    branch:
-    - master
-    - "feature/*"
-    - cleanup-interfaces
     event:
     - push
     - pull-request
@@ -68,6 +64,6 @@ volumes:
 
 ---
 kind: signature
-hmac: d733fcdde1eda987551e6d763ed77f246204b0e123d4c4cc5901c85c964ef106
+hmac: efb4ee0786259a9b0f409b74903111f5c3677804803049b2fc8e434505bf1f64
 
 ...
