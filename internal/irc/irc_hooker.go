@@ -44,21 +44,21 @@ func (i *IRC) HookPart(f func(source, channel, message string)) {
 }
 
 func (i *IRC) HookQuit(f func(source, message string)) {
-	i.ParsedEvents.Attach("JOIN", func(e event.Event) {
+	i.ParsedEvents.Attach("QUIT", func(e event.Event) {
 		quit := e.(*QuitEvent)
 		f(util.UserHost2Canonical(quit.Source), quit.Message)
 	}, event.PriNorm)
 }
 
 func (i *IRC) HookKick(f func(source, channel, target, message string)) {
-	i.ParsedEvents.Attach("JOIN", func(e event.Event) {
+	i.ParsedEvents.Attach("KICK", func(e event.Event) {
 		kick := e.(*KickEvent)
 		f(util.UserHost2Canonical(kick.Source), kick.Channel, kick.KickedNick, kick.Message)
 	}, event.PriNorm)
 }
 
 func (i *IRC) HookNick(f func(source, newNick string)) {
-	i.ParsedEvents.Attach("JOIN", func(e event.Event) {
+	i.ParsedEvents.Attach("NICK", func(e event.Event) {
 		nick := e.(*NickEvent)
 		f(util.UserHost2Canonical(nick.Source), nick.NewNick)
 	}, event.PriNorm)
