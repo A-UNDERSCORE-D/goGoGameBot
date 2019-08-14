@@ -66,16 +66,41 @@ func (m *Manager) setupHooks() {
 
 // Manager manages games, and communication between them, eachother, and an interfaces.Bot
 type Manager struct {
-	rootConf   *config.Config
-	games      []interfaces.Game
-	gamesMutex sync.RWMutex
-	bot        interfaces.Bot
-	Cmd        *command.Manager
-	status     status
-	stripMasks []string
-	done       *sync.Cond
-	restarting bool
+	rootConf    *config.Config
+	games       []interfaces.Game
+	gamesMutex  sync.RWMutex
+	bot         interfaces.Bot
+	Cmd         *command.Manager
+	stripMasks  []string
+	done        *sync.Cond
+	statusMutex sync.Mutex // covers both restarting and status
+	restarting  bool
+	status      status
 	*log.Logger
+}
+
+func (m *Manager) getRestarting() bool {
+	m.statusMutex.Lock()
+	defer m.statusMutex.Unlock()
+	return m.restarting
+}
+
+func (m *Manager) setRestarting(toSet bool) {
+	m.statusMutex.Lock()
+	m.restarting = toSet
+	m.statusMutex.Unlock()
+}
+
+func (m *Manager) getStatus() status {
+	m.statusMutex.Lock()
+	defer m.statusMutex.Unlock()
+	return m.status
+}
+
+func (m *Manager) setStatus(toSet status) {
+	m.statusMutex.Lock()
+	m.status = toSet
+	m.statusMutex.Unlock()
 }
 
 // Run starts the manager, connects its bots
@@ -83,12 +108,12 @@ func (m *Manager) Run() (bool, error) {
 	go m.runBot()
 	m.StartAutoStartGames()
 	m.done.L.Lock()
-	for m.status == normal {
+	for m.getStatus() == normal {
 		m.done.Wait()
 	}
 	m.done.L.Unlock()
 	// Make sure we return a restart condition here if we need to
-	return m.restarting, nil
+	return m.getRestarting(), nil
 }
 
 func (m *Manager) runBot() {
@@ -97,7 +122,7 @@ func (m *Manager) runBot() {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
 		}
 
-		if m.status == normal {
+		if m.getStatus() == normal {
 			m.ForEachGame(func(g interfaces.Game) {
 				g.SendLineFromOtherGame("Chat is disconnected. Reconnecting in 10 seconds", g)
 			}, nil)
@@ -217,7 +242,7 @@ var (
 
 // StopAllGames stops all the games on the manager, blocking until they all close or are killed
 func (m *Manager) StopAllGames() {
-	m.status = shutdown
+	m.setStatus(shutdown)
 	wg := sync.WaitGroup{}
 	m.ForEachGame(func(game interfaces.Game) { wg.Add(1); game.StopOrKillWaitgroup(&wg) }, nil)
 	wg.Wait()
@@ -303,8 +328,8 @@ func (m *Manager) setupCommands() error {
 }
 
 func (m *Manager) Stop(msg string, restart bool) {
-	m.restarting = restart
-	m.status = shutdown
+	m.setRestarting(restart)
+	m.setStatus(shutdown)
 	m.StopAllGames()
 	m.bot.Disconnect(msg)
 	m.done.Broadcast()
