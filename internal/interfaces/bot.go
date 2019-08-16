@@ -12,6 +12,7 @@ type Bot interface {
 	JoinChannel(string)
 	Reload(string) error
 	CommandPrefixes() []string
+	HumanReadableSource(source string) string
 }
 
 // Messager represents a type that can send messages to a chat system

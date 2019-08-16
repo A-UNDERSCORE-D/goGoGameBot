@@ -12,10 +12,8 @@ import (
 )
 
 type dataForFmt struct {
-	// SourceNick   string
-	// SourceUser   string
-	// SourceHost   string
 	Source       string
+	SourceRaw    string
 	MsgRaw       string
 	MsgEscaped   string
 	MsgMapped    string
@@ -27,15 +25,10 @@ type dataForFmt struct {
 }
 
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
-	// TODO: This needs a way to convert the source into a more human readable format. for IRC this is extracting the
-	//  	 nick. For discord this is stripping the ID etc, for slack, the same (I think)
-	// uh := ircutils.ParseUserhost(source)
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
-		// SourceNick:   uh.Nick,
-		// SourceUser:   uh.User,
-		// SourceHost:   uh.Host,
-		Source:       source,
+		Source:       g.manager.bot.HumanReadableSource(source),
+		SourceRaw:    source,
 		Target:       target,
 		MsgRaw:       msg,
 		MsgEscaped:   ircfmt.Escape(deZwsp),

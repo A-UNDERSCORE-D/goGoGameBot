@@ -386,3 +386,12 @@ func (i *IRC) Reload(conf string) error {
 func (i *IRC) CommandPrefixes() []string {
 	return []string{i.CmdPfx, i.Nick + ": "}
 }
+
+// HumanReadableSource takes an IRC userhost and returns just the nick
+func (i *IRC) HumanReadableSource(source string) string {
+	if out := ircutils.ParseUserhost(source).Nick; out != "" {
+		return out
+	}
+
+	return source
+}
