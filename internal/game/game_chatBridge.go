@@ -41,7 +41,7 @@ func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 }
 
 func (g *Game) shouldBridge(target string) bool {
-	if !g.chatBridge.shouldBridge || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
+	if !g.chatBridge.shouldBridge || !g.process.IsRunning() {
 		return false
 	}
 
