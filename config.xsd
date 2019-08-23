@@ -4,34 +4,10 @@
   <xs:element name="bot" type="botType"/>
 
   <xs:complexType name="gameType">
-    <xs:all>
+    <xs:sequence>
       <xs:element type="xs:string" name="binary"/>
       <xs:element type="xs:string" name="working_dir" minOccurs="0"/>
       <xs:element type="xs:string" name="args"/>
-      <xs:element name="command" minOccurs="0" maxOccurs="unbounded">
-        <xs:complexType>
-          <xs:all>
-            <xs:element type="xs:string" name="format"/>
-            <xs:element type="xs:string" name="help"/>
-          </xs:all>
-          <xs:attribute type="xs:string" name="name"/>
-          <xs:attribute type="xs:positiveInteger" name="requires_admin"/>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="stdio_regexp" minOccurs="0" maxOccurs="unbounded">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element type="xs:string" name="regexp"/>
-            <xs:element type="xs:string" name="format"/>
-          </xs:sequence>
-          <xs:attribute type="xs:string" name="name"/>
-          <xs:attribute type="xs:integer" name="priority"/>
-          <xs:attribute type="xs:boolean" name="dont_eat"/>
-          <xs:attribute type="xs:boolean" name="dont_send_to_chan"/>
-          <xs:attribute type="xs:boolean" name="dont_forward"/>
-          <xs:attribute type="xs:boolean" name="send_to_local"/>
-        </xs:complexType>
-      </xs:element>
       <xs:element name="status_channels">
         <xs:complexType>
           <xs:all>
@@ -74,8 +50,32 @@
           <xs:attribute type="xs:boolean" name="dump_stderr"/>
         </xs:complexType>
       </xs:element>
+      <xs:element name="command" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:all>
+            <xs:element type="xs:string" name="format"/>
+            <xs:element type="xs:string" name="help"/>
+          </xs:all>
+          <xs:attribute type="xs:string" name="name"/>
+          <xs:attribute type="xs:positiveInteger" name="requires_admin"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="stdio_regexp" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element type="xs:string" name="regexp"/>
+            <xs:element type="xs:string" name="format"/>
+          </xs:sequence>
+          <xs:attribute type="xs:string" name="name"/>
+          <xs:attribute type="xs:integer" name="priority"/>
+          <xs:attribute type="xs:boolean" name="dont_eat"/>
+          <xs:attribute type="xs:boolean" name="dont_send_to_chan"/>
+          <xs:attribute type="xs:boolean" name="dont_forward"/>
+          <xs:attribute type="xs:boolean" name="send_to_local"/>
+        </xs:complexType>
+      </xs:element>
       <!--TODO: Need to add colour map here when I decide how to make that system work-->
-    </xs:all>
+    </xs:sequence>
 
     <xs:attribute type="xs:string" name="name" use="required"/>
     <xs:attribute type="xs:string" name="auto_start"/>
@@ -83,14 +83,14 @@
   </xs:complexType>
 
   <xs:complexType name="game_managerType">
-    <xs:all>
+    <xs:sequence>
       <xs:element name="strip_mask" minOccurs="0" maxOccurs="unbounded">
         <xs:complexType>
           <xs:attribute type="xs:string" name="mask"/>
         </xs:complexType>
       </xs:element>
       <xs:element type="gameType" name="game" maxOccurs="unbounded"/>
-    </xs:all>
+    </xs:sequence>
   </xs:complexType>
 
   <!-- Connection configs-->
