@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+## [0.4.0] - 2019-08-23
 ## Added
 - A new bool is available on game regexps that sends the result of the regex to the local
 game as well as any other options. Note that these strings are sent through the `external`
@@ -149,6 +151,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9ab227b07856945179e05159c48fc0bb08025efa...f9f59d1c07c93a54019804a22df4feef23409dca 
 [0.3.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/88f7d651928e613dc57fa0e8d5b0de2cc970fc6d...9ab227b07856945179e05159c48fc0bb08025efa
 [0.3.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/b38b8c345c4f614ff167ceff17ea75a3d477aca0...88f7d651928e613dc57fa0e8d5b0de2cc970fc6d
 [0.3.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3...b38b8c345c4f614ff167ceff17ea75a3d477aca0
