@@ -4,18 +4,16 @@ import (
 	"strings"
 
 	"github.com/goshuirc/irc-go/ircfmt"
-	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 type dataForFmt struct {
-	SourceNick   string
-	SourceUser   string
-	SourceHost   string
+	Source       string
+	SourceRaw    string
 	MsgRaw       string
 	MsgEscaped   string
 	MsgMapped    string
@@ -27,12 +25,10 @@ type dataForFmt struct {
 }
 
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
-	uh := ircutils.ParseUserhost(source)
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
-		SourceNick:   uh.Nick,
-		SourceUser:   uh.User,
-		SourceHost:   uh.Host,
+		Source:       g.manager.bot.HumanReadableSource(source),
+		SourceRaw:    source,
 		Target:       target,
 		MsgRaw:       msg,
 		MsgEscaped:   ircfmt.Escape(deZwsp),
@@ -45,7 +41,7 @@ func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 }
 
 func (g *Game) shouldBridge(target string) bool {
-	if !g.chatBridge.shouldBridge || !g.process.IsRunning() || !strings.HasPrefix(target, "#") {
+	if !g.chatBridge.shouldBridge || !g.process.IsRunning() {
 		return false
 	}
 
@@ -149,12 +145,12 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 }
 
 // SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
-func (g *Game) SendFormattedLine(d interface{}, format format.Format) error {
+func (g *Game) SendFormattedLine(d interface{}, fmt format.Format) error {
 	if !g.IsRunning() {
 		return nil
 	}
 
-	res, err := format.Execute(d)
+	res, err := fmt.Execute(d)
 	if err != nil {
 		return err
 	}

@@ -28,8 +28,6 @@ warningCode = 0
   arguments = [6]
 [rule.cyclomatic]
  arguments = [10]
-[rule.max-public-structs]
-  arguments = [3]
 # [rule.file-header] to be added once I do a licence etc
 [rule.empty-block]
 [rule.superfluous-else]

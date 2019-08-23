@@ -3,21 +3,14 @@ package game
 import (
 	"errors"
 
-	"github.com/goshuirc/irc-go/ircutils"
-
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
-func (g *Game) createCommandCallback(fmt format.Format) interfaces.CmdFunc {
-	return func(fromIRC bool, args []string, source ircutils.UserHost, target string, _ interfaces.CommandResponder) {
-		res, err := fmt.ExecuteBytes(struct {
-			FromIRC bool
-			Args    []string
-			Source  ircutils.UserHost
-			Target  string
-		}{fromIRC, args, source, target})
+func (g *Game) createCommandCallback(fmt format.Format) command.Callback {
+	return func(data *command.Data) {
+		res, err := fmt.ExecuteBytes(data)
 		if err != nil {
 			g.manager.Error(err)
 			return
@@ -38,15 +31,15 @@ func (g *Game) registerCommand(conf config.Command) error {
 	if err := conf.Format.Compile(conf.Name, false, nil); err != nil {
 		return err
 	}
-	return g.manager.bot.HookSubCommand(
+	return g.manager.Cmd.AddSubCommand(
 		g.name,
 		conf.Name,
 		conf.RequiresAdmin,
-		conf.Help,
 		g.createCommandCallback(conf.Format),
+		conf.Help,
 	)
 }
 
 func (g *Game) clearCommands() error {
-	return g.manager.bot.UnhookCommand(g.name)
+	return g.manager.Cmd.RemoveCommand(g.name)
 }

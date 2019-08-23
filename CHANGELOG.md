@@ -21,6 +21,13 @@ It allows for cross-invocation storage of values. For use in formatters
 - Control codes being shared between games without being stripped when sent over the external
 line interface
 
+## Changed
+- Reimplemented all of the IRC side of the bot
+- GGGB is no longer tied to an IRC connection. IRC connections can be dropped without running servers being stopped
+- Other connection types other than IRC are now experimentally supported. Some things are still IRC-centric, namely, colour formatting
+- Due to the above, the config syntax has completely changed, please validate configs against the new XSD before attempting
+to start under the new version
+
 ## [0.3.5] - 2019-07-01
 ### Fixed
 - Messages from other games are no longer sent directly to stdin on the target game without going through the external formatter

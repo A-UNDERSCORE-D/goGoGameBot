@@ -110,12 +110,13 @@ func (s *SubCommandList) Fire(data *Data) {
 	}
 
 	newData := &Data{
-		IsFromIRC:    data.IsFromIRC,
+		FromTerminal: data.FromTerminal,
 		Args:         data.Args[1:],
 		OriginalArgs: data.OriginalArgs,
 		Source:       data.Source,
 		Target:       data.Target,
 		Manager:      data.Manager,
+		util:         data.util,
 	}
 	c.Fire(newData)
 }

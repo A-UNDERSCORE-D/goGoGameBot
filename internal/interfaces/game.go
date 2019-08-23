@@ -21,7 +21,7 @@ type GameManager interface {
 // Game Represents a runnable game server
 type Game interface {
 	GetName() string
-	UpdateFromConfig(config config.Game) error
+	UpdateFromConfig(config.Game) error
 	StopOrKiller
 	Runner
 	AutoStarter

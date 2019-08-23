@@ -27,6 +27,7 @@ func (g *Game) MapColours(s string) string {
 		g.Warn("Colour map is nil. returning stripped string instead")
 		return ircfmt.Strip(s)
 	}
+
 	return g.chatBridge.colourMap.Replace(ircfmt.Escape(s))
 }
 
@@ -35,11 +36,11 @@ func (g *Game) prefixMsg(args ...interface{}) string {
 }
 
 func (g *Game) sendToMsgChan(args ...interface{}) {
-	g.manager.bot.SendPrivmsg(g.controlChannels.msg, g.prefixMsg(args...))
+	g.manager.bot.SendMessage(g.controlChannels.msg, g.prefixMsg(args...))
 }
 
 func (g *Game) sendToAdminChan(args ...interface{}) {
-	g.manager.bot.SendPrivmsg(g.controlChannels.admin, g.prefixMsg(args...))
+	g.manager.bot.SendMessage(g.controlChannels.admin, g.prefixMsg(args...))
 }
 
 func (g *Game) writeToAllOthers(msg string) {
@@ -48,6 +49,7 @@ func (g *Game) writeToAllOthers(msg string) {
 		if !g.IsRunning() {
 			return
 		}
+
 		game.SendLineFromOtherGame(msg, g)
 	}, []interfaces.Game{g})
 }
@@ -64,12 +66,13 @@ func (g *Game) templSendToMsgChan(v ...interface{}) string {
 	return msg
 }
 
-func (g *Game) templSendPrivmsg(c string, v ...interface{}) (string, error) {
+func (g *Game) templSendMessage(c string, v ...interface{}) (string, error) {
 	if c == "" {
 		return "", errors.New("cannot send to a nonexistent target")
 	}
+
 	msg := fmt.Sprint(v...)
-	g.manager.bot.SendPrivmsg(c, msg)
+	g.manager.bot.SendMessage(c, msg)
 	return msg, nil
 }
 

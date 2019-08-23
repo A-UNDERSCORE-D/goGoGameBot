@@ -1,30 +1,38 @@
 package interfaces
 
-import (
-	"github.com/goshuirc/irc-go/ircmsg"
-	"github.com/goshuirc/irc-go/ircutils"
-)
-
-// Bot represents an IRC bot
+// Bot represents a bot
 type Bot interface {
-	Error(error)
-	IRCMessager
-	IRCHooker
-	CommandHooker
+	Connect() error
+	Disconnect(string)
+	Run() error
+	SendAdminMessage(string)
+	Messager
+	Hooker
+	AdminLeveler
+	JoinChannel(string)
+	Reload(string) error
+	CommandPrefixes() []string
+	HumanReadableSource(source string) string
 }
 
-// IRCMessager represents a type that can send messages to an IRC network
-type IRCMessager interface {
-	SendPrivmsg(target, message string)
+// Messager represents a type that can send messages to a chat system
+type Messager interface {
+	SendMessage(target, message string)
 	SendNotice(target, message string)
-	WriteString(message string) error
-	WriteIRCLine(line ircmsg.IrcMessage) error
 }
 
-// IRCHooker provides methods to hook callback functions onto IRC commands, with a helper specifically for IRC PRIVMSGs
-type IRCHooker interface {
-	HookPrivmsg(f func(source, target, message string, originalLine ircmsg.IrcMessage, bot Bot))
-	HookRaw(command string, callback func(ircmsg.IrcMessage, Bot), priority int)
+// Hooker provides methods for hooking on specific "chat" events, like joining and leaving a channel, or messages in
+// a given channel
+type Hooker interface {
+	HookMessage(func(source, channel, message string))
+	HookPrivateMessage(func(source, channel, message string))
+	HookJoin(func(source, channel string))
+	HookPart(func(source, channel, message string))
+	HookQuit(func(source, message string))
+	HookKick(func(source, channel, target, message string))
+	HookNick(func(source, newNick string))
+	// TODO: bans
+	// TODO: system notices (this is where modes etc will go)
 }
 
 // CommandResponder provides helper methods for responding to command calls with Messages, and Notices
@@ -33,13 +41,7 @@ type CommandResponder interface {
 	ReturnMessage(msg string)
 }
 
-// CmdFunc is a function used in a command callback
-type CmdFunc func(fromIRC bool, args []string, source ircutils.UserHost, target string, responder CommandResponder)
-
-// CommandHooker provides methods to hook and unhook callbacks onto commands
-type CommandHooker interface {
-	HookCommand(name string, adminRequired int, help string, callback CmdFunc) error
-	HookSubCommand(rootCommand, name string, adminRequired int, help string, callback CmdFunc) error
-	UnhookCommand(name string) error
-	UnhookSubCommand(rootName, name string) error
+// AdminLeveler provides a method to check what admin level a given string has
+type AdminLeveler interface {
+	AdminLevel(source string) int
 }

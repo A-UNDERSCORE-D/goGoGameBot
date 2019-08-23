@@ -202,3 +202,170 @@ func ExampleStripAll() {
 	// output:
 	// Some string with  control characters in it
 }
+
+func TestIdxOrEmpty(t *testing.T) {
+	type args struct {
+		slice []string
+		idx   int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"good", args{[]string{"test", "string"}, 1}, "string"},
+		{"bad", args{[]string{"test", "string"}, 1337}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IdxOrEmpty(tt.args.slice, tt.args.idx); got != tt.want {
+				t.Errorf("IdxOrEmpty() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleIdxOrEmpty() {
+	s := []string{"test", "string", "is", "testy"}
+	fmt.Printf("%q\n", IdxOrEmpty(s, 0))
+	fmt.Printf("%q\n", IdxOrEmpty(s, 5))
+	// output:
+	// "test"
+	// ""
+}
+
+func TestJoinToMaxLength(t *testing.T) {
+	type args struct {
+		toJoin    []string
+		sep       string
+		maxLength int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			"normal",
+			args{
+				toJoin:    []string{"this", "is", "a", "test"},
+				sep:       ", ",
+				maxLength: 10,
+			},
+			[]string{"this, is", "a, test"},
+		},
+		{
+			"constrained",
+			args{
+				toJoin:    []string{"this", "is", "a", "test"},
+				sep:       ", ",
+				maxLength: 1,
+			},
+			[]string{"this", "is", "a", "test"},
+		},
+		{
+			"wide",
+			args{
+				toJoin:    []string{"this", "is", "a", "test"},
+				sep:       ", ",
+				maxLength: 100,
+			},
+			[]string{"this, is, a, test"},
+		},
+		{
+			"empty",
+			args{
+				toJoin:    []string{""},
+				sep:       ", ",
+				maxLength: 100,
+			},
+			[]string(nil),
+		},
+		{
+			"no split",
+			args{
+				toJoin:    []string{"this is a test"},
+				sep:       ", ",
+				maxLength: 1,
+			},
+			[]string{"this is a test"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := JoinToMaxLength(tt.args.toJoin, tt.args.sep, tt.args.maxLength); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JoinToMaxLength() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleJoinToMaxLength() {
+	fmt.Printf("%#v", JoinToMaxLength([]string{"this", "is", "a", "test"}, ", ", 10))
+	// output:
+	// []string{"this, is", "a, test"}
+}
+
+func TestReverseIdx(t *testing.T) {
+	testArr := []string{
+		"He", "just", "kept", "talking", "in", "one", "long", "incredibly", "unbroken", "sentence", "moving", "from",
+		"topic", "so", "that", "no", "one", "had", "the", "chance", "to", "interrupt", "him",
+	}
+	tests := []struct {
+		name string
+		idx  int
+		want string
+	}{
+		{"zero", 0, "He"},
+		{"negative zero", -0, "He"},
+		{"forward", 1, "just"},
+		{"backward", -1, "him"},
+		{"out of bounds", 1337, ""},
+		{"inverse out of bounds", -1337, ""},
+		{"middle idx", 7, "incredibly"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ReverseIdx(testArr, tt.idx); got != tt.want {
+				t.Errorf("ReverseIdx() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func ExampleReverseIdx() {
+	fmt.Println(ReverseIdx([]string{"have", "an", "example", "string", "slice"}, -2))
+	// output:
+	// string
+}
+
+var addZwspTests = []struct {
+	name string
+	args string
+	want string
+}{
+	{"empty string", "", ""},
+	{"test string", "A_Dragon", "A\u200b_Dragon"},
+	{"short test", "AD", "A\u200bD"},
+	{"one char", "A", "A"},
+}
+
+func TestAddZwsp(t *testing.T) {
+	for _, tt := range addZwspTests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := AddZwsp(tt.args); got != tt.want {
+				t.Errorf("AddZwsp() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func BenchmarkAddZwsp(b *testing.B) {
+	for _, tt := range addZwspTests {
+		b.Run(tt.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				AddZwsp(tt.args)
+			}
+		})
+	}
+}

@@ -1,5 +1,8 @@
 package config
 
+// TODO: Figure out how I want to deal with this in future, where IRC may not be who we're talking to. Im thinking
+// 		 something like a StringTransformer interface that bots can provide? that take a config of $someKind
+
 // ColourMap is map to convert IRC colours to other formats
 type ColourMap struct {
 	Bold          string `xml:"bold,omitempty"`

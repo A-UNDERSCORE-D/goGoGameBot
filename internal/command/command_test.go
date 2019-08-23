@@ -3,8 +3,6 @@ package command
 import (
 	"reflect"
 	"testing"
-
-	"github.com/goshuirc/irc-go/ircutils"
 )
 
 func TestSingleCommand_Fire(t *testing.T) {
@@ -169,13 +167,15 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 }
 
 func TestSubCommandList_Fire(t *testing.T) {
-	manager := NewManager(baseLogger, &mockMessager{})
+	messager := &mockMessager{}
+	manager := NewManager(baseLogger)
 	type fields struct {
 		subCommands map[string]Command
 	}
 	type args struct {
 		data *Data
 	}
+	const testSource = "test!testIdent@testHost"
 	tests := []struct {
 		name        string
 		fields      fields
@@ -193,10 +193,10 @@ func TestSubCommandList_Fire(t *testing.T) {
 			}},
 			args: args{
 				data: &Data{
-					IsFromIRC: true,
-					Args:      []string{"test", "stuff"},
-					Source:    ircutils.ParseUserhost("test!test@test"),
-					Manager:   manager,
+					FromTerminal: false,
+					Args:         []string{"test", "stuff"},
+					Source:       testSource,
+					Manager:      manager,
 				},
 			},
 			wantNotice: [][2]string{{"test", "works"}},
@@ -205,10 +205,10 @@ func TestSubCommandList_Fire(t *testing.T) {
 			name: "does not exist",
 			args: args{
 				data: &Data{
-					IsFromIRC: true,
-					Args:      []string{"test", "stuff"},
-					Source:    ircutils.ParseUserhost("test!test@test"),
-					Manager:   manager,
+					FromTerminal: false,
+					Args:         []string{"test", "stuff"},
+					Source:       testSource,
+					Manager:      manager,
 				},
 			},
 			wantNotice: [][2]string{{"test", "unknown subcommand \"test\""}, {"test", "Available subcommands are: "}},
@@ -217,10 +217,10 @@ func TestSubCommandList_Fire(t *testing.T) {
 			name: "not enough args",
 			args: args{
 				data: &Data{
-					IsFromIRC: true,
-					Args:      []string{},
-					Source:    ircutils.ParseUserhost("test!test@test"),
-					Manager:   manager,
+					FromTerminal: false,
+					Args:         []string{},
+					Source:       testSource,
+					Manager:      manager,
 				},
 			},
 			wantNotice: [][2]string{{"test", "Not enough arguments"}, {"test", "Available subcommands are: "}},
@@ -228,18 +228,18 @@ func TestSubCommandList_Fire(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			msger := tt.args.data.Manager.messenger.(*mockMessager)
-			msger.Clear()
+			messager.Clear()
 			s := &SubCommandList{
 				SingleCommand: SingleCommand{},
 				subCommands:   tt.fields.subCommands,
 			}
+			tt.args.data.util = messager
 			s.Fire(tt.args.data)
-			if !cmpSlice(msger.lastMessages, tt.wantMessage) {
-				t.Errorf("SubCommandList.Fire() sent messages %s, want %s", msger.lastMessages, tt.wantMessage)
+			if !cmpSlice(messager.lastMessages, tt.wantMessage) {
+				t.Errorf("SubCommandList.Fire() sent messages %s, want %s", messager.lastMessages, tt.wantMessage)
 			}
-			if !cmpSlice(msger.lastNotices, tt.wantNotice) {
-				t.Errorf("SubCommandList.Fire() sent notices %s, want %s", msger.lastNotices, tt.wantNotice)
+			if !cmpSlice(messager.lastNotices, tt.wantNotice) {
+				t.Errorf("SubCommandList.Fire() sent notices %s, want %s", messager.lastNotices, tt.wantNotice)
 			}
 		})
 	}

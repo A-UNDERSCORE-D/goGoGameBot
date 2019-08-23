@@ -10,9 +10,9 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/format"
 )
 
 const (
@@ -38,6 +38,9 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
 		return nil, err
+	}
+	for _, c := range g.chatBridge.channels {
+		manager.bot.JoinChannel(c)
 	}
 	return g, nil
 }
@@ -80,12 +83,25 @@ type Game struct {
 	statusMutex     sync.Mutex
 	status          status
 	autoRestart     int
+	asMutex         sync.Mutex
 	autoStart       bool
 	regexpManager   *RegexpManager
 	stdinChan       chan []byte
 	controlChannels channelPair
 	chatBridge      chatBridge
 	allowForwards   bool
+}
+
+func (g *Game) setAutoStart(autoStart bool) {
+	g.asMutex.Lock()
+	g.autoStart = autoStart
+	g.asMutex.Unlock()
+}
+
+func (g *Game) getAutoStart() bool {
+	g.asMutex.Lock()
+	defer g.asMutex.Unlock()
+	return g.autoStart
 }
 
 func (g *Game) setInternalStatus(status status) {
@@ -213,7 +229,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	} else {
 		g.process.UpdateCmd(conf.Path, procArgs, wd)
 	}
-	g.autoStart = conf.AutoStart
+
+	g.setAutoStart(conf.AutoStart)
 	g.autoRestart = conf.AutoRestart
 	g.controlChannels.admin = conf.ControlChannels.Admin
 	g.controlChannels.msg = conf.ControlChannels.Msg
@@ -283,7 +300,7 @@ func (g *Game) GetName() string {
 // AutoStart checks if the game is marked as auto-starting, and if so, starts the game by starting Game.Run in a
 // goroutine
 func (g *Game) AutoStart() {
-	if g.autoStart {
+	if g.getAutoStart() {
 		go g.Run()
 	}
 }
@@ -295,7 +312,7 @@ func (g *Game) String() string {
 // StopOrKillTimeout sends SIGTERM to the running process. If the game is still running after the timeout has passed,
 // the process is sent SIGKILL
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
-	if !g.process.IsRunning() && g.manager.status != shutdown {
+	if !g.process.IsRunning() && g.manager.getStatus() != shutdown {
 		g.sendToMsgChan("cannot stop a non-running game")
 		return nil
 	}

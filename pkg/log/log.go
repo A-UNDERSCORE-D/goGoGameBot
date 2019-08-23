@@ -2,6 +2,7 @@
 package log
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -110,7 +111,7 @@ func (l *Logger) writeOut(msg string, level int) {
 		return
 	}
 
-	outStr := strings.Builder{}
+	outStr := bytes.Buffer{}
 	if l.flags&FTimestamp != 0 {
 		outStr.WriteRune(openBrace)
 		outStr.WriteString(time.Now().Format("15:04:05.000"))
@@ -150,7 +151,7 @@ func (l *Logger) writeOut(msg string, level int) {
 
 	l.wMutex.Lock()
 	defer l.wMutex.Unlock()
-	_, _ = l.output.Write([]byte(outStr.String()))
+	_, _ = l.output.Write(outStr.Bytes())
 }
 
 // Trace logs the passed data at the Trace level. The passed arguments are run through fmt.Sprintf before logging
