@@ -111,6 +111,12 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 
 func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("PRIVMSG", i.dispatchMessage, event.PriHighest)
+	i.RawEvents.Attach("NOTICE", i.dispatchMessage, event.PriHighest)
+	i.RawEvents.Attach("JOIN", i.dispatchJoin, event.PriHighest)
+	i.RawEvents.Attach("PART", i.dispatchPart, event.PriHighest)
+	i.RawEvents.Attach("QUIT", i.dispatchQuit, event.PriHighest)
+	i.RawEvents.Attach("KICK", i.dispatchKick, event.PriHighest)
+	i.RawEvents.Attach("NICK", i.dispatchNick, event.PriHighest)
 }
 
 // LineHandler is a function that is called on every raw Line
