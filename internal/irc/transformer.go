@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/formatTransformer"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 )
 
 const (
@@ -41,10 +41,10 @@ var ircPalette = color.Palette{
 }
 
 var ircFmtMapping = map[rune]string{
-	formatTransformer.Bold:      string(bold),
-	formatTransformer.Italic:    string(italic),
-	formatTransformer.Underline: string(underline),
-	formatTransformer.Reset:     string(reset),
+	transformer.Bold:      string(bold),
+	transformer.Italic:    string(italic),
+	transformer.Underline: string(underline),
+	transformer.Reset:     string(reset),
 }
 
 func reverseLookupMap(r rune) rune {
@@ -59,8 +59,8 @@ func reverseLookupMap(r rune) rune {
 type IRCTransformer struct{}
 
 func (IRCTransformer) Transform(in string) string {
-	return formatTransformer.Map(in, ircFmtMapping, func(in string) (s string, b bool) {
-		if c, err := formatTransformer.ParseColour(in); err != nil {
+	return transformer.Map(in, ircFmtMapping, func(in string) (s string, b bool) {
+		if c, err := transformer.ParseColour(in); err != nil {
 			return "", false
 		} else {
 			return fmt.Sprintf("%b%d", colour, ircPalette.Index(c)), true
@@ -73,10 +73,10 @@ func (IRCTransformer) MakeIntermediate(in string) string {
 	for _, r := range in {
 		switch r {
 		case bold, italic, underline, reset:
-			out.WriteRune(formatTransformer.Sentinel)
+			out.WriteRune(transformer.Sentinel)
 			out.WriteRune(reverseLookupMap(r))
-		case formatTransformer.Sentinel:
-			out.Write([]byte{formatTransformer.Sentinel, formatTransformer.Sentinel})
+		case transformer.Sentinel:
+			out.Write([]byte{transformer.Sentinel, transformer.Sentinel})
 		default:
 			out.WriteRune(r)
 		}

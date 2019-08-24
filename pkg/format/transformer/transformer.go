@@ -1,4 +1,4 @@
-package formatTransformer
+package transformer
 
 // Transformer refers to a string transformer. String Transformers convert messages from an intermediate format
 // to a protocol specific format

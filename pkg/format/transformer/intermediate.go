@@ -1,4 +1,4 @@
-package formatTransformer
+package transformer
 
 // All of the formats specified above are available here. It is expected that implementations use this wherever
 // possible to allow for changes

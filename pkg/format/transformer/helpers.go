@@ -1,4 +1,4 @@
-package formatTransformer
+package transformer
 
 import (
 	"image/color"

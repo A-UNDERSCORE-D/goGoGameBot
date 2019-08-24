@@ -17,4 +17,4 @@
 // together indicate a colour.
 //
 // Unintended uses of the sentinel must be escaped by using two dollar signs.
-package formatTransformer
+package transformer
