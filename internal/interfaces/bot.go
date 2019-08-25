@@ -16,6 +16,8 @@ type Bot interface {
 }
 
 // Messager represents a type that can send messages to a chat system
+// TODO: This should state / expect that conversion	from format/transformer intermediate to a protocol level formatting
+//       should be done with these methods
 type Messager interface {
 	SendMessage(target, message string)
 	SendNotice(target, message string)

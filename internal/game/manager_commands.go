@@ -7,6 +7,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
 
 const (
@@ -117,7 +118,7 @@ func restartGame(game interfaces.Game, responder interfaces.CommandResponder) {
 }
 
 func (m *Manager) stopCmd(data *command.Data) {
-	msg := ""
+	msg := "Stop requested"
 	if len(data.Args) > 0 {
 		msg = strings.Join(data.Args, " ")
 	}
@@ -147,4 +148,26 @@ func (m *Manager) reloadCmd(data *command.Data) {
 		return
 	}
 	data.ReturnMessage("reload complete")
+}
+
+func (m *Manager) statusCmd(data *command.Data) {
+	if len(data.Args) == 0 {
+		data.ReturnMessage(systemstats.GetStats())
+		return
+	}
+
+	for _, v := range data.Args {
+		switch {
+		case v == "all":
+			data.ReturnMessage(systemstats.GetStats())
+			m.ForEachGame(func(g interfaces.Game) { data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status())) }, nil)
+			return
+
+		case m.GameExists(v):
+			g := m.GetGameFromName(v)
+			data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status()))
+		default:
+			data.ReturnNotice(fmt.Sprintf("unknown game %q", v))
+		}
+	}
 }

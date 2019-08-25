@@ -131,6 +131,7 @@ func (p *Process) GetReturnCode() int {
 
 // GetStatus returns the current status of the process, including memory and CPU usage
 func (p *Process) GetStatus() string {
+	// TODO: replace this with format/transformer intermediate stuff
 	out := strings.Builder{}
 	if !p.IsRunning() {
 		out.WriteString("$c[red]$bNot running$r")

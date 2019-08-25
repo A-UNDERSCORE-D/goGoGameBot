@@ -299,6 +299,9 @@ func (m *Manager) setupCommands() error {
 		stopMHelp    = "stops the running bot instance, disconnects all connections, and stops all games"
 		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, and then starts it all back up"
 		reloadHelp   = "reloads the config file from disk and applies it to the running bot. Note that some configuration changes require a restart of the bot"
+
+		statusHelp = "returns the status of the bot. If a list of games is provided as arguments, " +
+			"gets the status for each game. If all is provided as the first arg, all game's statuses are reported"
 	)
 
 	var errs []error
@@ -309,6 +312,7 @@ func (m *Manager) setupCommands() error {
 	errs = append(errs, m.Cmd.AddCommand("stop", 2, m.stopCmd, stopMHelp))
 	errs = append(errs, m.Cmd.AddCommand("restart", 2, m.restartCmd, restartMHelp))
 	errs = append(errs, m.Cmd.AddCommand("reload", 2, m.reloadCmd, reloadHelp))
+	errs = append(errs, m.Cmd.AddCommand("status", 2, m.statusCmd, statusHelp))
 
 	outErr := strings.Builder{}
 
