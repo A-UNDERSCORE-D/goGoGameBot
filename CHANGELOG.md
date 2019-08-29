@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+## [0.4.2] - 2019-08-29
 ## Added
 - reimplemented status command. It now also supports specifying game names to get status specific to each game. In future
 games will be able to add additional information to status, by way of extra stdin commands and regex
-
 - Continued implementation of format/transformer
 
 ## [0.4.1] - 2019-08-23
@@ -161,6 +162,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9c16e5bdef8c6382b72b20f3713ab4a4d45883ff...7d083518df663bd8cd7b71f525c2c3624b69dfb7
 [0.4.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/f9f59d1c07c93a54019804a22df4feef23409dca...9c16e5bdef8c6382b72b20f3713ab4a4d45883ff
 [0.4.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9ab227b07856945179e05159c48fc0bb08025efa...f9f59d1c07c93a54019804a22df4feef23409dca 
 [0.3.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/88f7d651928e613dc57fa0e8d5b0de2cc970fc6d...9ab227b07856945179e05159c48fc0bb08025efa
