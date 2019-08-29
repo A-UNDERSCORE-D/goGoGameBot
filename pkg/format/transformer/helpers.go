@@ -1,6 +1,7 @@
 package transformer
 
 import (
+	"fmt"
 	"image/color"
 	"strconv"
 	"strings"
@@ -34,6 +35,13 @@ func ParseColour(in string) (color.RGBA, error) {
 		return color.RGBA{}, err
 	}
 	return color.RGBA{A: alpha, R: uint8(r), G: uint8(g), B: uint8(b)}, nil
+}
+
+// EmitColour is the companion to ParseColour, it converts a color.Color to the intermediate representation for
+// use in larger tooling
+func EmitColour(in color.Color) string {
+	r, g, b, _ := in.RGBA()
+	return fmt.Sprintf("$c%02X%02X%02X", uint8(r), uint8(g), uint8(b))
 }
 
 type ColourFn func(in string) (string, bool)

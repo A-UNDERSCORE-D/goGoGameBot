@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"fmt"
+	"image/color"
 	"testing"
 )
 
@@ -123,6 +124,37 @@ func TestStrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Strip(tt.in); got != tt.want {
 				t.Errorf("Strip() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEmitColour(t *testing.T) {
+	tests := []struct {
+		name string
+		in   color.Color
+		want string
+	}{
+		{
+			"all FF",
+			color.RGBA{R: 255, G: 255, B: 255, A: 255},
+			"$cFFFFFF",
+		},
+		{
+			"all 0",
+			color.RGBA{R: 0, G: 0, B: 0, A: 0},
+			"$c000000",
+		},
+		{
+			"133337",
+			color.RGBA{R: 13, G: 33, B: 37, A: 0},
+			"$c0D2125",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := EmitColour(tt.in); got != tt.want {
+				t.Errorf("EmitColour() = %q, want %q", got, tt.want)
 			}
 		})
 	}
