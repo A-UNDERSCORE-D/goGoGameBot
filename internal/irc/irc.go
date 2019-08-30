@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -328,15 +329,21 @@ func nickOrOriginal(toParse string) string {
 
 // SendMessage sends a message to the given target
 func (i *IRC) SendMessage(target, message string) {
-	if _, err := i.writeLine("PRIVMSG", nickOrOriginal(target), message); err != nil {
-		i.log.Warnf("could not send message %q to target %q: %s", message, target, err)
+	msgs := strings.Split(message, "\n")
+	for _, m := range msgs {
+		if _, err := i.writeLine("PRIVMSG", nickOrOriginal(target), m); err != nil {
+			i.log.Warnf("could not send message %q to target %q: %s", m, target, err)
+		}
 	}
 }
 
 // SendNotice sends a notice to the given notice
 func (i *IRC) SendNotice(target, message string) {
-	if _, err := i.writeLine("NOTICE", nickOrOriginal(target), message); err != nil {
-		i.log.Warnf("could not send notice %q to target %q: %s", message, target, err)
+	msgs := strings.Split(message, "\n")
+	for _, m := range msgs {
+		if _, err := i.writeLine("NOTICE", nickOrOriginal(target), m); err != nil {
+			i.log.Warnf("could not send notice %q to target %q: %s", m, target, err)
+		}
 	}
 }
 

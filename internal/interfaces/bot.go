@@ -15,7 +15,8 @@ type Bot interface {
 	HumanReadableSource(source string) string
 }
 
-// Messager represents a type that can send messages to a chat system
+// Messager represents a type that can send messages to a chat system. Implementations should expect and handle
+// newlines if needed
 // TODO: This should state / expect that conversion	from format/transformer intermediate to a protocol level formatting
 //       should be done with these methods
 type Messager interface {
