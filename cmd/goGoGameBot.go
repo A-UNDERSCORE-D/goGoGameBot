@@ -26,7 +26,7 @@ const (
 | |_| | |_| | |_| | |_) |
  \____|\____|\____|____/
 `
-	version = "0.4.0"
+	version = "0.4.3"
 )
 
 var (
@@ -76,6 +76,7 @@ func main() {
 	}
 
 	go func() {
+		// TODO: write to stdin?
 		<-time.After(time.Second * 1)
 		fmt.Println("Hang on close detected. forcing an exit")
 
