@@ -1,4 +1,4 @@
-// Package formatTransformer implements a platform agnostic way of converting between platform specific formatting styles
+// Package transformer implements a platform agnostic way of converting between platform specific formatting styles
 //
 // In order to do this, an intermediate format is used internally and by all implementations of Transformer
 // The format is defined as follows
@@ -14,7 +14,8 @@
 //    c Colour
 //
 // Colour has a special definition, instead of simply $c, the sentinel and type is followed by six hex characters that
-// together indicate a colour.
+// together indicate a colour. It is expected that converters with a smaller colour space automatically condense any
+// unsupported colours into something within their colour space.
 //
-// Unintended uses of the sentinel must be escaped by using two dollar signs.
+// Unintended uses of the sentinel must be escaped by using two sentinels in a row.
 package transformer
