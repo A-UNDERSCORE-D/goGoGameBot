@@ -1,5 +1,7 @@
 module git.ferricyanide.solutions/A_D/goGoGameBot
 
+go 1.13
+
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/chzyer/logex v1.1.10 // indirect
