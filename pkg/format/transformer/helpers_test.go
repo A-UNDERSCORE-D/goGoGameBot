@@ -14,15 +14,10 @@ func TestMap(t *testing.T) {
 		Strikethrough: "strikethrough",
 		Reset:         "reset",
 	}
-	cFn := ColourFn(func(in string) (string, bool) {
-		c, err := ParseColour(in)
-		if err != nil {
-			return string(Sentinel) + string(Colour), false // Return $c because that's all that would be eaten otherwise
-		}
-
-		return fmt.Sprintf("COLOUR[%0X%0X%0X]", c.R, c.G, c.B), true
-
-	})
+	cFn := func(c color.Color) string {
+		r, g, b, _ := c.RGBA()
+		return fmt.Sprintf("COLOUR[%0X%0X%0X]", uint8(r), uint8(g), uint8(b))
+	}
 
 	tests := []struct {
 		name    string
@@ -123,7 +118,7 @@ func TestStrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Strip(tt.in); got != tt.want {
-				t.Errorf("Strip() = %q, want %q", got, tt.want)
+				t.Errorf("Strip() = %v, want %q", got, tt.want)
 			}
 		})
 	}

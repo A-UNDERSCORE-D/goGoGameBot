@@ -44,63 +44,24 @@ func EmitColour(in color.Color) string {
 	return fmt.Sprintf("$c%02X%02X%02X", uint8(r), uint8(g), uint8(b))
 }
 
-type ColourFn func(in string) (string, bool)
-
 // Map maps a string containing intermediate formatting to the strings specified by the mapping arg. Its a helper method
 // to easily implement simple swapping for a Transformer implementation. If colourFn returns false, the sentinel and
 // colour rune are added to the string as they are
-func Map(in string, mapping map[rune]string, fn ColourFn) string {
+func Map(in string, mapping map[rune]string, fn func(color.Color) string) string {
+	tokenised := Tokenise(in)
 	out := strings.Builder{}
-
-	seenSentinel := false
-	skip := 0
-	for i, r := range in {
-		if skip > 0 {
-			skip--
-			continue
-		}
-		if r != Sentinel && !seenSentinel {
-			out.WriteRune(r)
-			continue
-		}
-		if !seenSentinel {
-			seenSentinel = true
-			if len(in) == i+1 /*Seen a sentinel, but its right at the end*/ {
-				out.WriteRune(Sentinel)
-			}
-			continue
-		}
-
-		switch r {
-		case Sentinel:
-			out.WriteRune(Sentinel)
+	for _, tok := range tokenised {
+		switch tok.TokenType {
+		case StringToken:
+			out.WriteString(tok.OriginalString)
 		case Bold, Italic, Underline, Strikethrough, Reset:
-			out.WriteString(entryOrEmpty(r, mapping))
+			out.WriteString(entryOrEmpty(rune(tok.TokenType), mapping))
 		case Colour:
-			runes := []rune(in)
-			if len(runes[i:]) < 7 || fn == nil {
-				// We saw a $c, but there's not enough space here to contain an entire colour, or we dont have a colour
-				// mapping
-				out.WriteRune(Sentinel)
-				out.WriteRune(Colour)
-				break
+			if fn == nil {
+				continue // eat colour if unsupported
 			}
-
-			res, ok := fn(string(runes[i+1 : i+7]))
-			if ok {
-				skip += 6
-				out.WriteString(res)
-			} else {
-				out.WriteRune(Sentinel)
-				out.WriteRune(Colour)
-			}
-
-		default:
-			out.WriteRune(Sentinel)
-			out.WriteRune(r)
+			out.WriteString(fn(tok.Colour))
 		}
-		seenSentinel = false
-
 	}
 	return out.String()
 }
