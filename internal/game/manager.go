@@ -222,6 +222,7 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 	var g interfaces.Game
 	defer func() {
 		if err := recover(); err != nil {
+			// TODO: s/: %s/: %w
 			m.Error(fmt.Errorf("recovered a panic from function %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
 		}
 	}()

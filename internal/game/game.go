@@ -11,8 +11,8 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 const (
@@ -47,6 +47,8 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 
 type status int
 
+// TODO: move this to game_chatBridge.go and start dangling some methods off it
+//       rather than doing everything on the game struct
 type chatBridge struct {
 	shouldBridge  bool
 	dumpStdout    bool
@@ -55,7 +57,7 @@ type chatBridge struct {
 	stripMasks    []string
 	channels      []string
 	format        formatSet
-	colourMap     *strings.Replacer
+	transformer   transformer.Transformer
 }
 
 type formatSet struct {
@@ -201,15 +203,14 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		return err
 	}
 
+	if err := g.setupTransformer(conf); err != nil {
+		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
+	}
+
 	wd := conf.WorkingDir
 	if wd == "" {
 		wd = path.Dir(conf.Path)
 		g.Logger.Infof("game %q's working directory inferred to %q from binary path %q", g.GetName(), wd, conf.Path)
-	}
-
-	cm, err := util.MakeColourMap(conf.ColourMap.ToMap())
-	if err != nil {
-		return fmt.Errorf("could not create colour map for game %s from config: %s", g, err)
 	}
 
 	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
@@ -241,7 +242,6 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	g.chatBridge.dumpStderr = conf.Chat.DumpStderr
 	g.chatBridge.allowForwards = !conf.Chat.DontAllowForwards
 	g.chatBridge.channels = conf.Chat.BridgedChannels
-	g.chatBridge.colourMap = cm
 	gf := &g.chatBridge.format
 	f := &conf.Chat.Formats
 	gf.message = f.Message
@@ -261,7 +261,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 
 func (*Game) compileFormats(gameConf *config.Game) error {
 	fmts := &gameConf.Chat.Formats
-	const cantCompile = "could not compile format %s: %s"
+	const cantCompile = "could not compile format %s: %s" // TODO: s/: %s/: %w/
 	if err := fmts.Message.Compile("message", false, nil); err != nil {
 		return fmt.Errorf(cantCompile, "message", err)
 	}

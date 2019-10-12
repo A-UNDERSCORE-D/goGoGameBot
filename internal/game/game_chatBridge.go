@@ -7,10 +7,12 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
 
+// TODO: replace the type_op (eg SourceRaw) fields with methods to do what I want
 type dataForFmt struct {
 	Source       string
 	SourceRaw    string
@@ -24,6 +26,7 @@ type dataForFmt struct {
 	Storage      *format.Storage
 }
 
+// This should always be given intermediate format data
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
@@ -31,9 +34,9 @@ func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 		SourceRaw:    source,
 		Target:       target,
 		MsgRaw:       msg,
-		MsgEscaped:   ircfmt.Escape(deZwsp),
-		MsgMapped:    g.MapColours(deZwsp),
-		MsgStripped:  ircfmt.Strip(deZwsp),
+		MsgEscaped:   ircfmt.Escape(deZwsp), // TODO: change this to makeintermediate, or remove it entirely
+		MsgMapped:    g.chatBridge.transformer.Transform(deZwsp),
+		MsgStripped:  transformer.Strip(deZwsp),
 		MatchesStrip: util.AnyMaskMatch(source, g.chatBridge.stripMasks),
 		ExtraData:    make(map[string]string),
 		Storage:      g.chatBridge.format.storage,

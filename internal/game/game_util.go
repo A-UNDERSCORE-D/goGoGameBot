@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goshuirc/irc-go/ircfmt"
-
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 )
 
@@ -19,16 +17,6 @@ func (g *Game) checkError(err error) {
 // IsRunning returns whether or not the process is currently running
 func (g *Game) IsRunning() bool {
 	return g.process.IsRunning()
-}
-
-// MapColours maps any IRC colours found in the string to the colour map on the game
-func (g *Game) MapColours(s string) string {
-	if g.chatBridge.colourMap == nil {
-		g.Warn("Colour map is nil. returning stripped string instead")
-		return ircfmt.Strip(s)
-	}
-
-	return g.chatBridge.colourMap.Replace(ircfmt.Escape(s))
 }
 
 func (g *Game) prefixMsg(args ...interface{}) string {
