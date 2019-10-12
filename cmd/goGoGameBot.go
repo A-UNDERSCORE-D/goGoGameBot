@@ -15,6 +15,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
@@ -26,7 +27,6 @@ const (
 | |_| | |_| | |_| | |_) |
  \____|\____|\____|____/
 `
-	version = "0.4.3"
 )
 
 var (
@@ -43,7 +43,7 @@ func main() {
 	for _, line := range strings.Split(asciiArt, "\n") {
 		l.Info(line)
 	}
-	l.Infof("goGoGameBot version %s loading....", version)
+	l.Infof("goGoGameBot version %s loading....", version.Version)
 
 	conf, err := config.GetConfig(*configFile)
 	if err != nil {
