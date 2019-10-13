@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Changed
 - newlines and carriage returns are now escaped
+- Raw access to IRC lines is essentially removed
+
+## Added
+- A new formatting system that uses characters similar to the old one (except for colour), but is far
+more extensible. The new system is based on "Transformers" each of which behave differently, but work by converting strings to
+an "Intermediate Form". For example, the IRC formatter (which is local to the IRC implementation) converts IRC formatting and
+colour to the intermediate form
+- Continuing to the above, the new Transformers available everywhere are:
+  
+  | Name   | Description|
+  |:---:   |---         |
+  | Strip  | Does what it says on the tin. Strips intermediate form |
+  | Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string|
+
 
 ## [0.4.2] - 2019-08-29
 ## Added
