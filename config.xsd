@@ -42,6 +42,7 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
+            <xs:element name="transformer" type="transformerConfigType"/>
           </xs:all>
 
           <xs:attribute type="xs:boolean" name="dont_bridge"/>
@@ -74,7 +75,6 @@
           <xs:attribute type="xs:boolean" name="send_to_local"/>
         </xs:complexType>
       </xs:element>
-      <!--TODO: Need to add colour map here when I decide how to make that system work-->
     </xs:sequence>
 
     <xs:attribute type="xs:string" name="name" use="required"/>
@@ -91,6 +91,55 @@
       </xs:element>
       <xs:element type="gameType" name="game" maxOccurs="unbounded"/>
     </xs:sequence>
+  </xs:complexType>
+
+  <!-- Transformer Configs -->
+  <xs:complexType name="transformerConfigType" abstract="true">
+    <xs:attribute name="type" type="xs:string"/>
+  </xs:complexType>
+
+  <!-- strip transformer -->
+  <xs:complexType name="strip_transformer">
+    <xs:complexContent>
+      <xs:extension base="transformerConfigType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- simple transformer -->
+  <xs:complexType name="simple_transformer">
+    <xs:complexContent>
+      <xs:extension base="transformerConfigType">
+        <xs:all>
+          <xs:element name="replace_map">
+            <xs:complexType>
+              <xs:all>
+                <xs:element name="bold" type="xs:string"/>
+                <xs:element name="italic" type="xs:string"/>
+                <xs:element name="underline" type="xs:string"/>
+                <xs:element name="strikethrough" type="xs:string"/>
+                <xs:element name="reset" type="xs:string"/>
+              </xs:all>
+            </xs:complexType>
+          </xs:element>
+
+          <xs:element name="colour_map">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="colour" maxOccurs="unbounded" minOccurs="0">
+                  <xs:complexType mixed="true">
+                    <xs:attribute name="r" type="xs:nonNegativeInteger" default="0"/>
+                    <xs:attribute name="g" type="xs:nonNegativeInteger" default="0"/>
+                    <xs:attribute name="b" type="xs:nonNegativeInteger" default="0"/>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="all_colour" type="xs:string" minOccurs="0"/>
+
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
 
   <!-- Connection configs-->

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/xml"
+	"fmt"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
@@ -45,8 +46,39 @@ type Game struct {
 			External format.Format `xml:"external"`
 			Extra    []ExtraFormat `xml:"extra"`
 		} `xml:"formats"`
+		TransformerConfig TransformerConfig `xml:"transformer"`
 	} `xml:"chat"`
-	ColourMap ColourMap `xml:"colour_map"`
+}
+
+// TransformerConfig holds configs for various implementations of Transformer.transformer
+type TransformerConfig struct {
+	Type   string `xml:"-"`
+	Config string `xml:"-"`
+}
+
+// UnmarshalXML Implements the Unmarshaler interface in the XML library. Specifically
+// this is designed to unmarshal a single attr while maintaining the content of the rest of the tag for
+// later unmarshalinmg
+func (t *TransformerConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if start.Name.Local != "transformer" {
+		return nil
+	}
+
+	t.Type = "strip" // default to a strip transformer
+
+	for _, attr := range start.Attr {
+		if attr.Name.Local == "type" {
+			t.Type = attr.Value
+			break
+		}
+	}
+
+	res, err := reconstructXML(d, start)
+	if err != nil {
+		return fmt.Errorf("could not reconstruct XML for TransformerConfig: %w", err)
+	}
+	t.Config = res
+	return nil
 }
 
 // ExtraFormat represents an additional format found in config.Game.Chat.Format

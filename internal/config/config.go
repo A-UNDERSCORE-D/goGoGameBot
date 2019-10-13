@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -14,6 +15,8 @@ type Config struct {
 	GameManager GameManager
 	ConfigPath  string `xml:"-"`
 }
+
+// TODO: Abstract(er) version of this as a func of extractStuff(*baseClass, data) (reconstructedData string)
 
 // ConnConfig represents a config for the connection named by ConnType. The config itself is a reconstructed XML stream
 // which means that this type implements xml.Unmarshaler
@@ -34,21 +37,30 @@ func (c *ConnConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 			break
 		}
 	}
+
+	conf, err := reconstructXML(d, start)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal XML for ConnConfig: %w", err)
+	}
+
+	c.Config = conf
+	return nil
+}
+
+func reconstructXML(decoder *xml.Decoder, start xml.StartElement) (string, error) {
 	buf := bytes.NewBuffer(tokenToBytes(start))
 	for {
-		t, err := d.Token()
+		t, err := decoder.Token()
 		if err != nil {
-			return err
+			return "", fmt.Errorf("could not reconstruct XML: %w", err)
 		}
+
 		buf.Write(tokenToBytes(t))
 		if t == start.End() {
 			break
 		}
-
 	}
-
-	c.Config = buf.String()
-	return nil
+	return buf.String(), nil
 }
 
 func nameToBytes(name xml.Name) (out []byte) {
