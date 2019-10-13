@@ -58,6 +58,8 @@ func reverseLookupMap(r rune) rune {
 	return 0
 }
 
+var ircTransformer = Transformer{} // Copy of ircTransformer for use in internal stuff
+
 // Transformer is a dummy struct that holds methods for IRC's implementation of format/transformer's transformer interface
 type Transformer struct{}
 
