@@ -1,5 +1,6 @@
 ---
 kind: pipeline
+type: docker
 name: default
 
 platform:
@@ -9,6 +10,9 @@ platform:
 steps:
 - name: run-tests
   image: golang
+  environment:
+    GOPROXY: https://proxy.golang.org
+
   commands:
   - go test ./...
   volumes:
@@ -22,8 +26,10 @@ steps:
 
 - name: build
   image: golang
+  environment:
+    GOPROXY: https://proxy.golang.org
   commands:
-  - go build -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go
+  - go build -trimpath -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go
   - "echo \"goGoGameBot version $DRONE_TAG\" > /tmp/build/releaseTitle"
   volumes:
   - name: go
@@ -64,6 +70,6 @@ volumes:
 
 ---
 kind: signature
-hmac: efb4ee0786259a9b0f409b74903111f5c3677804803049b2fc8e434505bf1f64
+hmac: 1b5add86757b788535f067d5dc38b74ae037bba29d3d132acfebe0e1a99b6725
 
 ...
