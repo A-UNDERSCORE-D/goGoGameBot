@@ -7,7 +7,8 @@
     <xs:sequence>
       <xs:element type="xs:string" name="binary"/>
       <xs:element type="xs:string" name="working_dir" minOccurs="0"/>
-      <xs:element type="xs:string" name="args"/>
+      <xs:element type="xs:string" name="args" minOccurs="0"/>
+      <xs:element type="xs:string" name="environment" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="status_channels">
         <xs:complexType>
           <xs:all>
@@ -42,7 +43,7 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
-            <xs:element name="transformer" type="transformerConfigType"/>
+            <xs:element name="transformer" type="transformerConfigType" /> <!--TODO: This should be ignorable, in which case it should use strip-->
           </xs:all>
 
           <xs:attribute type="xs:boolean" name="dont_bridge"/>
@@ -80,6 +81,7 @@
     <xs:attribute type="xs:string" name="name" use="required"/>
     <xs:attribute type="xs:string" name="auto_start"/>
     <xs:attribute type="xs:string" name="auto_restart"/>
+    <xs:attribute type="xs:boolean" name="dont_copy_env"/>
   </xs:complexType>
 
   <xs:complexType name="game_managerType">

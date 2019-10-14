@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raw access to IRC lines is essentially removed
 
 ## Added
+- You can now specify ENV variables (and specifically avoid the system ENV VARs) when launching games, use `<environment>`
+to add (or override) environment variables. If you want to explicitly ignore the system environment variables, add 
+`dont_copy_env="true"` to the attributes on `<game>`.
 - A new formatting system that uses characters similar to the old one (except for colour), but is far
 more extensible. The new system is based on "Transformers" each of which behave differently, but work by converting strings to
 an "Intermediate Form". For example, the IRC formatter (which is local to the IRC implementation) converts IRC formatting and

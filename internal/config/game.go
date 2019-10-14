@@ -23,6 +23,8 @@ type Game struct {
 	Path            string    `xml:"binary"`
 	WorkingDir      string    `xml:"working_dir"`
 	Args            string    `xml:"args"`
+	Env             []string  `xml:"environment"`
+	DontCopyEnv     bool      `xml:"dont_copy_env,attr"`
 	Commands        []Command `xml:"command"`
 	Regexps         []Regexp  `xml:"stdio_regexp"`
 	ControlChannels struct {

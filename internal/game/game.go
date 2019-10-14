@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/anmitsu/go-shlex"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
@@ -46,19 +46,6 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 }
 
 type status int
-
-// TODO: move this to game_chatBridge.go and start dangling some methods off it
-//       rather than doing everything on the game struct
-type chatBridge struct {
-	shouldBridge  bool
-	dumpStdout    bool
-	dumpStderr    bool
-	allowForwards bool
-	stripMasks    []string
-	channels      []string
-	format        formatSet
-	transformer   transformer.Transformer
-}
 
 type formatSet struct {
 	message  format.Format
@@ -146,6 +133,9 @@ func (g *Game) Run() {
 		}
 
 		if shouldBreak || g.getInternalStatus() == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
+			if g.process.GetReturnCode() == 0 {
+				g.sendToMsgChan(g.process.GetReturnStatus())
+			}
 			break
 		}
 
@@ -220,15 +210,18 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 			return err
 		}
 	}
-	procArgs := strings.Split(conf.Args, " ")
+	procArgs, err := shlex.Split(conf.Args, true)
+	if err != nil {
+		return err
+	}
 	if g.process == nil {
-		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone())
+		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone(), conf.Env, !conf.DontCopyEnv)
 		if err != nil {
 			return err
 		}
 		g.process = p
 	} else {
-		g.process.UpdateCmd(conf.Path, procArgs, wd)
+		g.process.UpdateCmd(conf.Path, procArgs, wd, conf.Env, !conf.DontCopyEnv)
 	}
 
 	g.setAutoStart(conf.AutoStart)

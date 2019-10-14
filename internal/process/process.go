@@ -19,13 +19,16 @@ import (
 
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
 // setup, they are returned
-func NewProcess(command string, args []string, workingDir string, logger *log.Logger) (*Process, error) {
+func NewProcess(command string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) {
+	// TODO: this setup (the env stuff, the working dir, EVERYTHING aside from the logger and mutex should be done
+	//       though a method, doing things twice is how you make a mess.
 	p := &Process{
 		commandString: command,
 		argListString: args,
 		workingDir:    workingDir,
 		StdinMutex:    sync.Mutex{},
 		log:           logger,
+		cmdEnv:        getEnv(env, copySystemEnv),
 	}
 	if err := p.Reset(); err != nil {
 		return nil, err
@@ -39,6 +42,7 @@ type Process struct {
 	commandString string
 	argListString []string
 	workingDir    string
+	cmdEnv        []string
 	commandMutex  sync.Mutex
 	Stderr        io.ReadCloser
 	Stdout        io.ReadCloser
@@ -51,20 +55,32 @@ type Process struct {
 	hasExited     bool
 }
 
+func getEnv(baseEnvs []string, copySystemEnv bool) []string {
+	var envs []string
+	if copySystemEnv {
+		envs = append(envs, os.Environ()...)
+	}
+	envs = append(envs, baseEnvs...) // Do this second for overriding
+	return envs
+}
+
 // UpdateCmd sets the command and arguments to be used when creating the exec.Cmd used internally.
 // It is safe for concurrent use. Note that this will only take effect on the next reset of the Process object
-func (p *Process) UpdateCmd(command string, args []string, workingDir string) {
+func (p *Process) UpdateCmd(command string, args []string, workingDir string, env []string, copySystemEnv bool) {
 	p.commandMutex.Lock()
 	defer p.commandMutex.Unlock()
 	p.commandString = command
 	p.argListString = args
 	p.workingDir = workingDir
+	p.cmdEnv = getEnv(env, copySystemEnv)
 }
 
 func (p *Process) setupCmd() error {
 	p.commandMutex.Lock()
 	cmd := exec.Command(p.commandString, p.argListString...)
 	cmd.Dir = p.workingDir
+	cmd.Env = p.cmdEnv
+	p.log.Info(fmt.Sprintf("%#v", p.cmdEnv))
 	p.commandMutex.Unlock()
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
