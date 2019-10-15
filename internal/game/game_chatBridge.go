@@ -3,8 +3,6 @@ package game
 import (
 	"strings"
 
-	"github.com/goshuirc/irc-go/ircfmt"
-
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
@@ -12,31 +10,47 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
 
-// TODO: replace the type_op (eg SourceRaw) fields with methods to do what I want
+type chatBridge struct {
+	shouldBridge  bool
+	dumpStdout    bool
+	dumpStderr    bool
+	allowForwards bool
+	stripMasks    []string
+	channels      []string
+	format        formatSet
+	transformer   transformer.Transformer
+}
+
 type dataForFmt struct {
-	Source       string
+	game         *Game
 	SourceRaw    string
 	MsgRaw       string
-	MsgEscaped   string
-	MsgMapped    string
-	MsgStripped  string
 	Target       string
 	MatchesStrip bool
 	ExtraData    map[string]string
 	Storage      *format.Storage
 }
 
+// MsgEscaped returns the message in an escaped format
+func (d *dataForFmt) MsgEscaped() string { return d.MsgRaw }
+
+// MsgMapped returns the message as if it were mapped using the games transformer
+func (d *dataForFmt) MsgMapped() string { return d.game.chatBridge.transformer.Transform(d.MsgRaw) }
+
+// MsgStripped returns the message with all intermediate form codes stripped
+func (d *dataForFmt) MsgStripped() string { return transformer.Strip(d.MsgRaw) }
+
+// Source returns the source in a human readable form
+func (d *dataForFmt) Source() string { return d.game.manager.bot.HumanReadableSource(d.SourceRaw) }
+
 // This should always be given intermediate format data
 func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 	return dataForFmt{
-		Source:       g.manager.bot.HumanReadableSource(source),
+		game:         g,
 		SourceRaw:    source,
 		Target:       target,
-		MsgRaw:       msg,
-		MsgEscaped:   ircfmt.Escape(deZwsp), // TODO: change this to makeintermediate, or remove it entirely
-		MsgMapped:    g.chatBridge.transformer.Transform(deZwsp),
-		MsgStripped:  transformer.Strip(deZwsp),
+		MsgRaw:       deZwsp,
 		MatchesStrip: util.AnyMaskMatch(source, g.chatBridge.stripMasks),
 		ExtraData:    make(map[string]string),
 		Storage:      g.chatBridge.format.storage,
@@ -126,7 +140,7 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.kick))
 }
 
-type dataForOtherGameFmt struct {
+type dataForOtherGameFmt struct { // TODO: Make this use dataForFMt
 	Msg        string
 	SourceGame string
 }
@@ -143,7 +157,7 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	}
 	// Lets make sure to at least strip weird control characters when crossing games
 	cleanMsg := strings.ReplaceAll(msg, "\u200b", "")
-	fmtData := dataForOtherGameFmt{ircfmt.Strip(cleanMsg), name}
+	fmtData := dataForOtherGameFmt{cleanMsg, name}
 	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
 }
 
