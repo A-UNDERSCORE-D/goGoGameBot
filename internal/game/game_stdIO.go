@@ -45,7 +45,7 @@ func (g *Game) monitorStdIO() {
 	go func() {
 		s := bufio.NewScanner(g.process.Stderr)
 		for s.Scan() {
-			g.handleStdIO(s.Text(), true)
+			g.handleStdIO(s.Text(), false)
 		}
 		g.checkError(s.Err())
 	}()
