@@ -56,6 +56,7 @@ type IRC struct {
 	connected         bool
 	m                 sync.RWMutex
 	socket            net.Conn
+	socketDoneChan    chan struct{} // Sentinel for when the socket dies
 	log               *log.Logger
 	RawEvents         *event.Manager
 	ParsedEvents      *event.Manager
@@ -79,9 +80,10 @@ func (i *IRC) SetConnected(connected bool) {
 // New creates a new IRC instance ready for use
 func New(conf string, logger *log.Logger) (*IRC, error) {
 	out := &IRC{
-		log:          logger,
-		RawEvents:    new(event.Manager),
-		ParsedEvents: new(event.Manager),
+		log:            logger,
+		RawEvents:      new(event.Manager),
+		ParsedEvents:   new(event.Manager),
+		socketDoneChan: make(chan struct{}),
 	}
 
 	if err := out.Reload(conf); err != nil {
@@ -210,11 +212,22 @@ func (i *IRC) Disconnect(msg string) {
 
 // Run connects the bot and blocks until it disconnects
 func (i *IRC) Run() error {
+	// ensure that if the socket chan was marked as closed, we clean it up
+	select {
+	case <-i.socketDoneChan:
+	default:
+	}
+
 	if err := i.Connect(); err != nil {
 		return err
 	}
-	i.RawEvents.WaitFor("ERROR")
-	return nil
+
+	select {
+	case e := <-i.RawEvents.WaitForChan("ERROR"):
+		return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
+	case <-i.socketDoneChan:
+		return fmt.Errorf("IRC socket closed")
+	}
 }
 
 func (i *IRC) readLoop() {
@@ -230,13 +243,15 @@ func (i *IRC) readLoop() {
 
 		if line.Command == "PING" {
 			if _, err := i.writeLine("PONG", line.Params...); err != nil {
-				panic(fmt.Errorf("IRC.readloop(): could not create ping. This is a bug: %s", err))
+				i.log.Warnf("IRC.readloop(): could not create ping: %s", err)
 			}
 
 		}
 
 		i.handleLine(line)
 	}
+	i.log.Info("IRC socket closed")
+	i.socketDoneChan <- struct{}{}
 }
 
 func (i *IRC) handleLine(line ircmsg.IrcMessage) {
