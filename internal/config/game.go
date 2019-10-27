@@ -46,14 +46,14 @@ type Game struct {
 		DumpStderr        bool     `xml:"dump_stderr,attr"`
 		BridgedChannels   []string `xml:"bridged_channel"`
 		Formats           struct {
-			Message  format.Format `xml:"message"`
-			Join     format.Format `xml:"join"`
-			Part     format.Format `xml:"part"`
-			Nick     format.Format `xml:"nick"`
-			Quit     format.Format `xml:"quit"`
-			Kick     format.Format `xml:"kick"`
-			External format.Format `xml:"external"`
-			Extra    []ExtraFormat `xml:"extra"`
+			Message  *format.Format `xml:"message"`
+			Join     *format.Format `xml:"join"`
+			Part     *format.Format `xml:"part"`
+			Nick     *format.Format `xml:"nick"`
+			Quit     *format.Format `xml:"quit"`
+			Kick     *format.Format `xml:"kick"`
+			External *format.Format `xml:"external"`
+			Extra    []*ExtraFormat `xml:"extra"`
 		} `xml:"formats"`
 		TransformerConfig TransformerConfig `xml:"transformer"`
 	} `xml:"chat"`

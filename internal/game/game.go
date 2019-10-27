@@ -6,6 +6,7 @@ import (
 	"path"
 	"regexp"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/anmitsu/go-shlex"
@@ -49,13 +50,14 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 type status int
 
 type formatSet struct {
-	message  format.Format
-	join     format.Format
-	part     format.Format
-	nick     format.Format
-	quit     format.Format
-	kick     format.Format
-	external format.Format
+	root     *template.Template
+	message  *format.Format
+	join     *format.Format
+	part     *format.Format
+	nick     *format.Format
+	quit     *format.Format
+	kick     *format.Format
+	external *format.Format
 	storage  *format.Storage
 }
 
@@ -178,13 +180,6 @@ func (g *Game) validateConfig(conf *config.Game) error {
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
 
-	if err := g.compileFormats(conf); err != nil {
-		return fmt.Errorf("could not compile formats: %s", err)
-	}
-
-	if err := g.regexpManager.UpdateFromConf(conf.Regexps, conf.Chat.Formats.Message.CompiledFormat); err != nil {
-		return fmt.Errorf("could not update regepxs from config: %s", err)
-	}
 	return nil
 }
 
@@ -196,16 +191,23 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		return err
 	}
 
+	root := template.New(fmt.Sprintf("%s root", conf.Name))
+	if err := g.compileFormats(&conf, root); err != nil {
+		return fmt.Errorf("could not compile formats: %s", err)
+	}
+
+	if err := g.regexpManager.UpdateFromConf(conf.Regexps, root); err != nil {
+		return fmt.Errorf("could not update regepxs from config: %s", err)
+	}
+
+	var preRollRe *regexp.Regexp
 	if conf.PreRoll.Regexp != "" {
 		re, err := regexp.Compile(conf.PreRoll.Regexp)
 		if err != nil {
 			return fmt.Errorf("could not compile preroll regexp: %w", err)
 		}
-		g.preRollRe = re
-		g.preRollReplace = conf.PreRoll.Replace
+		preRollRe = re
 	}
-
-	// TODO: add the pre-roll regexp stuff here for updates etc
 
 	if err := g.setupTransformer(conf); err != nil {
 		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
@@ -264,33 +266,45 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		gf.storage = new(format.Storage)
 	}
 
+	g.preRollRe = preRollRe
+	g.preRollReplace = conf.PreRoll.Replace
+
+	g.chatBridge.format.root = root
+
 	g.Info("reload completed successfully")
 	return nil
 }
 
-func (*Game) compileFormats(gameConf *config.Game) error {
+func compileOrNil(targetFmt *format.Format, name string, evalColor bool, root *template.Template) error {
+	if targetFmt == nil || targetFmt.FormatString == "" {
+		targetFmt = nil
+		return nil
+	}
+	return targetFmt.Compile(name, evalColor, root)
+}
+
+func (g *Game) compileFormats(gameConf *config.Game, root *template.Template) error {
 	fmts := &gameConf.Chat.Formats
-	const cantCompile = "could not compile format %s: %s" // TODO: s/: %s/: %w/
-	if err := fmts.Message.Compile("message", false, nil); err != nil {
+	const cantCompile = "could not compile format %s: %w"
+	if err := compileOrNil(fmts.Message, "message", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "message", err)
 	}
-	root := fmts.Message.CompiledFormat
-	if err := fmts.Join.Compile("join", false, root); err != nil {
+	if err := compileOrNil(fmts.Join, "join", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "join", err)
 	}
-	if err := fmts.Part.Compile("part", false, root); err != nil {
+	if err := compileOrNil(fmts.Part, "part", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "part", err)
 	}
-	if err := fmts.Nick.Compile("nick", false, root); err != nil {
+	if err := compileOrNil(fmts.Nick, "nick", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "nick", err)
 	}
-	if err := fmts.Quit.Compile("quit", false, root); err != nil {
+	if err := compileOrNil(fmts.Quit, "quit", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "quit", err)
 	}
-	if err := fmts.Kick.Compile("kick", false, root); err != nil {
+	if err := compileOrNil(fmts.Kick, "kick", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "kick", err)
 	}
-	if err := fmts.External.Compile("external", false, root); err != nil {
+	if err := compileOrNil(fmts.External, "external", false, root); err != nil {
 		return fmt.Errorf(cantCompile, "external", err)
 	}
 	for _, v := range fmts.Extra {
