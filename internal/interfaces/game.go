@@ -10,10 +10,10 @@ import (
 
 // GameManager handles games
 type GameManager interface {
-	ReloadGames(configs []config.Game)
-	GetGameFromName(name string) Game
-	GameExists(name string) bool
-	AddGame(game Game) error
+	ReloadGames(configs []config.Game) // Reload the games on this Manager with the given configs
+	GetGameFromName(name string) Game  // get the Game instance on this Manager that has the given name, or nil
+	GameExists(name string) bool       // check whether or not this Manager has a Game with this name
+	AddGame(game Game) error           // add a Game to this manager (game names should be case sensitive and unique)
 	ForEachGame(f func(Game), skip []Game)
 	StopAllGames()
 }
