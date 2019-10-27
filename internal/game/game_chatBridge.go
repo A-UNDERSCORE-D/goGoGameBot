@@ -44,9 +44,9 @@ func (d *dataForFmt) MsgStripped() string { return transformer.Strip(d.MsgRaw) }
 func (d *dataForFmt) Source() string { return d.game.manager.bot.HumanReadableSource(d.SourceRaw) }
 
 // This should always be given intermediate format data
-func (g *Game) makeDataForFormat(source string, target, msg string) dataForFmt {
+func (g *Game) makeDataForFormat(source string, target, msg string) *dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
-	return dataForFmt{
+	return &dataForFmt{
 		game:         g,
 		SourceRaw:    source,
 		Target:       target,
@@ -89,8 +89,8 @@ func (g *Game) OnPrivmsg(source, target, msg string) {
 		msg = out.Arg
 		isAction = true
 	}
-	data := dataForPrivmsg{g.makeDataForFormat(source, target, msg), isAction}
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.message))
+	data := dataForPrivmsg{*g.makeDataForFormat(source, target, msg), isAction}
+	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.message))
 }
 
 // OnJoin is a callback that is fired when a user joins any channel
@@ -116,14 +116,14 @@ type dataForNick struct {
 
 // OnNick is a callback that is fired when a user changes their nickname
 func (g *Game) OnNick(source, newnick string) {
-	data := dataForNick{g.makeDataForFormat(source, "", ""), newnick}
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.nick))
+	data := dataForNick{*g.makeDataForFormat(source, "", ""), newnick}
+	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.nick))
 }
 
 // OnQuit is a callback that is fired when a user quits from IRC
 func (g *Game) OnQuit(source, message string) {
 	data := g.makeDataForFormat(source, "", message)
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.quit))
+	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.quit))
 }
 
 type dataForKick struct {
@@ -136,8 +136,8 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 	if !g.shouldBridge(channel) {
 		return
 	}
-	data := dataForKick{g.makeDataForFormat(source, channel, message), kickee}
-	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.kick))
+	data := dataForKick{*g.makeDataForFormat(source, channel, message), kickee}
+	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.kick))
 }
 
 type dataForOtherGameFmt struct { // TODO: Make this use dataForFMt
@@ -158,7 +158,7 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	// Lets make sure to at least strip weird control characters when crossing games
 	cleanMsg := strings.ReplaceAll(msg, "\u200b", "")
 	fmtData := dataForOtherGameFmt{cleanMsg, name}
-	g.checkError(g.SendFormattedLine(fmtData, g.chatBridge.format.external))
+	g.checkError(g.SendFormattedLine(&fmtData, g.chatBridge.format.external))
 }
 
 // SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
