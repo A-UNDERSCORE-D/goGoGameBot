@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 - newlines and carriage returns are now escaped
 - Raw access to IRC lines is essentially removed
+- Non existent (and/or empty) formatters are now valid for incoming-to-game messages (eg `<message>`). If a formatter is
+empty or doesnt exist, anything that uses it will simply return
 
 ## Added
 - You can now specify ENV variables (and specifically avoid the system ENV VARs) when launching games, use `<environment>`
