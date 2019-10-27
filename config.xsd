@@ -17,6 +17,14 @@
           </xs:all>
         </xs:complexType>
       </xs:element>
+      <xs:element name="pre_roll" minOccurs="0">
+        <xs:complexType>
+          <xs:all>
+            <xs:element type="xs:string" name="regexp"/>
+            <xs:element type="xs:string" name="replace"/>
+          </xs:all>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="chat">
         <xs:complexType>
           <xs:all>
@@ -43,7 +51,7 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
-            <xs:element name="transformer" type="transformerConfigType" /> <!--TODO: This should be ignorable, in which case it should use strip-->
+            <xs:element name="transformer" type="transformerConfigType" minOccurs="0" /> <!--TODO: This should be ignorable, in which case it should use strip-->
           </xs:all>
 
           <xs:attribute type="xs:boolean" name="dont_bridge"/>
@@ -162,7 +170,7 @@
           <xs:element type="xs:string" name="host"/>
           <xs:element type="xs:nonNegativeInteger" name="port"/>
 
-          <xs:element name="admin" maxOccurs="unbounded">
+          <xs:element name="admin"  maxOccurs="unbounded">
             <xs:complexType>
               <xs:attribute type="xs:string" name="mask"/>
               <xs:attribute type="xs:nonNegativeInteger" name="level"/>

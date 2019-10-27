@@ -16,17 +16,24 @@ type GameManager struct {
 
 // Game represents a config for a game.Game instance. It has embedded structs for organisation
 type Game struct {
-	XMLName         xml.Name  `xml:"game"`
-	Name            string    `xml:"name,attr"`
-	AutoRestart     int       `xml:"auto_restart,attr"`
-	AutoStart       bool      `xml:"auto_start,attr"`
-	Path            string    `xml:"binary"`
-	WorkingDir      string    `xml:"working_dir"`
-	Args            string    `xml:"args"`
-	Env             []string  `xml:"environment"`
-	DontCopyEnv     bool      `xml:"dont_copy_env,attr"`
-	Commands        []Command `xml:"command"`
-	Regexps         []Regexp  `xml:"stdio_regexp"`
+	XMLName xml.Name `xml:"game"`
+
+	Name        string   `xml:"name,attr"`
+	AutoRestart int      `xml:"auto_restart,attr"`
+	AutoStart   bool     `xml:"auto_start,attr"`
+	Path        string   `xml:"binary"`
+	WorkingDir  string   `xml:"working_dir"`
+	Args        string   `xml:"args"`
+	Env         []string `xml:"environment"`
+	DontCopyEnv bool     `xml:"dont_copy_env,attr"`
+	PreRoll     struct {
+		Regexp  string `xml:"regexp"`
+		Replace string `xml:"replace"`
+	} `xml:"pre_roll"`
+
+	Commands []Command `xml:"command"`
+	Regexps  []Regexp  `xml:"stdio_regexp"`
+
 	ControlChannels struct {
 		Admin string `xml:"admin"`
 		Msg   string `xml:"msg"`

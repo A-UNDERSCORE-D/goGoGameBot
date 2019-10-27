@@ -22,6 +22,7 @@ colour to the intermediate form
   |:---:   |---         |
   | Strip  | Does what it says on the tin. Strips intermediate form |
   | Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string|
+- Pre Roll regexp config option. This option allows you to transform every incoming line from stdin and stderr with a regex
 
 
 ## [0.4.2] - 2019-08-29

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"regexp"
 	"sync"
 	"time"
 
@@ -76,6 +77,8 @@ type Game struct {
 	autoStart       bool
 	regexpManager   *RegexpManager
 	stdinChan       chan []byte
+	preRollRe       *regexp.Regexp
+	preRollReplace  string
 	controlChannels channelPair
 	chatBridge      chatBridge
 	allowForwards   bool
@@ -105,7 +108,7 @@ func (g *Game) getInternalStatus() status {
 	return g.status
 }
 
-//noinspection GoExportedElementShouldHaveComment
+// Sentinel errors
 var (
 	ErrAlreadyRunning = errors.New("game is already running")
 	ErrGameNotRunning = errors.New("game is not running")
@@ -193,6 +196,17 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		return err
 	}
 
+	if conf.PreRoll.Regexp != "" {
+		re, err := regexp.Compile(conf.PreRoll.Regexp)
+		if err != nil {
+			return fmt.Errorf("could not compile preroll regexp: %w", err)
+		}
+		g.preRollRe = re
+		g.preRollReplace = conf.PreRoll.Replace
+	}
+
+	// TODO: add the pre-roll regexp stuff here for updates etc
+
 	if err := g.setupTransformer(conf); err != nil {
 		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
 	}
@@ -225,7 +239,9 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 
 	g.setAutoStart(conf.AutoStart)
-	g.autoRestart = conf.AutoRestart
+	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
+
+	// TODO: what are these used for?
 	g.controlChannels.admin = conf.ControlChannels.Admin
 	g.controlChannels.msg = conf.ControlChannels.Msg
 
