@@ -35,6 +35,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		return nil, fmt.Errorf("could not compile regexp %s for mannager %s: %s", conf.Name, manager, err)
 	}
 
+	// TODO: move this to the DataForFmt object, functions get weird when they're attached like this
 	funcs := template.FuncMap{
 		"sendToMsgChan":   manager.game.templSendToMsgChan,
 		"sendToAdminChan": manager.game.templSendToAdminChan,
