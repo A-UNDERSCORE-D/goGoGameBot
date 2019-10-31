@@ -10,6 +10,8 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
 )
 
 func getSystemUsageStats() string {
@@ -31,6 +33,7 @@ func getSystemUsageStats() string {
 
 func getBotUsageStats() string {
 	out := strings.Builder{}
+	out.WriteString(fmt.Sprintf("Version: %s", version.Version))
 	memstats := new(runtime.MemStats)
 	runtime.ReadMemStats(memstats)
 	out.WriteString(fmt.Sprintf(
