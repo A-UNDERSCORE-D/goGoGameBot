@@ -32,13 +32,13 @@
             <xs:element name="formats">
               <xs:complexType>
                 <xs:sequence>
-                  <xs:element type="xs:string" name="message"/>
-                  <xs:element type="xs:string" name="join"/>
-                  <xs:element type="xs:string" name="part"/>
-                  <xs:element type="xs:string" name="nick"/>
-                  <xs:element type="xs:string" name="quit"/>
-                  <xs:element type="xs:string" name="kick"/>
-                  <xs:element type="xs:string" name="external"/>
+                  <xs:element type="xs:string" name="message" minOccurs="0"/>
+                  <xs:element type="xs:string" name="join" minOccurs="0"/>
+                  <xs:element type="xs:string" name="part" minOccurs="0"/>
+                  <xs:element type="xs:string" name="nick" minOccurs="0"/>
+                  <xs:element type="xs:string" name="quit" minOccurs="0"/>
+                  <xs:element type="xs:string" name="kick" minOccurs="0"/>
+                  <xs:element type="xs:string" name="external" minOccurs="0"/>
                   <xs:element name="extra" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>
                       <xs:simpleContent>
@@ -51,7 +51,7 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
-            <xs:element name="transformer" type="transformerConfigType" minOccurs="0" /> <!--TODO: This should be ignorable, in which case it should use strip-->
+            <xs:element name="transformer" type="transformerConfigType" minOccurs="0"/> <!--TODO: This should be ignorable, in which case it should use strip-->
           </xs:all>
 
           <xs:attribute type="xs:boolean" name="dont_bridge"/>
@@ -170,7 +170,7 @@
           <xs:element type="xs:string" name="host"/>
           <xs:element type="xs:nonNegativeInteger" name="port"/>
 
-          <xs:element name="admin"  maxOccurs="unbounded">
+          <xs:element name="admin" maxOccurs="unbounded">
             <xs:complexType>
               <xs:attribute type="xs:string" name="mask"/>
               <xs:attribute type="xs:nonNegativeInteger" name="level"/>
