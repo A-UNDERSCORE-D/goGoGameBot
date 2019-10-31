@@ -30,7 +30,7 @@ func WordEol(s string, wordIdx int) string {
 	return ""
 }
 
-var escapeReplacer = strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`, `\n`, `:`, `\r`, ``)
+var escapeReplacer = strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`, "\n", `:`, "\r", ``)
 
 // EscapeString escapes commonly (ab)used strings
 func EscapeString(s string) string {

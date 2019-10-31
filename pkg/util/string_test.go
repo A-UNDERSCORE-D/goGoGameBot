@@ -161,6 +161,11 @@ func TestEscapeString(t *testing.T) {
 			"",
 			"",
 		},
+		{
+			"newlines and co",
+			"this is\n a test\r\n",
+			"this is: a test:",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
