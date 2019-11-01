@@ -106,7 +106,11 @@ func (m *Manager) setStatus(toSet status) {
 // Run starts the manager, connects its bots
 func (m *Manager) Run() (bool, error) {
 	go m.runBot()
-	m.StartAutoStartGames()
+	go func() {
+		time.Sleep(time.Second * 5)
+		m.StartAutoStartGames()
+	}()
+
 	m.done.L.Lock()
 	for m.getStatus() == normal {
 		m.done.Wait()
