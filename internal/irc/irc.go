@@ -16,6 +16,7 @@ import (
 	"github.com/goshuirc/irc-go/ircutils"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/keepalive"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
@@ -57,6 +58,7 @@ type IRC struct {
 	m                 sync.RWMutex
 	socket            net.Conn
 	socketDoneChan    chan struct{} // Sentinel for when the socket dies
+	lag               int
 	log               *log.Logger
 	RawEvents         *event.Manager
 	ParsedEvents      *event.Manager
@@ -120,6 +122,7 @@ func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("QUIT", i.dispatchQuit, event.PriHighest)
 	i.RawEvents.Attach("KICK", i.dispatchKick, event.PriHighest)
 	i.RawEvents.Attach("NICK", i.dispatchNick, event.PriHighest)
+	i.RawEvents.Attach("PONG", i.pongHandler, event.PriHighest)
 }
 
 // LineHandler is a function that is called on every raw Line
@@ -197,6 +200,7 @@ func (i *IRC) Connect() error {
 	for _, name := range i.channels {
 		_, _ = i.writeLine("JOIN", name)
 	}
+	go i.pingLoop()
 
 	return nil
 }
@@ -208,6 +212,12 @@ func (i *IRC) Disconnect(msg string) {
 	} else {
 		_, _ = i.writeLine("QUIT", "Disconnecting")
 	}
+	go func() {
+		time.Sleep(time.Millisecond * 30)
+		if i.Connected() {
+			i.socket.Close()
+		}
+	}()
 }
 
 // Run connects the bot and blocks until it disconnects
@@ -228,6 +238,36 @@ func (i *IRC) Run() error {
 	case <-i.socketDoneChan:
 		return fmt.Errorf("IRC socket closed")
 	}
+}
+
+func (i *IRC) pingLoop() {
+	for i.Connected() {
+		time.Sleep(time.Second * 5)
+		msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
+		if _, err := i.writeLine("PING", msg); err != nil {
+			// Something broke. No idea what. Bail out the entire bot
+			i.socket.Close()
+		}
+	}
+}
+
+func (i *IRC) pongHandler(e event.Event) {
+	rawEvent := event2RawEvent(e)
+	if rawEvent == nil {
+		i.log.Warnf("Got an invalid PONG")
+		return
+	}
+	ts := strings.SplitN(rawEvent.Line.Params[len(rawEvent.Line.Params)-1], " ", 2)[0]
+	thyme, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		i.log.Warnf("could not parse time for PONG: %s", err)
+		return
+	}
+	lag := time.Since(thyme)
+	if lag.Seconds() > 30 {
+		i.Disconnect(fmt.Sprintf("No ping response in %f seconds", lag.Seconds()))
+	}
+	i.lag = int(lag.Milliseconds())
 }
 
 func (i *IRC) readLoop() {
@@ -392,10 +432,11 @@ func (i *IRC) JoinChannel(name string) {
 
 func (i *IRC) String() string {
 	return fmt.Sprintf(
-		"IRC conn; Host: %s, Port: %s, Conencted: %t",
+		"IRC conn; Host: %s, Port: %s, Conencted: %t, Lag: %dms",
 		i.Host,
 		i.Port,
 		i.Connected(),
+		i.lag,
 	)
 }
 
