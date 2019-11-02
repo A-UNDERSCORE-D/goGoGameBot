@@ -109,8 +109,6 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 		out.log.Warn("SASL disabled as the connection is not SSL")
 	}
 
-	out.RawEvents.Attach("ERROR", func(event.Event) { out.SetConnected(false) }, event.PriHighest)
-
 	return out, nil
 }
 
@@ -231,7 +229,7 @@ func (i *IRC) Run() error {
 	if err := i.Connect(); err != nil {
 		return err
 	}
-
+	defer i.SetConnected(false)
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
 		return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
