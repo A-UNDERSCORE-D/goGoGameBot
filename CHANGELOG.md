@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raw access to IRC lines is essentially removed
 - Non existent (and/or empty) formatters are now valid for incoming-to-game messages (eg `<message>`). If a formatter is
 empty or doesnt exist, anything that uses it will simply return
+- Bot control commands (start, stop, restart) now require admin level 3, and status requires no admin, and game raw now requires an admin of 3
 
 ## Added
 - You can now specify ENV variables (and specifically avoid the system ENV VARs) when launching games, use `<environment>`
