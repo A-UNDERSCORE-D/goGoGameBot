@@ -15,10 +15,11 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
 const (
-	normal status = iota
+	normal = iota
 	killed
 	shutdown
 )
@@ -31,7 +32,7 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 
 	g := &Game{
 		name:      conf.Name,
-		status:    normal,
+		status:    mutexTypes.MutexInt{},
 		manager:   manager,
 		Logger:    manager.Logger.Clone().SetPrefix(conf.Name),
 		stdinChan: make(chan []byte),
@@ -72,11 +73,9 @@ type Game struct {
 	name            string
 	process         *process.Process
 	manager         *Manager
-	statusMutex     sync.Mutex
-	status          status
+	status          mutexTypes.MutexInt
 	autoRestart     int
-	asMutex         sync.Mutex
-	autoStart       bool
+	autoStart       mutexTypes.MutexBool
 	regexpManager   *RegexpManager
 	stdinChan       chan []byte
 	preRollRe       *regexp.Regexp
@@ -84,30 +83,6 @@ type Game struct {
 	controlChannels channelPair
 	chatBridge      chatBridge
 	allowForwards   bool
-}
-
-func (g *Game) setAutoStart(autoStart bool) {
-	g.asMutex.Lock()
-	g.autoStart = autoStart
-	g.asMutex.Unlock()
-}
-
-func (g *Game) getAutoStart() bool {
-	g.asMutex.Lock()
-	defer g.asMutex.Unlock()
-	return g.autoStart
-}
-
-func (g *Game) setInternalStatus(status status) {
-	g.statusMutex.Lock()
-	g.status = status
-	g.statusMutex.Unlock()
-}
-
-func (g *Game) getInternalStatus() status {
-	g.statusMutex.Lock()
-	defer g.statusMutex.Unlock()
-	return g.status
 }
 
 // Sentinel errors
@@ -137,7 +112,7 @@ func (g *Game) Run() {
 			shouldBreak = true
 		}
 
-		if shouldBreak || g.getInternalStatus() == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
+		if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
 			if g.process.GetReturnCode() == 0 {
 				g.sendToMsgChan(g.process.GetReturnStatus())
 			}
@@ -156,13 +131,13 @@ func (g *Game) runGame() (bool, error) {
 	}
 
 	g.sendToMsgChan("starting")
-	g.setInternalStatus(normal)
+	g.status.Set(normal)
 	if err := g.process.Start(); err != nil {
 		return false, err
 	}
 	g.monitorStdIO()
 
-	if err := g.process.WaitForCompletion(); err != nil && g.getInternalStatus() != killed {
+	if err := g.process.WaitForCompletion(); err != nil && g.status.Get() != killed {
 		return true, err
 	}
 
@@ -240,7 +215,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		g.process.UpdateCmd(conf.Path, procArgs, wd, conf.Env, !conf.DontCopyEnv)
 	}
 
-	g.setAutoStart(conf.AutoStart)
+	g.autoStart.Set(conf.AutoStart)
 	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
 
 	// TODO: what are these used for?
@@ -323,7 +298,7 @@ func (g *Game) GetName() string {
 // AutoStart checks if the game is marked as auto-starting, and if so, starts the game by starting Game.Run in a
 // goroutine
 func (g *Game) AutoStart() {
-	if g.getAutoStart() {
+	if g.autoStart.Get() {
 		go g.Run()
 	}
 }
@@ -340,7 +315,7 @@ func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 		return nil
 	}
 	g.sendToMsgChan("stopping")
-	g.setInternalStatus(killed)
+	g.status.Set(killed)
 	return g.process.StopOrKillTimeout(timeout)
 }
 

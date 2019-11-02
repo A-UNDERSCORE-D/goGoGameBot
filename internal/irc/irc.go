@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/goshuirc/irc-go/ircmsg"
@@ -18,6 +17,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/keepalive"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
@@ -53,30 +53,16 @@ type Conf struct {
 // IRC Represents a connection to an IRC server
 type IRC struct {
 	*Conf
-	channels          []string
-	connected         bool
-	m                 sync.RWMutex
+	channels          mutexTypes.MutexStringSlice
+	Connected         mutexTypes.MutexBool
 	socket            net.Conn
 	socketDoneChan    chan struct{} // Sentinel for when the socket dies
-	lag               int
+	lag               mutexTypes.MutexDuration
+	lastPong          mutexTypes.MutexTime
 	log               *log.Logger
 	RawEvents         *event.Manager
 	ParsedEvents      *event.Manager
 	capabilityManager *capabilityManager
-}
-
-// Connected gets the connected field in a concurrent-safe manner
-func (i *IRC) Connected() bool {
-	i.m.Lock()
-	defer i.m.Unlock()
-	return i.connected
-}
-
-// SetConnected sets the connected field in a concurrent-safe manner
-func (i *IRC) SetConnected(connected bool) {
-	i.m.Lock()
-	i.connected = connected
-	i.m.Unlock()
 }
 
 // New creates a new IRC instance ready for use
@@ -130,7 +116,7 @@ type LineHandler func(message *ircmsg.IrcMessage, irc *IRC)
 var ErrNotConnected = errors.New("cannot send a message when not connected")
 
 func (i *IRC) write(toSend []byte) (int, error) {
-	if !i.Connected() {
+	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
 	if !bytes.HasSuffix(toSend, []byte{'\r', '\n'}) {
@@ -165,7 +151,7 @@ func (i *IRC) Connect() error {
 		return fmt.Errorf("IRC.Connect(): could not open socket: %s", err)
 	}
 	i.socket = s
-	i.SetConnected(true)
+	i.Connected.Set(true)
 	go i.readLoop()
 
 	if i.HostPasswd != "" {
@@ -195,7 +181,7 @@ func (i *IRC) Connect() error {
 
 	i.RawEvents.WaitFor("001")
 
-	for _, name := range i.channels {
+	for _, name := range i.channels.Get() {
 		_, _ = i.writeLine("JOIN", name)
 	}
 	go i.pingLoop()
@@ -212,7 +198,7 @@ func (i *IRC) Disconnect(msg string) {
 	}
 	go func() {
 		time.Sleep(time.Millisecond * 30)
-		if i.Connected() {
+		if i.Connected.Get() {
 			i.socket.Close()
 		}
 	}()
@@ -229,7 +215,7 @@ func (i *IRC) Run() error {
 	if err := i.Connect(); err != nil {
 		return err
 	}
-	defer i.SetConnected(false)
+	defer i.Connected.Set(false)
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
 		return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
@@ -239,13 +225,14 @@ func (i *IRC) Run() error {
 }
 
 func (i *IRC) pingLoop() {
-	for i.Connected() {
+	for i.Connected.Get() {
 		time.Sleep(time.Second * 5)
 		msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
 		if _, err := i.writeLine("PING", msg); err != nil {
 			// Something broke. No idea what. Bail out the entire bot
 			i.socket.Close()
 		}
+		i.checkLag()
 	}
 }
 
@@ -261,11 +248,17 @@ func (i *IRC) pongHandler(e event.Event) {
 		i.log.Warnf("could not parse time for PONG: %s", err)
 		return
 	}
-	lag := time.Since(thyme)
-	if lag.Seconds() > 30 {
-		i.Disconnect(fmt.Sprintf("No ping response in %f seconds", lag.Seconds()))
+
+	i.lag.Set(time.Since(thyme))
+	i.lastPong.Set(time.Now())
+	i.checkLag()
+}
+
+func (i *IRC) checkLag() {
+	lp := i.lastPong.Get()
+	if !lp.IsZero() && time.Since(lp) > time.Second*30 {
+		i.Disconnect(fmt.Sprintf("No ping response in %s", time.Since(lp)))
 	}
-	i.lag = int(lag.Milliseconds())
 }
 
 func (i *IRC) readLoop() {
@@ -285,7 +278,7 @@ func (i *IRC) readLoop() {
 			}
 
 		}
-
+		i.checkLag()
 		i.handleLine(line)
 	}
 	i.log.Info("IRC socket closed")
@@ -419,13 +412,11 @@ func (i *IRC) SendAdminMessage(msg string) {
 
 // JoinChannel joins the bot to the named channel and adds it to the channel list for later autojoins
 func (i *IRC) JoinChannel(name string) {
-	if i.Connected() {
+	if i.Connected.Get() {
 		i.writeLine("JOIN", name)
 	}
 
-	i.m.Lock()
-	i.channels = append(i.channels, name)
-	i.m.Unlock()
+	i.channels.Set(append(i.channels.Get(), name))
 }
 
 func (i *IRC) String() string {
@@ -433,8 +424,8 @@ func (i *IRC) String() string {
 		"IRC conn; Host: %s, Port: %s, Conencted: %t, Lag: %dms",
 		i.Host,
 		i.Port,
-		i.Connected(),
-		i.lag,
+		i.Connected.Get(),
+		i.lag.Get().Milliseconds(),
 	)
 }
 
