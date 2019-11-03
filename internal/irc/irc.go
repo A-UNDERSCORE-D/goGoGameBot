@@ -53,12 +53,12 @@ type Conf struct {
 // IRC Represents a connection to an IRC server
 type IRC struct {
 	*Conf
-	channels          mutexTypes.MutexStringSlice
-	Connected         mutexTypes.MutexBool
+	channels          mutexTypes.StringSlice
+	Connected         mutexTypes.Bool
 	socket            net.Conn
 	socketDoneChan    chan struct{} // Sentinel for when the socket dies
-	lag               mutexTypes.MutexDuration
-	lastPong          mutexTypes.MutexTime
+	lag               mutexTypes.Duration
+	lastPong          mutexTypes.Time
 	log               *log.Logger
 	RawEvents         *event.Manager
 	ParsedEvents      *event.Manager

@@ -8,101 +8,101 @@ import (
 	"time"
 )
 
-// MutexBool is a bool wrapped with a sync.RWMutex.
-type MutexBool struct {
+// Bool is a bool wrapped with a sync.RWMutex.
+type Bool struct {
 	x bool
 	m sync.RWMutex
 }
 
 // Get fetches the stored value in a concurrent safe manner
-func (x *MutexBool) Get() bool {
+func (x *Bool) Get() bool {
 	x.m.RLock()
 	defer x.m.RUnlock()
 	return x.x
 }
 
 // Set sets the stored value in a concurrent safe manner
-func (x *MutexBool) Set(thing bool) {
+func (x *Bool) Set(thing bool) {
 	x.m.Lock()
 	x.x = thing
 	x.m.Unlock()
 }
 
-// MutexInt is a int wrapped with a sync.RWMutex.
-type MutexInt struct {
+// Int is a int wrapped with a sync.RWMutex.
+type Int struct {
 	x int
 	m sync.RWMutex
 }
 
 // Get fetches the stored value in a concurrent safe manner
-func (x *MutexInt) Get() int {
+func (x *Int) Get() int {
 	x.m.RLock()
 	defer x.m.RUnlock()
 	return x.x
 }
 
 // Set sets the stored value in a concurrent safe manner
-func (x *MutexInt) Set(thing int) {
+func (x *Int) Set(thing int) {
 	x.m.Lock()
 	x.x = thing
 	x.m.Unlock()
 }
 
-// MutexStringSlice is a []string wrapped with a sync.RWMutex.
-type MutexStringSlice struct {
+// StringSlice is a []string wrapped with a sync.RWMutex.
+type StringSlice struct {
 	x []string
 	m sync.RWMutex
 }
 
 // Get fetches the stored value in a concurrent safe manner
-func (x *MutexStringSlice) Get() []string {
+func (x *StringSlice) Get() []string {
 	x.m.RLock()
 	defer x.m.RUnlock()
 	return x.x
 }
 
 // Set sets the stored value in a concurrent safe manner
-func (x *MutexStringSlice) Set(thing []string) {
+func (x *StringSlice) Set(thing []string) {
 	x.m.Lock()
 	x.x = thing
 	x.m.Unlock()
 }
 
-// MutexDuration is a time.Duration wrapped with a sync.RWMutex.
-type MutexDuration struct {
+// Duration is a time.Duration wrapped with a sync.RWMutex.
+type Duration struct {
 	x time.Duration
 	m sync.RWMutex
 }
 
 // Get fetches the stored value in a concurrent safe manner
-func (x *MutexDuration) Get() time.Duration {
+func (x *Duration) Get() time.Duration {
 	x.m.RLock()
 	defer x.m.RUnlock()
 	return x.x
 }
 
 // Set sets the stored value in a concurrent safe manner
-func (x *MutexDuration) Set(thing time.Duration) {
+func (x *Duration) Set(thing time.Duration) {
 	x.m.Lock()
 	x.x = thing
 	x.m.Unlock()
 }
 
-// MutexTime is a time.Time wrapped with a sync.RWMutex.
-type MutexTime struct {
+// Time is a time.Time wrapped with a sync.RWMutex.
+type Time struct {
 	x time.Time
 	m sync.RWMutex
 }
 
 // Get fetches the stored value in a concurrent safe manner
-func (x *MutexTime) Get() time.Time {
+func (x *Time) Get() time.Time {
 	x.m.RLock()
 	defer x.m.RUnlock()
 	return x.x
 }
 
 // Set sets the stored value in a concurrent safe manner
-func (x *MutexTime) Set(thing time.Time) {
+func (x *Time) Set(thing time.Time) {
 	x.m.Lock()
 	x.x = thing
 	x.m.Unlock()

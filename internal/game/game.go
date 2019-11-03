@@ -32,11 +32,12 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 
 	g := &Game{
 		name:      conf.Name,
-		status:    mutexTypes.MutexInt{},
+		status:    mutexTypes.Int{},
 		manager:   manager,
 		Logger:    manager.Logger.Clone().SetPrefix(conf.Name),
 		stdinChan: make(chan []byte),
 	}
+	g.status.Set(normal)
 	go g.watchStdinChan()
 	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
@@ -73,9 +74,9 @@ type Game struct {
 	name            string
 	process         *process.Process
 	manager         *Manager
-	status          mutexTypes.MutexInt
+	status          mutexTypes.Int
 	autoRestart     int
-	autoStart       mutexTypes.MutexBool
+	autoStart       mutexTypes.Bool
 	regexpManager   *RegexpManager
 	stdinChan       chan []byte
 	preRollRe       *regexp.Regexp
