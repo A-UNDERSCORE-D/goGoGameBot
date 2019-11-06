@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -105,7 +106,7 @@ func (g *Game) Run() {
 		cleanExit, err := g.runGame()
 		if err == ErrAlreadyRunning {
 			shouldBreak = true
-		} else if err != nil {
+		} else if err != nil && !strings.HasPrefix(err.Error(), "exit status") {
 			g.manager.Error(err)
 		}
 
@@ -113,10 +114,9 @@ func (g *Game) Run() {
 			shouldBreak = true
 		}
 
-		if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart < 0 {
-			if g.process.GetReturnCode() == 0 {
-				g.sendToMsgChan(g.process.GetReturnStatus())
-			}
+		g.sendToMsgChan(g.process.GetReturnStatus())
+
+		if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart <= 0 {
 			break
 		}
 
@@ -125,6 +125,8 @@ func (g *Game) Run() {
 	}
 }
 
+// runGame does the actual process handling for the game. It returns whether or not the process exited cleanly,
+// and an error
 func (g *Game) runGame() (bool, error) {
 	if g.IsRunning() {
 		g.sendToMsgChan("cannot start an already running game")
@@ -204,7 +206,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 	procArgs, err := shlex.Split(conf.Args, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not parse game arguments: %w", err)
 	}
 	if g.process == nil {
 		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone(), conf.Env, !conf.DontCopyEnv)
