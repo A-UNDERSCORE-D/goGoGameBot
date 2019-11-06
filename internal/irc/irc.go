@@ -458,3 +458,7 @@ func (i *IRC) HumanReadableSource(source string) string {
 
 	return source
 }
+
+func (i *IRC) Status() string {
+	return fmt.Sprintf("IRC: Connected: %t Lag: %s", i.Connected.Get(), i.lag.Get())
+}

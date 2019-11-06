@@ -13,6 +13,7 @@ type Bot interface {
 	Reload(string) error                      // Reload using the passed config
 	CommandPrefixes() []string                // Return the current valid command prefixes
 	HumanReadableSource(source string) string // Convert the provided source string to a version that is human readable
+	Statuser
 }
 
 // Messager represents a type that can send messages to a chat system. Implementations should expect and handle

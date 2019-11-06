@@ -151,15 +151,16 @@ func (m *Manager) reloadCmd(data *command.Data) {
 }
 
 func (m *Manager) statusCmd(data *command.Data) {
+	ourStats := fmt.Sprintf("%s %s", systemstats.GetStats(), m.bot.Status())
 	if len(data.Args) == 0 {
-		data.ReturnMessage(systemstats.GetStats())
+		data.ReturnMessage(ourStats)
 		return
 	}
 
 	for _, v := range data.Args {
 		switch {
 		case v == "all":
-			data.ReturnMessage(systemstats.GetStats())
+			data.ReturnMessage(ourStats)
 			m.ForEachGame(func(g interfaces.Game) { data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status())) }, nil)
 			return
 
