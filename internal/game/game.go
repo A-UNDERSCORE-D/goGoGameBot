@@ -311,10 +311,13 @@ func (g *Game) String() string {
 // StopOrKillTimeout sends SIGTERM to the running process. If the game is still running after the timeout has passed,
 // the process is sent SIGKILL
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
-	if !g.process.IsRunning() && g.manager.getStatus() != shutdown {
-		g.sendToMsgChan("cannot stop a non-running game")
+	if !g.process.IsRunning() {
+		if g.manager.getStatus() != shutdown {
+			g.sendToMsgChan("cannot stop a non-running game")
+		}
 		return nil
 	}
+
 	g.sendToMsgChan("stopping")
 	g.status.Set(killed)
 	return g.process.StopOrKillTimeout(timeout)

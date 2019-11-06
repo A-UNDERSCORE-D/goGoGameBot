@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Fixed
 - Newlines and Carriage Returns are correctly escaped by the escape method
+- Games that are not running no longer show as stopping when the bot is stopped
 
 ## Changed
 - newlines and carriage returns are now escaped
