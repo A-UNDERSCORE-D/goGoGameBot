@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+
+## [0.4.4] 2019-11-06
 ## Fixed
 - Newlines and Carriage Returns are correctly escaped by the escape method
 - Games that are not running no longer show as stopping when the bot is stopped
@@ -190,6 +192,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7d083518df663bd8cd7b71f525c2c3624b69dfb7...933d526afe8f7c31d0c809d03ec2182b8d205d51
 [0.4.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9c16e5bdef8c6382b72b20f3713ab4a4d45883ff...7d083518df663bd8cd7b71f525c2c3624b69dfb7
 [0.4.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/f9f59d1c07c93a54019804a22df4feef23409dca...9c16e5bdef8c6382b72b20f3713ab4a4d45883ff
 [0.4.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9ab227b07856945179e05159c48fc0bb08025efa...f9f59d1c07c93a54019804a22df4feef23409dca 
