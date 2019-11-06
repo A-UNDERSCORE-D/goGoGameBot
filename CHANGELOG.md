@@ -26,11 +26,15 @@ more extensible. The new system is based on "Transformers" each of which behave 
 an "Intermediate Form". For example, the IRC formatter (which is local to the IRC implementation) converts IRC formatting and
 colour to the intermediate form
 - Continuing to the above, the new Transformers available everywhere are:
+
+
+
+| Name     | Description |
+| -------- | -------- |
+| Strip  | Does what it says on the tin. Strips intermediate form |
+| Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string|
   
-  | Name   | Description|
-  |:---:   |---         |
-  | Strip  | Does what it says on the tin. Strips intermediate form |
-  | Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string|
+
 - Pre Roll regexp config option. This option allows you to transform every incoming line from stdin and stderr with a regex
 - The IRC conn now maintains its own ping to the server, which will disconnect it after 30 seconds
 
