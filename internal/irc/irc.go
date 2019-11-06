@@ -55,6 +55,7 @@ type IRC struct {
 	*Conf
 	channels          mutexTypes.StringSlice
 	Connected         mutexTypes.Bool
+	StopRequested     mutexTypes.Bool
 	socket            net.Conn
 	socketDoneChan    chan struct{} // Sentinel for when the socket dies
 	lag               mutexTypes.Duration
@@ -196,6 +197,7 @@ func (i *IRC) Disconnect(msg string) {
 	} else {
 		_, _ = i.writeLine("QUIT", "Disconnecting")
 	}
+	i.StopRequested.Set(true)
 	go func() {
 		time.Sleep(time.Millisecond * 30)
 		if i.Connected.Get() {
@@ -218,10 +220,13 @@ func (i *IRC) Run() error {
 	defer i.Connected.Set(false)
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
-		return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
+		if !i.StopRequested.Get() {
+			return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
+		}
 	case <-i.socketDoneChan:
 		return fmt.Errorf("IRC socket closed")
 	}
+	return nil
 }
 
 func (i *IRC) pingLoop() {
