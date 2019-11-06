@@ -12,6 +12,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
 // NewManager creates a Manager and configures it using the given data.
@@ -73,34 +74,10 @@ type Manager struct {
 	Cmd         *command.Manager
 	stripMasks  []string
 	done        *sync.Cond
-	statusMutex sync.Mutex // covers both restarting and status
-	restarting  bool
-	status      status
+	statusMutex sync.Mutex      // covers both restarting and status
+	restarting  mutexTypes.Bool // TODO: MutexBool
+	status      mutexTypes.Int  // TODO: MutexInt
 	*log.Logger
-}
-
-func (m *Manager) getRestarting() bool {
-	m.statusMutex.Lock()
-	defer m.statusMutex.Unlock()
-	return m.restarting
-}
-
-func (m *Manager) setRestarting(toSet bool) {
-	m.statusMutex.Lock()
-	m.restarting = toSet
-	m.statusMutex.Unlock()
-}
-
-func (m *Manager) getStatus() status {
-	m.statusMutex.Lock()
-	defer m.statusMutex.Unlock()
-	return m.status
-}
-
-func (m *Manager) setStatus(toSet status) {
-	m.statusMutex.Lock()
-	m.status = toSet
-	m.statusMutex.Unlock()
 }
 
 // Run starts the manager, connects its bots
@@ -112,12 +89,12 @@ func (m *Manager) Run() (bool, error) {
 	}()
 
 	m.done.L.Lock()
-	for m.getStatus() == normal {
+	for m.status.Get() == normal {
 		m.done.Wait()
 	}
 	m.done.L.Unlock()
 	// Make sure we return a restart condition here if we need to
-	return m.getRestarting(), nil
+	return m.restarting.Get(), nil
 }
 
 func (m *Manager) runBot() {
@@ -126,7 +103,7 @@ func (m *Manager) runBot() {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
 		}
 
-		if m.getStatus() == normal {
+		if m.status.Get() == normal {
 			m.ForEachGame(func(g interfaces.Game) {
 				g.SendLineFromOtherGame("Chat is disconnected. Reconnecting in 10 seconds", g)
 			}, nil)
@@ -247,7 +224,7 @@ var (
 
 // StopAllGames stops all the games on the manager, blocking until they all close or are killed
 func (m *Manager) StopAllGames() {
-	m.setStatus(shutdown)
+	m.status.Set(shutdown)
 	wg := sync.WaitGroup{}
 	m.ForEachGame(func(game interfaces.Game) { wg.Add(1); game.StopOrKillWaitgroup(&wg) }, nil)
 	wg.Wait()
@@ -337,8 +314,8 @@ func (m *Manager) setupCommands() error {
 }
 
 func (m *Manager) Stop(msg string, restart bool) {
-	m.setRestarting(restart)
-	m.setStatus(shutdown)
+	m.restarting.Set(restart)
+	m.status.Set(shutdown)
 	m.StopAllGames()
 	m.bot.Disconnect(msg)
 	m.done.Broadcast()

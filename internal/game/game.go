@@ -314,7 +314,7 @@ func (g *Game) String() string {
 // the process is sent SIGKILL
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 	if !g.process.IsRunning() {
-		if g.manager.getStatus() != shutdown {
+		if g.manager.status.Get() != shutdown {
 			g.sendToMsgChan("cannot stop a non-running game")
 		}
 		return nil
