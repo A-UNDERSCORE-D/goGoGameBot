@@ -8,6 +8,10 @@ import (
 )
 
 func (g *Game) setupTransformer(game config.Game) error {
+	if game.Chat.TransformerConfig.Type == "" {
+		game.Chat.TransformerConfig.Type = "strip"
+	}
+
 	t, err := transformer.GetTransformer(game.Chat.TransformerConfig)
 	if err != nil {
 		return fmt.Errorf("could not add transformer to game %s: %w", game.Name, err)
