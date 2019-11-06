@@ -15,6 +15,7 @@ import (
 	psutilProc "github.com/shirou/gopsutil/process"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
@@ -50,9 +51,8 @@ type Process struct {
 	StdinMutex    sync.Mutex
 	DoneChan      chan bool
 	log           *log.Logger
-	statusMutex   sync.Mutex
-	hasStarted    bool
-	hasExited     bool
+	hasStarted    mutexTypes.Bool
+	hasExited     mutexTypes.Bool
 }
 
 func getEnv(baseEnvs []string, copySystemEnv bool) []string {
@@ -107,10 +107,8 @@ func (p *Process) setupCmd() error {
 // Reset cleans up an already-run process, making it ready to be run again
 func (p *Process) Reset() error {
 	p.DoneChan = make(chan bool) // TODO: This causes a data race. In theory it's not an issue, but it'd be nice to fix it
-	p.statusMutex.Lock()
-	p.hasStarted = false
-	p.hasExited = false
-	p.statusMutex.Unlock()
+	p.hasStarted.Set(false)
+	p.hasExited.Set(false)
 	return p.setupCmd()
 }
 
@@ -121,17 +119,13 @@ func (p *Process) Start() error {
 		return fmt.Errorf("could not start process: %v", err)
 	}
 
-	p.statusMutex.Lock()
-	p.hasStarted = true
-	p.statusMutex.Unlock()
+	p.hasStarted.Set(true)
 	return nil
 }
 
 // IsRunning returns whether or not the current process is running
 func (p *Process) IsRunning() bool {
-	p.statusMutex.Lock()
-	defer p.statusMutex.Unlock()
-	return p.hasStarted && !p.hasExited
+	return p.hasStarted.Get() && !p.hasExited.Get()
 }
 
 // GetReturnStatus returns a string containing the return status of the process, an example would be "exit code 1"
@@ -207,9 +201,7 @@ func (p *Process) WriteString(toWrite string) (int, error) {
 func (p *Process) WaitForCompletion() error {
 	defer close(p.DoneChan)
 	err := p.cmd.Wait()
-	p.statusMutex.Lock()
-	p.hasExited = true
-	p.statusMutex.Unlock()
+	p.hasExited.Set(true)
 	if err != nil {
 		return err
 	}
