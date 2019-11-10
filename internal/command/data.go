@@ -3,8 +3,6 @@ package command
 import (
 	"strings"
 
-	"github.com/goshuirc/irc-go/ircfmt"
-
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 )
 
@@ -37,7 +35,7 @@ func (d *Data) CheckPerms(requiredLevel int) bool {
 }
 
 // SendNotice sends an IRC notice to the given target with the given message
-func (d *Data) SendNotice(target, msg string) { d.util.SendNotice(target, ircfmt.Unescape(msg)) }
+func (d *Data) SendNotice(target, msg string) { d.util.SendNotice(target, msg) }
 
 // SendTargetNotice is a shortcut to SendNotice that sets the target of the notice to the target of the Data object
 func (d *Data) SendTargetNotice(msg string) { d.SendNotice(d.Target, msg) }
@@ -47,7 +45,7 @@ func (d *Data) SendTargetNotice(msg string) { d.SendNotice(d.Target, msg) }
 func (d *Data) SendSourceNotice(msg string) { d.SendNotice(d.Source, msg) }
 
 // SendMessage sends an IRC privmsg to the given target
-func (d *Data) SendMessage(target, msg string) { d.util.SendMessage(target, ircfmt.Unescape(msg)) }
+func (d *Data) SendMessage(target, msg string) { d.util.SendMessage(target, msg) }
 
 // SendTargetMessage is a shortcut to SendMessage that sets the target for the privmsg to the target of the Data object
 func (d *Data) SendTargetMessage(msg string) { d.SendMessage(d.Target, msg) }
