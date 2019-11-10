@@ -382,7 +382,7 @@ func nickOrOriginal(toParse string) string {
 func (i *IRC) SendMessage(target, message string) {
 	msgs := strings.Split(message, "\n")
 	for _, m := range msgs {
-		if _, err := i.writeLine("PRIVMSG", nickOrOriginal(target), m); err != nil {
+		if _, err := i.writeLine("PRIVMSG", nickOrOriginal(target), ircTransformer.Transform(m)); err != nil {
 			i.log.Warnf("could not send message %q to target %q: %s", m, target, err)
 		}
 	}
@@ -392,7 +392,7 @@ func (i *IRC) SendMessage(target, message string) {
 func (i *IRC) SendNotice(target, message string) {
 	msgs := strings.Split(message, "\n")
 	for _, m := range msgs {
-		if _, err := i.writeLine("NOTICE", nickOrOriginal(target), m); err != nil {
+		if _, err := i.writeLine("NOTICE", nickOrOriginal(target), ircTransformer.Transform(m)); err != nil {
 			i.log.Warnf("could not send notice %q to target %q: %s", m, target, err)
 		}
 	}
