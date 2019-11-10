@@ -28,7 +28,7 @@ func (g *Game) registerCommand(conf config.Command) error {
 	if conf.Help == "" {
 		return errors.New("cannot have a game command with an empty help string")
 	}
-	if err := conf.Format.Compile(conf.Name, false, nil); err != nil {
+	if err := conf.Format.Compile(conf.Name, nil, nil); err != nil {
 		return err
 	}
 	return g.manager.Cmd.AddSubCommand(

@@ -253,40 +253,40 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	return nil
 }
 
-func compileOrNil(targetFmt *format.Format, name string, evalColor bool, root *template.Template) error {
+func compileOrNil(targetFmt *format.Format, name string, root *template.Template) error {
 	if targetFmt == nil || targetFmt.FormatString == "" {
 		targetFmt = nil
 		return nil
 	}
-	return targetFmt.Compile(name, evalColor, root)
+	return targetFmt.Compile(name, root)
 }
 
 func (g *Game) compileFormats(gameConf *config.Game, root *template.Template) error {
 	fmts := &gameConf.Chat.Formats
 	const cantCompile = "could not compile format %s: %w"
-	if err := compileOrNil(fmts.Message, "message", false, root); err != nil {
+	if err := compileOrNil(fmts.Message, "message", root); err != nil {
 		return fmt.Errorf(cantCompile, "message", err)
 	}
-	if err := compileOrNil(fmts.Join, "join", false, root); err != nil {
+	if err := compileOrNil(fmts.Join, "join", root); err != nil {
 		return fmt.Errorf(cantCompile, "join", err)
 	}
-	if err := compileOrNil(fmts.Part, "part", false, root); err != nil {
+	if err := compileOrNil(fmts.Part, "part", root); err != nil {
 		return fmt.Errorf(cantCompile, "part", err)
 	}
-	if err := compileOrNil(fmts.Nick, "nick", false, root); err != nil {
+	if err := compileOrNil(fmts.Nick, "nick", root); err != nil {
 		return fmt.Errorf(cantCompile, "nick", err)
 	}
-	if err := compileOrNil(fmts.Quit, "quit", false, root); err != nil {
+	if err := compileOrNil(fmts.Quit, "quit", root); err != nil {
 		return fmt.Errorf(cantCompile, "quit", err)
 	}
-	if err := compileOrNil(fmts.Kick, "kick", false, root); err != nil {
+	if err := compileOrNil(fmts.Kick, "kick", root); err != nil {
 		return fmt.Errorf(cantCompile, "kick", err)
 	}
-	if err := compileOrNil(fmts.External, "external", false, root); err != nil {
+	if err := compileOrNil(fmts.External, "external", root); err != nil {
 		return fmt.Errorf(cantCompile, "external", err)
 	}
 	for _, v := range fmts.Extra {
-		if err := v.Compile(v.Name, false, root); err != nil {
+		if err := v.Compile(v.Name, root); err != nil {
 			return err
 		}
 	}

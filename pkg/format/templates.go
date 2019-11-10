@@ -5,19 +5,16 @@ import (
 	"errors"
 	"text/template"
 
-	"github.com/goshuirc/irc-go/ircfmt"
-
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
 // UtilFuncs is a standard set of functions added to all Format's template.Template
 var UtilFuncs = template.FuncMap{
-	"zwsp":        util.AddZwsp,
-	"wordEOL":     util.WordEol,
-	"escape":      util.EscapeString,
-	"stripColour": ircfmt.Strip,
-	"stripAll":    util.StripAll,
-	"eat":         func(...interface{}) string { return "" },
+	"zwsp":     util.AddZwsp,
+	"wordEOL":  util.WordEol,
+	"escape":   util.EscapeString,
+	"stripAll": util.StripAll,
+	"eat":      func(...interface{}) string { return "" },
 }
 
 // Format represents a wrapped template.Template
@@ -36,7 +33,7 @@ var (
 // default functions plus any passed to the template. if the template is invalid or the format has already been compiled,
 // Compile errors. An optional root text/template can be passed, and if so, the compiled format's internal template will
 // be associated with the passed root
-func (f *Format) Compile(name string, evalColour bool, root *template.Template, funcMaps ...template.FuncMap) error {
+func (f *Format) Compile(name string, root *template.Template, funcMaps ...template.FuncMap) error {
 	if f.compiled {
 		return errors.New("format: cannot compile a format twice")
 	}
@@ -53,10 +50,6 @@ func (f *Format) Compile(name string, evalColour bool, root *template.Template, 
 	toSet.Funcs(UtilFuncs)
 	for _, entry := range funcMaps {
 		toSet.Funcs(entry)
-	}
-
-	if evalColour {
-		f.FormatString = ircfmt.Unescape(f.FormatString)
 	}
 
 	res, err := toSet.Parse(f.FormatString)
