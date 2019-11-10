@@ -51,7 +51,7 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
-            <xs:element name="transformer" type="transformerConfigType" minOccurs="0"/> <!--TODO: This should be ignorable, in which case it should use strip-->
+            <xs:element name="transformer" type="transformerConfigType" minOccurs="0"/>
           </xs:all>
 
           <xs:attribute type="xs:boolean" name="dont_bridge"/>
