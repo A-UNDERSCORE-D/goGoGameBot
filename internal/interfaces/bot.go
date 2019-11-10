@@ -17,16 +17,15 @@ type Bot interface {
 }
 
 // Messager represents a type that can send messages to a chat system. Implementations should expect and handle
-// newlines if needed
-// TODO: This should state / expect that conversion	from format/transformer intermediate to a protocol level formatting
-//       should be done with these methods
+// newlines if needed. Implementations should also convert incoming lines to their protocol level formatting if
+// applicable
 type Messager interface {
 	SendMessage(target, message string)
 	SendNotice(target, message string)
 }
 
 // Hooker provides methods for hooking on specific "chat" events, like joining and leaving a channel, or messages in
-// a given channel
+// a given channel. It is expected that all these callbacks receive messages in the intermediate format
 type Hooker interface {
 	HookMessage(func(source, channel, message string))        // Standard chat message
 	HookPrivateMessage(func(source, channel, message string)) // Private message to the bot
