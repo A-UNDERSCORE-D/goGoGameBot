@@ -43,7 +43,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 	}
 
 	var templ *format.Format
-	if err := conf.Format.Compile("regexp_"+conf.Name, true, root, funcs); err != nil {
+	if err := conf.Format.Compile("regexp_"+conf.Name, root, funcs); err != nil {
 		if err != format.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}

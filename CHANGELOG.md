@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Fixed
 - Games no longer sometimes send IRC formatting codes to each other
+- Games sending to other games now verify that the target game is running, rather than themselves
 
 ## Changed
 - The external format on games now use the same formatting tools that the rest of the formats use
