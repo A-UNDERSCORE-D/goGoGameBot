@@ -97,7 +97,7 @@ func (p *Process) setupCmd() error {
 		return err
 	}
 
-	p.cmd = cmd
+	p.cmd = cmd // TODO: racy on really quick restarts?
 	p.Stdin = stdin
 	p.Stdout = stdout
 	p.Stderr = stderr
@@ -141,20 +141,19 @@ func (p *Process) GetReturnCode() int {
 
 // GetStatus returns the current status of the process, including memory and CPU usage
 func (p *Process) GetStatus() string {
-	// TODO: replace this with format/transformer intermediate stuff
 	out := strings.Builder{}
 	if !p.IsRunning() {
-		out.WriteString("$c[red]$bNot running$r")
+		out.WriteString("$cFF0000$bNot running$r")
 		return out.String()
 	}
 
 	ps, err := psutilProc.NewProcess(int32(p.cmd.Process.Pid))
 
 	if err != nil {
-		return fmt.Sprintf("$b$c[red]ERROR:$b %s", err)
+		return fmt.Sprintf("$b$cFF0000ERROR:$b %s", err)
 	}
 
-	out.WriteString("$c[light green]$bRunning$r: ")
+	out.WriteString("$c00FC00$bRunning$r: ")
 	out.WriteString("CPU usage: ")
 	cpuPercentage, err := ps.CPUPercent()
 
