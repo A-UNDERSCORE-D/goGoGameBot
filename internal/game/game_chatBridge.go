@@ -146,11 +146,6 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.kick))
 }
 
-type dataForOtherGameFmt struct { // TODO: Make this use dataForFMt
-	Msg        string
-	SourceGame string
-}
-
 // SendLineFromOtherGame Is a frontend for sending messages to a game from other games. If the game in source is the
 // same as the current game, the name is switched to "LOCAL"
 func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
@@ -161,10 +156,9 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if source != g {
 		name = source.GetName()
 	}
-	// Lets make sure to at least strip weird control characters when crossing games
-	cleanMsg := strings.ReplaceAll(msg, "\u200b", "")
-	fmtData := dataForOtherGameFmt{cleanMsg, name}
-	g.checkError(g.SendFormattedLine(&fmtData, g.chatBridge.format.external))
+
+	data := g.makeDataForFormat(name, "", util.StripAll(msg))
+	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.external))
 }
 
 // SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN

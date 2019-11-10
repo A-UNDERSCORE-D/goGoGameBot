@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
+## Changed
+- The external format on games now use the same formatting tools that the rest of the formats use
+meaning that you can now map etc messages from other games. (which should be setup to use intermediate formats when
+transferring messages)
+
+
 
 ## [0.4.4] 2019-11-06
 ## Fixed
