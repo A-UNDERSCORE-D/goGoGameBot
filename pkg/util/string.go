@@ -3,8 +3,6 @@ package util
 import (
 	"fmt"
 	"strings"
-
-	"github.com/goshuirc/irc-go/ircfmt"
 )
 
 // CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array for
@@ -39,9 +37,8 @@ func EscapeString(s string) string {
 
 const zwsp = '\u200b'
 
-// StripAll strips both IRC control codes and any extra weird ascii control codes
+// StripAll strips any extra weird ascii control codes
 func StripAll(s string) string {
-	s = ircfmt.Strip(s)
 	return strings.Map(func(r rune) rune {
 		if r < ' ' || r == zwsp {
 			return -1
