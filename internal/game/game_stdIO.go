@@ -69,6 +69,8 @@ func (g *Game) handleStdIO(text string, isStdout bool) {
 		text = g.preRollRe.ReplaceAllString(text, g.preRollReplace)
 	}
 
+	text = g.chatBridge.transformer.MakeIntermediate(text)
+
 	g.Info(pickString(stdout, stderr, isStdout), " ", text)
 	if (g.chatBridge.dumpStdout && isStdout) || (g.chatBridge.dumpStderr && !isStdout) {
 		g.sendToMsgChan(pickString(stdout, stderr, isStdout), " ", text)
