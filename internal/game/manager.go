@@ -36,12 +36,12 @@ func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*M
 }
 
 func (m *Manager) setupHooks() {
-	m.bot.HookMessage(func(source, channel, message string) {
+	m.bot.HookMessage(func(source, channel, message string, _ bool) {
 		m.Cmd.ParseLine(message, false, source, channel, m.bot)
 	})
 
-	m.bot.HookMessage(func(source, channel, message string) {
-		m.ForEachGame(func(game interfaces.Game) { game.OnPrivmsg(source, channel, message) }, nil)
+	m.bot.HookMessage(func(source, channel, message string, isAction bool) {
+		m.ForEachGame(func(game interfaces.Game) { game.OnMessage(source, channel, message, isAction) }, nil)
 	})
 
 	m.bot.HookJoin(func(source, channel string) {

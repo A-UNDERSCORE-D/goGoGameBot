@@ -27,13 +27,13 @@ type Messager interface {
 // Hooker provides methods for hooking on specific "chat" events, like joining and leaving a channel, or messages in
 // a given channel. It is expected that all these callbacks receive messages in the intermediate format
 type Hooker interface {
-	HookMessage(func(source, channel, message string))        // Standard chat message
-	HookPrivateMessage(func(source, channel, message string)) // Private message to the bot
-	HookJoin(func(source, channel string))                    // User joining a channel
-	HookPart(func(source, channel, message string))           // User leaving a channel
-	HookQuit(func(source, message string))                    // User disconnecting
-	HookKick(func(source, channel, target, message string))   // User kicked from a channel
-	HookNick(func(source, newNick string))                    // User changing their nickname
+	HookMessage(func(source, channel, message string, isAction bool)) // Standard chat message
+	HookPrivateMessage(func(source, channel, message string))         // Private message to the bot
+	HookJoin(func(source, channel string))                            // User joining a channel
+	HookPart(func(source, channel, message string))                   // User leaving a channel
+	HookQuit(func(source, message string))                            // User disconnecting
+	HookKick(func(source, channel, target, message string))           // User kicked from a channel
+	HookNick(func(source, newNick string))                            // User changing their nickname
 	// TODO: bans
 	// TODO: system notices (this is where modes etc will go)
 }

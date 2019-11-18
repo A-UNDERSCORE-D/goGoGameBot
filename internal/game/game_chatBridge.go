@@ -7,7 +7,6 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/ctcp"
 )
 
 type chatBridge struct {
@@ -75,19 +74,10 @@ type dataForPrivmsg struct {
 	IsAction bool
 }
 
-// OnPrivmsg is a callback that is fired when a PRIVMSG is received from IRC
-func (g *Game) OnPrivmsg(source, target, msg string) {
+// OnMessage is a callback that is fired when a PRIVMSG is received from IRC
+func (g *Game) OnMessage(source, target, msg string, isAction bool) {
 	if !g.shouldBridge(target) || g.chatBridge.format.message == nil {
 		return
-	}
-
-	isAction := false
-	if out, err := ctcp.Parse(msg); err == nil {
-		if out.Command != "ACTION" {
-			return
-		}
-		msg = out.Arg
-		isAction = true
 	}
 	data := dataForPrivmsg{*g.makeDataForFormat(source, target, msg), isAction}
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.message))

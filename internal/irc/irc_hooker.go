@@ -3,17 +3,27 @@ package irc
 import (
 	"strings"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc/ctcp"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
-func (i *IRC) HookMessage(f func(source, channel, message string)) {
+func (i *IRC) HookMessage(f func(source, channel, message string, isAction bool)) {
 	i.ParsedEvents.Attach("MSG", func(e event.Event) {
-		msg := e.(*MessageEvent)
-		if e.IsCancelled() || msg.IsNotice || !strings.HasPrefix(msg.Channel, "#") {
+		messageEvent := e.(*MessageEvent)
+		if e.IsCancelled() || messageEvent.IsNotice || !strings.HasPrefix(messageEvent.Channel, "#") {
 			return
 		}
-		f(util.UserHost2Canonical(msg.Source), msg.Channel, ircTransformer.MakeIntermediate(msg.Message))
+		act := false
+		msg := messageEvent.Message
+		if out, err := ctcp.Parse(messageEvent.Message); err == nil {
+			if out.Command != "ACTION" {
+				return
+			}
+			msg = out.Arg
+			act = true
+		}
+		f(util.UserHost2Canonical(messageEvent.Source), messageEvent.Channel, ircTransformer.MakeIntermediate(msg), act)
 
 	}, event.PriNorm)
 }

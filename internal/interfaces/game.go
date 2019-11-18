@@ -29,7 +29,7 @@ type Game interface {
 	io.Writer
 	io.StringWriter
 
-	OnPrivmsg(source, target, msg string)
+	OnMessage(source, target, msg string, isAction bool)
 	OnJoin(source, channel string)
 	OnPart(source, channel, message string)
 	OnNick(source, newnick string)
