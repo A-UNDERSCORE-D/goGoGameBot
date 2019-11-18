@@ -33,7 +33,7 @@ func getSystemUsageStats() string {
 
 func getBotUsageStats() string {
 	out := strings.Builder{}
-	out.WriteString(fmt.Sprintf("Version: %s", version.Version))
+	out.WriteString(fmt.Sprintf("Version: %s ", version.Version))
 	memstats := new(runtime.MemStats)
 	runtime.ReadMemStats(memstats)
 	out.WriteString(fmt.Sprintf(
