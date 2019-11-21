@@ -102,16 +102,21 @@ func (m *Manager) runBot() {
 		if err := m.bot.Run(); err != nil {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
 		}
+		m.sendStatusMessageToAllGames("Chat connected.")
 
 		if m.status.Get() == normal {
-			m.ForEachGame(func(g interfaces.Game) {
-				g.SendLineFromOtherGame("Chat is disconnected. Reconnecting in 10 seconds", g)
-			}, nil)
+			m.sendStatusMessageToAllGames("Chat is disconnected. Reconnecting in 10 seconds")
 			time.Sleep(time.Second * 10)
 		} else {
 			break
 		}
 	}
+}
+
+func (m *Manager) sendStatusMessageToAllGames(msg string) {
+	m.ForEachGame(func(g interfaces.Game) {
+		g.SendLineFromOtherGame(msg, g)
+	}, nil)
 }
 
 func (m *Manager) String() string {
