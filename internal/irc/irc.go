@@ -218,6 +218,8 @@ func (i *IRC) Run() error {
 		return err
 	}
 	defer i.Connected.Set(false)
+	defer i.lag.Set(time.Duration(0))
+	defer i.lastPong.Set(time.Time{})
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
 		if !i.StopRequested.Get() {

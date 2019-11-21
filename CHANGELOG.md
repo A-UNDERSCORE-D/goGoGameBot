@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Fixed
 - Game stdio is now run though transformers before they are processed
+- IRC no longer quits instantly after attempting to reconnect due to lag issues
 
 ## [0.4.5] - 2019-11-10
 ## Fixed
