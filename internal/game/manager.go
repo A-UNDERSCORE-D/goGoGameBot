@@ -74,9 +74,9 @@ type Manager struct {
 	Cmd         *command.Manager
 	stripMasks  []string
 	done        *sync.Cond
-	statusMutex sync.Mutex      // covers both restarting and status
-	restarting  mutexTypes.Bool // TODO: MutexBool
-	status      mutexTypes.Int  // TODO: MutexInt
+	statusMutex sync.Mutex // covers both restarting and status
+	restarting  mutexTypes.Bool
+	status      mutexTypes.Int
 	*log.Logger
 }
 
