@@ -1,8 +1,10 @@
-package transformer
+package tokeniser
 
 import (
 	"image/color"
 	"strings"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 // StringToken is the value given to Token instances holding a raw string
@@ -30,7 +32,7 @@ func Tokenise(in string) []Token {
 		}
 
 		switch r {
-		case Sentinel:
+		case intermediate.Sentinel:
 			if seenSentinel || len(in) == i+1 {
 				seenSentinel = false
 				buf.WriteRune(r)
@@ -39,19 +41,19 @@ func Tokenise(in string) []Token {
 
 			seenSentinel = true
 
-		case Colour:
+		case intermediate.Colour:
 			if seenSentinel {
 				seenSentinel = false
 				if len(in)-i < 7 {
 					// Dont have enough space -- write out as if we didnt see it
 					seenSentinel = false
-					buf.WriteString(SColourString)
+					buf.WriteString(intermediate.SColourString)
 					continue
 				}
 
 				col, err := ParseColour(in[i+1:])
 				if err != nil {
-					buf.WriteString(SColourString)
+					buf.WriteString(intermediate.SColourString)
 					continue
 				}
 
@@ -66,7 +68,7 @@ func Tokenise(in string) []Token {
 			}
 			fallthrough
 
-		case Bold, Italic, Underline, Strikethrough, Reset:
+		case intermediate.Bold, intermediate.Italic, intermediate.Underline, intermediate.Strikethrough, intermediate.Reset:
 			if seenSentinel {
 				seenSentinel = false
 				if buf.Len() > 0 {
@@ -83,7 +85,7 @@ func Tokenise(in string) []Token {
 		default:
 			if seenSentinel {
 				// Invalid trailing char after sentinel
-				buf.WriteRune(Sentinel)
+				buf.WriteRune(intermediate.Sentinel)
 			}
 			seenSentinel = false // Always reset this, just in case.
 			buf.WriteRune(r)

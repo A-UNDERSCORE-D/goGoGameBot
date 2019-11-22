@@ -6,6 +6,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
@@ -37,7 +38,7 @@ func (d *dataForFmt) MsgEscaped() string { return d.MsgRaw }
 func (d *dataForFmt) MsgMapped() string { return d.game.chatBridge.transformer.Transform(d.MsgRaw) }
 
 // MsgStripped returns the message with all intermediate form codes stripped
-func (d *dataForFmt) MsgStripped() string { return transformer.Strip(d.MsgRaw) }
+func (d *dataForFmt) MsgStripped() string { return tokeniser.Strip(d.MsgRaw) }
 
 // Source returns the source in a human readable form
 func (d *dataForFmt) Source() string { return d.game.manager.bot.HumanReadableSource(d.SourceRaw) }

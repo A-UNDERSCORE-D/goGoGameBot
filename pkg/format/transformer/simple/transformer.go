@@ -1,12 +1,15 @@
-package transformer
+package simple
 
 import (
 	"image/color"
 	"strings"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
 )
 
-// SimpleTransformerConf Holds a replacemap and a colourmap in a format that's simple to store in XML
-type SimpleTransformerConf struct {
+// Conf Holds a replacemap and a colourmap in a format that's simple to store in XML
+type Conf struct {
 	ReplaceMap struct {
 		Bold          string `xml:"bold"`
 		Italic        string `xml:"italic"`
@@ -23,13 +26,13 @@ type SimpleTransformerConf struct {
 	} `xml:"colour_map>colour"`
 }
 
-func (s *SimpleTransformerConf) MakeMaps() (map[rune]string, map[color.Color]string) {
+func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
 	replaceMap := map[rune]string{
-		Bold:          s.ReplaceMap.Bold,
-		Italic:        s.ReplaceMap.Italic,
-		Underline:     s.ReplaceMap.Underline,
-		Strikethrough: s.ReplaceMap.Strikethrough,
-		Reset:         s.ReplaceMap.Reset,
+		intermediate.Bold:          s.ReplaceMap.Bold,
+		intermediate.Italic:        s.ReplaceMap.Italic,
+		intermediate.Underline:     s.ReplaceMap.Underline,
+		intermediate.Strikethrough: s.ReplaceMap.Strikethrough,
+		intermediate.Reset:         s.ReplaceMap.Reset,
 	}
 	colourMap := make(map[color.Color]string)
 	for _, cc := range s.ColourMap {
@@ -64,14 +67,14 @@ func NewSimpleTransformer(replaceMap map[rune]string, colourMap map[color.Color]
 
 	var repl []string
 	for k, v := range replaceMap {
-		repl = append(repl, v, SentinelString+string(k))
+		repl = append(repl, v, intermediate.SentinelString+string(k))
 	}
 
 	for col, v := range colourMap {
-		repl = append(repl, v, EmitColour(col))
+		repl = append(repl, v, tokeniser.EmitColour(col))
 	}
 
-	repl = append(repl, SentinelString, SSentinelString)
+	repl = append(repl, intermediate.SentinelString, intermediate.SSentinelString)
 
 	return &SimpleTransformer{
 		rplMap:   replaceMap,
@@ -84,7 +87,7 @@ func NewSimpleTransformer(replaceMap map[rune]string, colourMap map[color.Color]
 
 // Transform implements the Transformer interface. Applies the simple conversions setup in the constructor
 func (s *SimpleTransformer) Transform(in string) string {
-	return Map(in, s.rplMap, s.colourFn)
+	return tokeniser.Map(in, s.rplMap, s.colourFn)
 }
 
 func (s *SimpleTransformer) colourFn(in color.Color) string {

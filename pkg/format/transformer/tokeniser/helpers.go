@@ -1,10 +1,12 @@
-package transformer
+package tokeniser
 
 import (
 	"fmt"
 	"image/color"
 	"strconv"
 	"strings"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 // Strip strips away all intermediate formatting
@@ -54,9 +56,9 @@ func Map(in string, mapping map[rune]string, fn func(color.Color) string) string
 		switch tok.TokenType {
 		case StringToken:
 			out.WriteString(tok.OriginalString)
-		case Bold, Italic, Underline, Strikethrough, Reset:
+		case intermediate.Bold, intermediate.Italic, intermediate.Underline, intermediate.Strikethrough, intermediate.Reset:
 			out.WriteString(entryOrEmpty(rune(tok.TokenType), mapping))
-		case Colour:
+		case intermediate.Colour:
 			if fn == nil {
 				continue // eat colour if unsupported
 			}

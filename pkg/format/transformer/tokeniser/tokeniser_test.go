@@ -1,9 +1,11 @@
-package transformer
+package tokeniser
 
 import (
 	"image/color"
 	"reflect"
 	"testing"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 func TestTokenise(t *testing.T) {
@@ -22,13 +24,13 @@ func TestTokenise(t *testing.T) {
 			in:   "this is a $btest$r that has some $scodes in it$r",
 			want: []Token{
 				{TokenType: StringToken, OriginalString: "this is a "},
-				{TokenType: Bold},
+				{TokenType: intermediate.Bold},
 				{TokenType: StringToken, OriginalString: "test"},
-				{TokenType: Reset},
+				{TokenType: intermediate.Reset},
 				{TokenType: StringToken, OriginalString: " that has some "},
-				{TokenType: Strikethrough},
+				{TokenType: intermediate.Strikethrough},
 				{TokenType: StringToken, OriginalString: "codes in it"},
-				{TokenType: Reset},
+				{TokenType: intermediate.Reset},
 			},
 		},
 		{
@@ -51,7 +53,7 @@ func TestTokenise(t *testing.T) {
 			in:   "colours $cFFFFFF are fun",
 			want: []Token{
 				{TokenType: StringToken, OriginalString: "colours "},
-				{TokenType: Colour, Colour: color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}},
+				{TokenType: intermediate.Colour, Colour: color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}},
 				{TokenType: StringToken, OriginalString: " are fun"},
 			},
 		},

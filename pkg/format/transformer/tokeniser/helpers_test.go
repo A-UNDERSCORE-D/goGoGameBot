@@ -1,18 +1,20 @@
-package transformer
+package tokeniser
 
 import (
 	"fmt"
 	"image/color"
 	"testing"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 func TestMap(t *testing.T) {
 	defaultMap := map[rune]string{
-		Bold:          "bold",
-		Italic:        "italic",
-		Underline:     "underline",
-		Strikethrough: "strikethrough",
-		Reset:         "reset",
+		intermediate.Bold:          "bold",
+		intermediate.Italic:        "italic",
+		intermediate.Underline:     "underline",
+		intermediate.Strikethrough: "strikethrough",
+		intermediate.Reset:         "reset",
 	}
 	cFn := func(c color.Color) string {
 		r, g, b, _ := c.RGBA()

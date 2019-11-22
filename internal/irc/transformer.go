@@ -7,7 +7,8 @@ import (
 	"strings"
 	"unicode"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
 )
 
 const (
@@ -43,10 +44,10 @@ var ircPalette = color.Palette{
 }
 
 var ircFmtMapping = map[rune]string{
-	transformer.Bold:      string(bold),
-	transformer.Italic:    string(italic),
-	transformer.Underline: string(underline),
-	transformer.Reset:     string(reset),
+	intermediate.Bold:      string(bold),
+	intermediate.Italic:    string(italic),
+	intermediate.Underline: string(underline),
+	intermediate.Reset:     string(reset),
 }
 
 func reverseLookupMap(r rune) rune {
@@ -65,7 +66,7 @@ type Transformer struct{}
 
 // Transform implments Transformer.Transform, colours are converted via a palette to the 15 IRC colours
 func (Transformer) Transform(in string) string {
-	return transformer.Map(in, ircFmtMapping, func(c color.Color) string { return fmt.Sprintf("%c%02d", colour, ircPalette.Index(c)) })
+	return tokeniser.Map(in, ircFmtMapping, func(c color.Color) string { return fmt.Sprintf("%c%02d", colour, ircPalette.Index(c)) })
 }
 
 // MakeIntermediate implements Transformer.MakeIntermediate
@@ -80,15 +81,15 @@ func (Transformer) MakeIntermediate(in string) string {
 
 		switch r {
 		case bold, italic, underline, reset:
-			out.WriteRune(transformer.Sentinel)
+			out.WriteRune(intermediate.Sentinel)
 			out.WriteRune(reverseLookupMap(r))
-		case transformer.Sentinel:
-			out.Write([]byte{transformer.Sentinel, transformer.Sentinel})
+		case intermediate.Sentinel:
+			out.Write([]byte{intermediate.Sentinel, intermediate.Sentinel})
 		case colour:
 			toSkip, col := extractColour(in[i:])
 			if toSkip != -1 {
 				skip += toSkip
-				out.WriteString(transformer.EmitColour(col))
+				out.WriteString(tokeniser.EmitColour(col))
 			}
 
 		default:

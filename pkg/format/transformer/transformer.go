@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/simple"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/strip"
 )
 
 // Transformer refers to a string transformer. String Transformers convert messages from an intermediate format
@@ -25,13 +27,13 @@ func GetTransformer(conf config.TransformerConfig) (Transformer, error) {
 	x := strings.ToLower(conf.Type)
 	switch x {
 	case "strip":
-		return new(StripTransformer), nil
+		return new(strip.Transformer), nil
 	case "simple":
-		var stc SimpleTransformerConf
+		var stc simple.Conf
 		if err := xml.Unmarshal([]byte(conf.Config), &stc); err != nil {
 			return nil, fmt.Errorf("could not create new SimpleTransformer: %w", err)
 		}
-		return NewSimpleTransformer(stc.MakeMaps()), nil
+		return simple.NewSimpleTransformer(stc.MakeMaps()), nil
 	}
 	return nil, fmt.Errorf("unknown transformer type %q", x)
 }

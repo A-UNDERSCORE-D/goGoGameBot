@@ -1,9 +1,12 @@
-package transformer
+package simple
 
 import (
 	"image/color"
 	"reflect"
 	"testing"
+
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 func TestNewSimpleTransformer(t *testing.T) {
@@ -19,11 +22,11 @@ func TestNewSimpleTransformer(t *testing.T) {
 		{
 			name: "normal setup",
 			args: args{
-				replaceMap: map[rune]string{Bold: "BOLD", Italic: "ITALIC", Underline: "UNDERLINE", Strikethrough: "STRIKETHROUGH", Reset: "RESET"},
+				replaceMap: map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
 				colourMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
 			want: &SimpleTransformer{
-				rplMap:  map[rune]string{Bold: "BOLD", Italic: "ITALIC", Underline: "UNDERLINE", Strikethrough: "STRIKETHROUGH", Reset: "RESET"},
+				rplMap:  map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
 				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
 				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
@@ -38,7 +41,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 				t.Errorf("NewSimpleTransformer().rplMap = %v, want %v", tf.rplMap, tt.want.rplMap)
 			case !reflect.DeepEqual(tt.want.colMap, tf.colMap):
 				t.Errorf("NewSimpleTransformer.colMap = %v, want %v", tf.colMap, tt.want.colMap)
-			case !cmpSliceNoOrder(tf.palette, tt.want.palette):
+			case !transformer.cmpSliceNoOrder(tf.palette, tt.want.palette):
 				t.Errorf("NewSimpleTransformer.palette = %#v, want %#v", tf.palette, tt.want.palette)
 			}
 		})
@@ -50,7 +53,7 @@ func TestSimpleTransformer_MakeIntermediate(t *testing.T) {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
 	}{
-		replaceMap: map[rune]string{Bold: "bold", Italic: "italic", Underline: "underline", Strikethrough: "strikethrough", Reset: "reset"},
+		replaceMap: map[rune]string{intermediate.Bold: "bold", intermediate.Italic: "italic", intermediate.Underline: "underline", intermediate.Strikethrough: "strikethrough", intermediate.Reset: "reset"},
 		colourMap: map[color.Color]string{
 			color.RGBA{R: 0xF9, G: 0x4B, B: 0xA3, A: 0xFF}: "ONE",
 			color.RGBA{R: 0x91, G: 0x82, B: 0xBA, A: 0xFF}: "TWO",
@@ -94,7 +97,7 @@ func TestSimpleTransformer_Transform(t *testing.T) {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
 	}{
-		replaceMap: map[rune]string{Bold: "bold", Italic: "italic", Underline: "underline", Strikethrough: "strikethrough", Reset: "reset"},
+		replaceMap: map[rune]string{intermediate.Bold: "bold", intermediate.Italic: "italic", intermediate.Underline: "underline", intermediate.Strikethrough: "strikethrough", intermediate.Reset: "reset"},
 		colourMap: map[color.Color]string{
 			color.RGBA{R: 0xF9, G: 0x4B, B: 0xA3, A: 0xFF}: "ONE",
 			color.RGBA{R: 0x91, G: 0x82, B: 0xBA, A: 0xFF}: "TWO",
