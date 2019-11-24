@@ -84,19 +84,21 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 	}
 
 	out.setupParsers()
-	out.capabilityManager = newCapabilityManager(out)
-	out.capabilityManager.supportCap("userhost-in-names")
-	out.capabilityManager.supportCap("server-time")
-
-	if out.SSL {
-		out.capabilityManager.supportCap("sasl")
-		out.capabilityManager.CapEvents.Attach("sasl", out.authenticateWithSasl, event.PriNorm)
-	} else if out.SASL {
-		out.SASL = false
-		out.log.Warn("SASL disabled as the connection is not SSL")
-	}
-
 	return out, nil
+}
+
+func (i *IRC) setupCapManager() {
+	i.capabilityManager = newCapabilityManager(i)
+	i.capabilityManager.supportCap("userhost-in-names")
+	i.capabilityManager.supportCap("server-time")
+
+	if i.SSL {
+		i.capabilityManager.supportCap("sasl")
+		i.capabilityManager.CapEvents.Attach("sasl", i.authenticateWithSasl, event.PriNorm)
+	} else if i.SASL {
+		i.SASL = false
+		i.log.Warn("SASL disabled as the connection is not SSL")
+	}
 }
 
 func (i *IRC) setupParsers() {
@@ -139,6 +141,7 @@ func (i *IRC) writeLine(command string, args ...string) (int, error) {
 // Connect connects to IRC and does the required negotiation for registering on the network and any capabilities
 // that have been requested
 func (i *IRC) Connect() error {
+	i.setupCapManager()
 	target := net.JoinHostPort(i.Host, i.Port)
 	var s net.Conn
 	var err error
@@ -236,6 +239,7 @@ func (i *IRC) pingLoop() {
 		time.Sleep(time.Second * 5)
 		msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
 		if _, err := i.writeLine("PING", msg); err != nil {
+			i.log.Warnf("could not write our PING message: %s", err)
 			// Something broke. No idea what. Bail out the entire bot
 			i.socket.Close()
 		}
