@@ -2,4 +2,4 @@
 package version
 
 // Version is the current bot version
-const Version = "0.4.6"
+const Version = "0.4.7"
