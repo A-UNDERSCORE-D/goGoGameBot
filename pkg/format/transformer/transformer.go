@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/minecraft"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/simple"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/strip"
 )
@@ -33,7 +34,9 @@ func GetTransformer(conf config.TransformerConfig) (Transformer, error) {
 		if err := xml.Unmarshal([]byte(conf.Config), &stc); err != nil {
 			return nil, fmt.Errorf("could not create new SimpleTransformer: %w", err)
 		}
-		return simple.NewSimpleTransformer(stc.MakeMaps()), nil
+		return simple.New(stc.MakeMaps()), nil
+	case "minecraft":
+		return minecraft.Transformer{}, nil
 	}
 	return nil, fmt.Errorf("unknown transformer type %q", x)
 }
