@@ -21,16 +21,10 @@ import (
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
 // setup, they are returned
 func NewProcess(command string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) {
-	// TODO: this setup (the env stuff, the working dir, EVERYTHING aside from the logger and mutex should be done
-	//       though a method, doing things twice is how you make a mess.
 	p := &Process{
-		commandString: command,
-		argListString: args,
-		workingDir:    workingDir,
-		StdinMutex:    sync.Mutex{},
-		log:           logger,
-		cmdEnv:        getEnv(env, copySystemEnv),
+		log: logger,
 	}
+	p.UpdateCmd(command, args, workingDir, env, copySystemEnv)
 	if err := p.Reset(); err != nil {
 		return nil, err
 	}
@@ -146,7 +140,6 @@ func (p *Process) GetStatus() string {
 		out.WriteString("$cFF0000$bNot running$r")
 		return out.String()
 	}
-
 	ps, err := psutilProc.NewProcess(int32(p.cmd.Process.Pid))
 
 	if err != nil {
@@ -243,6 +236,7 @@ func (p *Process) StopOrKillTimeout(timeout time.Duration) error {
 
 	select {
 	case <-time.After(timeout):
+		p.log.Infof("killing process as %s has elapsed without a polite exit", timeout)
 		return p.Kill()
 
 	case <-p.DoneChan:
