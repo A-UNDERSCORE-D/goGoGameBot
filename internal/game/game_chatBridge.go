@@ -43,6 +43,19 @@ func (d *dataForFmt) MsgStripped() string { return tokeniser.Strip(d.MsgRaw) }
 // Source returns the source in a human readable form
 func (d *dataForFmt) Source() string { return d.game.manager.bot.HumanReadableSource(d.SourceRaw) }
 
+// MapString applies the game's transformer to the given string
+func (d *dataForFmt) MapString(in ...string) string {
+	return d.game.chatBridge.transformer.Transform(strings.Join(in, " "))
+}
+
+func (d *dataForFmt) InvokeTemplate(name string, args interface{}) (string, error) {
+	out := new(strings.Builder)
+	if err := d.game.chatBridge.format.root.ExecuteTemplate(out, name, args); err != nil {
+		return "", err
+	}
+	return out.String(), nil
+}
+
 // This should always be given intermediate format data
 func (g *Game) makeDataForFormat(source string, target, msg string) *dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
@@ -170,7 +183,7 @@ func (g *Game) SendFormattedLine(d interface{}, fmt *format.Format) error {
 	if len(res) == 0 {
 		return nil
 	}
-	if _, err := g.WriteString(res); err != nil {
+	if _, err := g.WriteString(g.chatBridge.transformer.Transform(res)); err != nil {
 		return err
 	}
 	return nil
