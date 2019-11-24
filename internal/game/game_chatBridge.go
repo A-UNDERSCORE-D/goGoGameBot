@@ -183,7 +183,7 @@ func (g *Game) SendFormattedLine(d interface{}, fmt *format.Format) error {
 	if len(res) == 0 {
 		return nil
 	}
-	if _, err := g.WriteString(g.chatBridge.transformer.Transform(res)); err != nil {
+	if _, err := g.WriteString(res); err != nil {
 		return err
 	}
 	return nil
