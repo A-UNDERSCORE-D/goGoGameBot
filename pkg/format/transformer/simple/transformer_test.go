@@ -17,7 +17,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *SimpleTransformer
+		want *Transformer
 	}{
 		{
 			name: "normal setup",
@@ -25,7 +25,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 				replaceMap: map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
 				colourMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
-			want: &SimpleTransformer{
+			want: &Transformer{
 				rplMap:  map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
 				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
 				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
@@ -35,14 +35,14 @@ func TestNewSimpleTransformer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tf := NewSimpleTransformer(tt.args.replaceMap, tt.args.colourMap)
+			tf := New(tt.args.replaceMap, tt.args.colourMap)
 			switch {
 			case !reflect.DeepEqual(tt.want.rplMap, tf.rplMap):
-				t.Errorf("NewSimpleTransformer().rplMap = %v, want %v", tf.rplMap, tt.want.rplMap)
+				t.Errorf("New().rplMap = %v, want %v", tf.rplMap, tt.want.rplMap)
 			case !reflect.DeepEqual(tt.want.colMap, tf.colMap):
-				t.Errorf("NewSimpleTransformer.colMap = %v, want %v", tf.colMap, tt.want.colMap)
+				t.Errorf("New.colMap = %v, want %v", tf.colMap, tt.want.colMap)
 			case !transformer.cmpSliceNoOrder(tf.palette, tt.want.palette):
-				t.Errorf("NewSimpleTransformer.palette = %#v, want %#v", tf.palette, tt.want.palette)
+				t.Errorf("New.palette = %#v, want %#v", tf.palette, tt.want.palette)
 			}
 		})
 	}
@@ -84,7 +84,7 @@ func TestSimpleTransformer_MakeIntermediate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewSimpleTransformer(constructorArgs.replaceMap, constructorArgs.colourMap)
+			s := New(constructorArgs.replaceMap, constructorArgs.colourMap)
 			if got := s.MakeIntermediate(tt.in); got != tt.want {
 				t.Errorf("MakeIntermediate() = %v, want %v", got, tt.want)
 			}
@@ -134,7 +134,7 @@ func TestSimpleTransformer_Transform(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewSimpleTransformer(constructorArgs.replaceMap, constructorArgs.colourMap)
+			s := New(constructorArgs.replaceMap, constructorArgs.colourMap)
 			if got := s.Transform(tt.in); got != tt.want {
 				t.Errorf("Transform() = %v, want %v", got, tt.want)
 			}

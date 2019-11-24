@@ -47,24 +47,23 @@ func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
 	return replaceMap, colourMap
 }
 
-// SimpleTransformer is a Transformer implementation that does basic replacement based transformation.
+// Transformer is a Transformer implementation that does basic replacement based transformation.
 // Colours are handled by way of a palette and a map to transform colours in that palette to the transformer specific
 // format
-type SimpleTransformer struct {
+type Transformer struct {
 	rplMap   map[rune]string
 	palette  color.Palette
 	colMap   map[color.Color]string
 	replacer *strings.Replacer
 }
 
-// NewSimpleTransformer constructs a SimpleTransformer from the given args. A colour palette will be automatically
+// New constructs a Transformer from the given args. A colour palette will be automatically
 // created from the colour map passed.
-func NewSimpleTransformer(replaceMap map[rune]string, colourMap map[color.Color]string) *SimpleTransformer {
+func New(replaceMap map[rune]string, colourMap map[color.Color]string) *Transformer {
 	var palette color.Palette
 	for col := range colourMap {
 		palette = append(palette, col)
 	}
-
 	var repl []string
 	for k, v := range replaceMap {
 		repl = append(repl, v, intermediate.SentinelString+string(k))
@@ -76,7 +75,7 @@ func NewSimpleTransformer(replaceMap map[rune]string, colourMap map[color.Color]
 
 	repl = append(repl, intermediate.SentinelString, intermediate.SSentinelString)
 
-	return &SimpleTransformer{
+	return &Transformer{
 		rplMap:   replaceMap,
 		palette:  palette,
 		colMap:   colourMap,
@@ -86,11 +85,11 @@ func NewSimpleTransformer(replaceMap map[rune]string, colourMap map[color.Color]
 }
 
 // Transform implements the Transformer interface. Applies the simple conversions setup in the constructor
-func (s *SimpleTransformer) Transform(in string) string {
+func (s *Transformer) Transform(in string) string {
 	return tokeniser.Map(in, s.rplMap, s.colourFn)
 }
 
-func (s *SimpleTransformer) colourFn(in color.Color) string {
+func (s *Transformer) colourFn(in color.Color) string {
 	if s.palette == nil || len(s.palette) == 0 {
 		return ""
 	}
@@ -98,7 +97,7 @@ func (s *SimpleTransformer) colourFn(in color.Color) string {
 	return s.colMap[s.palette.Convert(in)]
 }
 
-func (s *SimpleTransformer) reverseColour(in string) color.Color {
+func (s *Transformer) reverseColour(in string) color.Color {
 	for c, s := range s.colMap {
 		if s == in {
 			return c
@@ -109,6 +108,6 @@ func (s *SimpleTransformer) reverseColour(in string) color.Color {
 
 // MakeIntermediate uses a simple replace operation to convert from a transformer specific implementation to the
 // intermediate format
-func (s *SimpleTransformer) MakeIntermediate(in string) string {
+func (s *Transformer) MakeIntermediate(in string) string {
 	return s.replacer.Replace(in)
 }
