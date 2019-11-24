@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [0.4.7] - 2019-11-24
+## Fixed
+- Simple transformers no longer misbehave when given an empty replace
+
 ## [0.4.6] - 2019-11-24
 ## Added
 - A new transformer is available under the `minecraft` name. Mapped messages will be in the form of minecraft JSON.
@@ -216,6 +220,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.7]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/41e314f473987a85db1bff74aecbe2b878dc6462...0563e36d876550fa2e77413f2f43cbedb6389663
 [0.4.6]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/121712681fb22f0099251f83249bb8451b58f212...41e314f473987a85db1bff74aecbe2b878dc6462
 [0.4.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/933d526afe8f7c31d0c809d03ec2182b8d205d51...121712681fb22f0099251f83249bb8451b58f212
 [0.4.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7d083518df663bd8cd7b71f525c2c3624b69dfb7...933d526afe8f7c31d0c809d03ec2182b8d205d51
