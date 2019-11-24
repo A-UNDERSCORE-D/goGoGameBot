@@ -5,9 +5,26 @@ import (
 	"reflect"
 	"testing"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
+
+func cmpSliceNoOrder(s1, s2 []color.Color) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	seen := make(map[color.Color]int)
+	for i, v := range s1 {
+		seen[v]++
+		seen[s2[i]]++
+	}
+
+	for _, v := range seen {
+		if v%2 != 0 {
+			return false
+		}
+	}
+	return true
+}
 
 func TestNewSimpleTransformer(t *testing.T) {
 	type args struct {
@@ -41,7 +58,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 				t.Errorf("New().rplMap = %v, want %v", tf.rplMap, tt.want.rplMap)
 			case !reflect.DeepEqual(tt.want.colMap, tf.colMap):
 				t.Errorf("New.colMap = %v, want %v", tf.colMap, tt.want.colMap)
-			case !transformer.cmpSliceNoOrder(tf.palette, tt.want.palette):
+			case !cmpSliceNoOrder(tf.palette, tt.want.palette):
 				t.Errorf("New.palette = %#v, want %#v", tf.palette, tt.want.palette)
 			}
 		})
