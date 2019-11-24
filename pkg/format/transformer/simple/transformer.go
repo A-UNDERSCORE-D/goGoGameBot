@@ -66,6 +66,9 @@ func New(replaceMap map[rune]string, colourMap map[color.Color]string) *Transfor
 	}
 	var repl []string
 	for k, v := range replaceMap {
+		if v == "" {
+			continue
+		}
 		repl = append(repl, v, intermediate.SentinelString+string(k))
 	}
 

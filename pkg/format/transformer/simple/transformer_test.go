@@ -47,6 +47,17 @@ func TestNewSimpleTransformer(t *testing.T) {
 				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
 				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
+		}, {
+			name: "normal setup with empty strikethrough",
+			args: args{
+				replaceMap: map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "", intermediate.Reset: "RESET"},
+				colourMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
+			},
+			want: &Transformer{
+				rplMap:  map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "", intermediate.Reset: "RESET"},
+				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
+				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
+			},
 		},
 	}
 
