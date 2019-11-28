@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 - The MineCraft transformer no longer causes latent formatting issues when the first part of a message is formatted
 
+## Added
+- There is now a reconnect command to force a reconnection to the chat platform
+
 ## [0.4.7] - 2019-11-24
 ## Fixed
 - Simple transformers no longer misbehave when given an empty replace

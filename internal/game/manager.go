@@ -67,16 +67,17 @@ func (m *Manager) setupHooks() {
 
 // Manager manages games, and communication between them, eachother, and an interfaces.Bot
 type Manager struct {
-	rootConf    *config.Config
-	games       []interfaces.Game
-	gamesMutex  sync.RWMutex
-	bot         interfaces.Bot
-	Cmd         *command.Manager
-	stripMasks  []string
-	done        *sync.Cond
-	statusMutex sync.Mutex // covers both restarting and status
-	restarting  mutexTypes.Bool
-	status      mutexTypes.Int
+	rootConf     *config.Config
+	games        []interfaces.Game
+	gamesMutex   sync.RWMutex
+	bot          interfaces.Bot
+	reconnecting mutexTypes.Bool
+	Cmd          *command.Manager
+	stripMasks   []string
+	done         *sync.Cond
+	statusMutex  sync.Mutex // covers both restarting and status
+	restarting   mutexTypes.Bool
+	status       mutexTypes.Int
 	*log.Logger
 }
 
@@ -104,11 +105,16 @@ func (m *Manager) runBot() {
 		}
 		m.sendStatusMessageToAllGames("Chat connected.")
 
-		if m.status.Get() == normal {
+		if m.status.Get() != normal {
+			break
+		}
+
+		if !m.reconnecting.Get() {
+			m.reconnecting.Set(false)
 			m.sendStatusMessageToAllGames("Chat is disconnected. Reconnecting in 10 seconds")
 			time.Sleep(time.Second * 10)
 		} else {
-			break
+			m.sendStatusMessageToAllGames("Chat is disconnected due to a reconnect request")
 		}
 	}
 }
@@ -289,6 +295,8 @@ func (m *Manager) setupCommands() error {
 
 		statusHelp = "returns the status of the bot. If a list of games is provided as arguments, " +
 			"gets the status for each game. If all is provided as the first arg, all game's statuses are reported"
+
+		reconnHelp = "reconnects the bot to the chat layer. "
 	)
 
 	var errs []error
@@ -300,6 +308,7 @@ func (m *Manager) setupCommands() error {
 	errs = append(errs, m.Cmd.AddCommand("restart", 3, m.restartCmd, restartMHelp))
 	errs = append(errs, m.Cmd.AddCommand("reload", 3, m.reloadCmd, reloadHelp))
 	errs = append(errs, m.Cmd.AddCommand("status", 0, m.statusCmd, statusHelp))
+	errs = append(errs, m.Cmd.AddCommand("reconnect", 3, m.reconnectCmd, reconnHelp))
 
 	outErr := strings.Builder{}
 

@@ -172,3 +172,12 @@ func (m *Manager) statusCmd(data *command.Data) {
 		}
 	}
 }
+
+func (m *Manager) reconnectCmd(data *command.Data) {
+	m.reconnecting.Set(true)
+	msg := "reconnecting"
+	if len(data.Args) > 0 {
+		msg = strings.Join(data.Args, " ")
+	}
+	m.bot.Disconnect(msg)
+}
