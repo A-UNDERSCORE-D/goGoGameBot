@@ -107,3 +107,23 @@ func (x *Time) Set(thing time.Time) {
 	x.x = thing
 	x.m.Unlock()
 }
+
+// Arbitrary is a interface{} wrapped with a sync.RWMutex.
+type Arbitrary struct {
+	x interface{}
+	m sync.RWMutex
+}
+
+// Get fetches the stored value in a concurrent safe manner
+func (x *Arbitrary) Get() interface{} {
+	x.m.RLock()
+	defer x.m.RUnlock()
+	return x.x
+}
+
+// Set sets the stored value in a concurrent safe manner
+func (x *Arbitrary) Set(thing interface{}) {
+	x.m.Lock()
+	x.x = thing
+	x.m.Unlock()
+}
