@@ -50,11 +50,15 @@ var tests = []struct {
 		name:  "url test 3",
 		input: "this is a test https://google.com",
 		want:  `[{"text":"this is a test "},{"text":"https://google.com","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://google.com"}}]`,
+	}, {
+		name:  "url leader",
+		input: "https://github.com/ this is a test",
+		want:  `[{"text":""},{"text":"https://github.com/","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://github.com/"}},{"text":" this is a test"}]`,
 	},
 	{
 		name:  "test using actual line",
 		input: "$c666666$i[#totallynotgames]$rtest message",
-		want:  `[{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},{"text":"test message","color":"reset"}]`,
+		want:  `[{"text":""},{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},{"text":"test message","color":"reset"}]`,
 	},
 }
 
@@ -75,8 +79,8 @@ func findFirstDiff(s1, s2 string) {
 		}
 	}
 	if differencesStartAt > 0 {
-		fmt.Println(shorter)
-		fmt.Println(longer)
+		fmt.Println("1:", shorter)
+		fmt.Println("2:", longer)
 		fmt.Println(strings.Repeat(" ", differencesStartAt) + "^")
 	}
 }

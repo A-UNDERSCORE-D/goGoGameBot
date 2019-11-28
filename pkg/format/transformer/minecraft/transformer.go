@@ -69,6 +69,9 @@ type clickEvent struct {
 	Value  string `json:"value"`
 }
 
+// TODO: this needs to be made to not omitEmpty because minecraft is dumb. Alternatively, an empty text element at the start
+// 		 could work
+
 type jsonSection struct {
 	Text          string      `json:"text"` // The text to actually display
 	Bold          bool        `json:"bold,omitempty"`
@@ -77,6 +80,10 @@ type jsonSection struct {
 	Strikethrough bool        `json:"strikethrough,omitempty"`
 	Colour        string      `json:"color,omitempty"` // Why cant people spell colour?
 	ClickEvent    *clickEvent `json:"clickEvent,omitempty"`
+}
+
+func (j *jsonSection) hasFormatting() bool {
+	return j.Bold || j.Italic || j.Underline || j.Strikethrough || j.Colour != "" || j.ClickEvent != nil
 }
 
 func getJSONColour(s *state) string {
@@ -171,6 +178,14 @@ func (Transformer) Transform(in string) string {
 			s.resetColour = true
 		}
 	}
+
+	if len(out) > 1 && out[0].hasFormatting() {
+		// Because MineCraft has some dumb as shit rules when it comes to first thing in a slice, lets (if we have to)
+		// add an empty text value with no formatting that can be the default to avoid
+		// "whoops everything has this formatting" issues
+		out = append([]jsonSection{{}}, out...)
+	}
+
 	var res []byte
 	var err error
 	switch len(out) {
