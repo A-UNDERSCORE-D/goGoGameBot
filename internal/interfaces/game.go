@@ -49,7 +49,7 @@ type StopOrKiller interface {
 
 // Runner holds methods to Run a process and query the status
 type Runner interface {
-	Run()
+	Run() error
 	IsRunning() bool
 }
 

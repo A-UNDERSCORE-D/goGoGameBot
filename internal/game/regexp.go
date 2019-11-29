@@ -77,6 +77,10 @@ type Regexp struct {
 	sendToLocalGame  bool
 }
 
+func (r *Regexp) String() string {
+	return fmt.Sprintf("%q with formatter %s", r.regexp, r.template.CompiledFormat.Name())
+}
+
 func (r *Regexp) matchToMap(line string) (map[string]string, bool) {
 	out := make(map[string]string)
 
@@ -184,8 +188,7 @@ func (r *RegexpManager) UpdateFromConf(res []config.Regexp, root *template.Templ
 		if err != nil {
 			return err
 		}
-
-		r.game.Debugf("adding regexp %#v", re)
+		r.game.Debugf("adding regexp %s", re)
 		reList = append(reList, re)
 	}
 

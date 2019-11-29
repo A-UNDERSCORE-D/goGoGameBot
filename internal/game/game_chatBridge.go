@@ -2,7 +2,9 @@ package game
 
 import (
 	"strings"
+	"text/template"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
@@ -19,6 +21,28 @@ type chatBridge struct {
 	channels      []string
 	format        formatSet
 	transformer   transformer.Transformer
+}
+
+func (c *chatBridge) update(gc config.Game, rootFmt *template.Template) {
+	conf := gc.Chat
+	c.shouldBridge = !conf.DontBridge
+	c.dumpStdout = conf.DumpStdout
+	c.dumpStderr = conf.DumpStderr
+	c.allowForwards = !conf.DontAllowForwards
+	c.channels = conf.BridgedChannels
+	gf := &c.format
+	f := &conf.Formats
+	gf.root = rootFmt
+	gf.message = f.Message
+	gf.join = f.Join
+	gf.part = f.Part
+	gf.nick = f.Nick
+	gf.quit = f.Quit
+	gf.kick = f.Kick
+	gf.external = f.External
+	if gf.storage == nil {
+		gf.storage = new(format.Storage)
+	}
 }
 
 type dataForFmt struct {
@@ -73,7 +97,7 @@ func (g *Game) makeDataForFormat(source, target, msg string) *dataForFmt {
 }
 
 func (g *Game) shouldBridge(target string) bool {
-	if !g.chatBridge.shouldBridge || !g.process.IsRunning() {
+	if !g.chatBridge.shouldBridge || !g.transport.IsRunning() {
 		return false
 	}
 
@@ -184,7 +208,7 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	g.checkError(g.SendFormattedLine(data, g.chatBridge.format.external))
 }
 
-// SendFormattedLine executes the given format with the given data and sends the result to the process's STDIN
+// SendFormattedLine executes the given format with the given data and sends the result to the transport's STDIN
 func (g *Game) SendFormattedLine(d interface{}, fmt *format.Format) error {
 	if !g.IsRunning() {
 		return nil

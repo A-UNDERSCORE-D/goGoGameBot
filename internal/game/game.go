@@ -3,17 +3,14 @@ package game
 import (
 	"errors"
 	"fmt"
-	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"text/template"
 	"time"
 
-	"github.com/anmitsu/go-shlex"
-
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
@@ -71,11 +68,11 @@ type channelPair struct {
 	msg   string
 }
 
-// Game represents a game server and its process
+// Game represents a game server and its transport
 type Game struct {
 	*log.Logger
 	name            string
-	process         *process.Process
+	transport       transport.Transport
 	manager         *Manager
 	status          mutexTypes.Int
 	autoRestart     int
@@ -85,7 +82,8 @@ type Game struct {
 	preRollRe       *regexp.Regexp
 	preRollReplace  string
 	controlChannels channelPair
-	chatBridge      chatBridge
+	chatBridge      *chatBridge
+	allowForwards   bool
 }
 
 // Sentinel errors
@@ -95,27 +93,21 @@ var (
 )
 
 func (g *Game) runStep() bool {
-	if err := g.process.Reset(); err != nil {
-		g.manager.Error(fmt.Errorf("error occurred while resetting process. not restarting: %s", err))
+	g.sendToMsgChan("starting")
+	g.status.Set(normal)
+	done := make(chan struct{})
+	go g.monitorStdIO(done)
+	code, humanStatus, err := g.transport.Run()
+	done <- struct{}{}
+	if err != nil {
+		if !errors.Is(err, util.ErrorAlreadyRunning) {
+			return err
+		}
 		return false
 	}
 
-	shouldBreak := false
-	cleanExit, err := g.runGame()
-
-	if errors.Is(err, ErrAlreadyRunning) {
-		shouldBreak = true
-	} else if err != nil && !strings.HasPrefix(err.Error(), "exit status") {
-		g.manager.Error(err)
-	}
-
-	if !cleanExit {
-		shouldBreak = true
-	}
-
-	g.sendToMsgChan(g.process.GetReturnStatus())
-
-	if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart <= 0 {
+	g.sendToMsgChan(humanStatus)
+	if g.status.Get() == killed || code != 0 || g.autoRestart <= 0 {
 		return false
 	}
 
@@ -129,30 +121,6 @@ func (g *Game) Run() {
 		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
 		time.Sleep(time.Second * time.Duration(g.autoRestart))
 	}
-}
-
-// runGame does the actual process handling for the game. It returns whether or not the process exited cleanly,
-// and an error
-func (g *Game) runGame() (bool, error) {
-	if g.IsRunning() {
-		g.sendToMsgChan("cannot start an already running game")
-		return false, ErrAlreadyRunning
-	}
-
-	g.sendToMsgChan("starting")
-	g.status.Set(normal)
-
-	if err := g.process.Start(); err != nil {
-		return false, err
-	}
-
-	g.monitorStdIO()
-
-	if err := g.process.WaitForCompletion(); err != nil && g.status.Get() != killed {
-		return true, err
-	}
-
-	return true, nil
 }
 
 func (g *Game) validateConfig(conf *config.Game) error {
@@ -197,16 +165,15 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		preRollRe = re
 	}
 
+	if g.chatBridge == nil {
+		g.chatBridge = new(chatBridge)
+	}
+
+	g.chatBridge.update(conf, root)
+
 	if err := g.setupTransformer(conf); err != nil {
 		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
 	}
-
-	wd := conf.WorkingDir
-	if wd == "" {
-		wd = path.Dir(conf.Path)
-		g.Logger.Infof("game %q's working directory inferred to %q from binary path %q", g.GetName(), wd, conf.Path)
-	}
-
 	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
 
 	for _, cmd := range conf.Commands {
@@ -215,20 +182,12 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		}
 	}
 
-	procArgs, err := shlex.Split(conf.Args, true)
-	if err != nil {
-		return fmt.Errorf("could not parse game arguments: %w", err)
-	}
-
-	if g.process == nil {
-		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone(), conf.Env, !conf.DontCopyEnv)
+	if g.transport == nil {
+		t, err := transport.GetTransport(conf.Transport.Type, conf.Transport, g.Logger.Clone())
 		if err != nil {
 			return err
 		}
-
-		g.process = p
-	} else {
-		g.process.UpdateCmd(conf.Path, procArgs, wd, conf.Env, !conf.DontCopyEnv)
+		g.transport = t
 	}
 
 	g.autoStart.Set(conf.AutoStart)
@@ -238,30 +197,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	g.controlChannels.admin = conf.ControlChannels.Admin
 	g.controlChannels.msg = conf.ControlChannels.Msg
 
-	// Start of chat bridge configs
-	g.chatBridge.shouldBridge = !conf.Chat.DontBridge
-	g.chatBridge.dumpStdout = conf.Chat.DumpStdout
-	g.chatBridge.dumpStderr = conf.Chat.DumpStderr
-	g.chatBridge.allowForwards = !conf.Chat.DontAllowForwards
-	g.chatBridge.channels = conf.Chat.BridgedChannels
-	gf := &g.chatBridge.format
-	f := &conf.Chat.Formats
-	gf.message = f.Message
-	gf.join = f.Join
-	gf.part = f.Part
-	gf.nick = f.Nick
-	gf.quit = f.Quit
-	gf.kick = f.Kick
-	gf.external = f.External
-
-	if gf.storage == nil {
-		gf.storage = new(format.Storage)
-	}
-
 	g.preRollRe = preRollRe
 	g.preRollReplace = conf.PreRoll.Replace
-
-	g.chatBridge.format.root = root
 
 	g.Info("reload completed successfully")
 
@@ -336,10 +273,10 @@ func (g *Game) String() string {
 	return fmt.Sprintf("game.Game at %p with manager %s", g, g.manager)
 }
 
-// StopOrKillTimeout sends SIGTERM to the running process. If the game is still running after the timeout has passed,
-// the process is sent SIGKILL
+// StopOrKillTimeout sends SIGTERM to the running transport. If the game is still running after the timeout has passed,
+// the transport is sent SIGKILL
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
-	if !g.process.IsRunning() {
+	if !g.transport.IsRunning() {
 		if g.manager.status.Get() != shutdown {
 			g.sendToMsgChan("cannot stop a non-running game")
 		}
@@ -349,8 +286,7 @@ func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 
 	g.sendToMsgChan("stopping")
 	g.status.Set(killed)
-
-	return g.process.StopOrKillTimeout(timeout)
+	return g.transport.StopOrKillTimeout(timeout)
 }
 
 // StopOrKill sends SIGINT to the running game, and after 30 seconds if the game has not closed on its own, it sends
