@@ -138,12 +138,12 @@ func runCLI(gm *game.Manager, rl *readline.Instance) {
 }
 
 func getConn(conf *config.Config, logger *log.Logger) (interfaces.Bot, error) {
-	switch strings.ToLower(conf.ConnConfig.ConnType) {
+	switch strings.ToLower(conf.ConnConfig.Type) {
 	case "irc":
 		return irc.New(conf.ConnConfig.Config, logger.Clone().SetPrefix("IRC"))
 	case "null":
 		return nullconn.New(logger.Clone().SetPrefix("null")), nil
 	default:
-		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.ConnType)
+		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.Type)
 	}
 }
