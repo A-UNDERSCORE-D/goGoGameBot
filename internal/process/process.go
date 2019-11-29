@@ -80,8 +80,6 @@ func (p *Process) setupCmd() error {
 	cmd := exec.Command(p.commandString, p.argListString...)
 	cmd.Dir = p.workingDir
 	cmd.Env = p.cmdEnv
-	p.log.Info(fmt.Sprintf("%#v", p.cmdEnv))
-
 	p.commandMutex.Unlock()
 
 	stdin, err := cmd.StdinPipe()
