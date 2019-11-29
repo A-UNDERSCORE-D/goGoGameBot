@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/xml"
-	"fmt"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
@@ -18,15 +17,16 @@ type GameManager struct {
 type Game struct {
 	XMLName xml.Name `xml:"game"`
 
-	Name        string   `xml:"name,attr"`
-	AutoRestart int      `xml:"auto_restart,attr"`
-	AutoStart   bool     `xml:"auto_start,attr"`
-	Path        string   `xml:"binary"`
-	WorkingDir  string   `xml:"working_dir"`
-	Args        string   `xml:"args"`
-	Env         []string `xml:"environment"`
-	DontCopyEnv bool     `xml:"dont_copy_env,attr"`
-	PreRoll     struct {
+	Name        string          `xml:"name,attr"`
+	AutoRestart int             `xml:"auto_restart,attr"`
+	AutoStart   bool            `xml:"auto_start,attr"`
+	Transport   TransportConfig `xml:"transport"` // Has its own magic for unmarshaling
+	// Path        string   `xml:"binary"`
+	// WorkingDir  string   `xml:"working_dir"`
+	// Args        string   `xml:"args"`
+	// Env         []string `xml:"environment"`
+	// DontCopyEnv bool     `xml:"dont_copy_env,attr"`
+	PreRoll struct {
 		Regexp  string `xml:"regexp"`
 		Replace string `xml:"replace"`
 	} `xml:"pre_roll"`
@@ -59,37 +59,21 @@ type Game struct {
 	} `xml:"chat"`
 }
 
-// TransformerConfig holds configs for various implementations of Transformer.transformer
-type TransformerConfig struct {
-	Type   string `xml:"-"`
-	Config string `xml:"-"`
+type TransportConfig struct {
+	ConfigHolder
 }
 
-// UnmarshalXML Implements the Unmarshaler interface in the XML library. Specifically
-// this is designed to unmarshal a single attr while maintaining the content of the rest of the tag for
-// later unmarshalinmg
+func (t *TransportConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	return t.ConfigHolder.UnmarshalXML("transport", "process", d, start)
+}
+
+// TransformerConfig holds configs for various implementations of Transformer.transformer
+type TransformerConfig struct {
+	ConfigHolder
+}
+
 func (t *TransformerConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if start.Name.Local != "transformer" {
-		return nil
-	}
-
-	t.Type = "strip" // default to a strip transformer
-
-	for _, attr := range start.Attr {
-		if attr.Name.Local == "type" {
-			t.Type = attr.Value
-			break
-		}
-	}
-
-	res, err := reconstructXML(d, start)
-	if err != nil {
-		return fmt.Errorf("could not reconstruct XML for TransformerConfig: %w", err)
-	}
-
-	t.Config = res
-
-	return nil
+	return t.ConfigHolder.UnmarshalXML("transformer", "strip", d, start)
 }
 
 // ExtraFormat represents an additional format found in config.Game.Chat.Format
