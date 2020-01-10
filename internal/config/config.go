@@ -22,24 +22,7 @@ type ConnConfig struct {
 // UnmarshalXML implements the unmarshaler interface in the XML package. In this instance, it takes the XML token stream
 // and reconstructs it, storing the result in ConnConfig.Config, for later parsing by the named ConnType's constructor
 func (c *ConnConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return c.ConfigHolder.UnmarshalXML("conn_config", "", d, start)
-	// if start.Name.Local != "conn_config" {
-	// 	return nil
-	// }
-	// for _, attr := range start.Attr {
-	// 	if attr.Name.Local == "conn_type" {
-	// 		c.ConnType = attr.Value
-	// 		break
-	// 	}
-	// }
-	//
-	// conf, err := reconstructXML(d, start)
-	// if err != nil {
-	// 	return fmt.Errorf("could not unmarshal XML for ConnConfig: %w", err)
-	// }
-	//
-	// c.Config = conf
-	// return nil
+	return c.ConfigHolder.MagicUnmarshalXML("conn_config", "", d, start)
 }
 
 func readAllFromFile(name string) ([]byte, error) {

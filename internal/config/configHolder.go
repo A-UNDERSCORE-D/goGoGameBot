@@ -5,15 +5,18 @@ import (
 	"fmt"
 )
 
+// ConfigHolder is a special construct that allows for partial unmarshaling of an XML object
+// Specifically, it is designed to allow configs to specify a type, and for code to change
+// objects used based on that type. Such as for Transport or Bot implementations
 type ConfigHolder struct {
 	Type   string // the type of the config we're holding
 	Config string // the config itself
 }
 
-// UnmarshalXML Implements the Unmarshaler interface in the XML library (with tweaks). Specifically
+// MagicUnmarshalXML Implements the Unmarshaler interface in the XML library (with tweaks). Specifically
 // this is designed to unmarshal a single attr while maintaining the content of the rest of the tag for
-// later unmarshalinmg
-func (c *ConfigHolder) UnmarshalXML(name, defaultType string, d *xml.Decoder, start xml.StartElement) error {
+// later unmarshaling
+func (c *ConfigHolder) MagicUnmarshalXML(name, defaultType string, d *xml.Decoder, start xml.StartElement) error {
 	if start.Name.Local != name {
 		return nil
 	}

@@ -64,7 +64,7 @@ type TransportConfig struct {
 }
 
 func (t *TransportConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return t.ConfigHolder.UnmarshalXML("transport", "process", d, start)
+	return t.ConfigHolder.MagicUnmarshalXML("transport", "process", d, start)
 }
 
 // TransformerConfig holds configs for various implementations of Transformer.transformer
@@ -73,7 +73,7 @@ type TransformerConfig struct {
 }
 
 func (t *TransformerConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return t.ConfigHolder.UnmarshalXML("transformer", "strip", d, start)
+	return t.ConfigHolder.MagicUnmarshalXML("transformer", "strip", d, start)
 }
 
 // ExtraFormat represents an additional format found in config.Game.Chat.Format
