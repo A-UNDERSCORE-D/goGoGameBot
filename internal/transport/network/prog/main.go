@@ -117,17 +117,10 @@ func notNil(format string, err error) {
 const maxCache = 1000 // Max size for caches before lines are dropped
 
 func parseConfig(confPath string) (*network.Config, error) {
-	f, err := os.Open(confPath)
+	data, err := ioutil.ReadFile(confPath)
 	if err != nil {
 		return nil, err
 	}
-
-	defer f.Close()
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	f.Close()
 
 	conf := &network.Config{}
 

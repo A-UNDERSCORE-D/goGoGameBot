@@ -55,6 +55,7 @@ func getListener(conf *network.Config) (net.Listener, error) {
 	if conf.IsUnix {
 		networkType = "unix"
 	}
+
 	listener, err := net.Listen(networkType, conf.Address)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "bind: address already in use") && conf.IsUnix {
@@ -94,6 +95,7 @@ func (p *Proc) reset() error {
 	if err := p.process.Reset(); err != nil {
 		return err
 	}
+
 	p.stdout = p.stdout[:0]
 	p.stderr = p.stderr[:0]
 	p.doneChan = make(chan struct{})
@@ -122,6 +124,17 @@ func makeCopy(src []string) (out []string) {
 	out = make([]string, len(src))
 	copy(out, src)
 	return out
+}
+
+func getLinesAfter(target string, slice []string) []string {
+	idx := findReverse(slice, target)
+	if idx == -1 {
+		return makeCopy(slice)
+	}
+	if len(slice) > idx {
+		return makeCopy(slice[idx+1:])
+	}
+	return []string{}
 }
 
 // GetStdout gets the current buffered stdout lines. The lastSeen arg is the place from which to start
@@ -160,6 +173,9 @@ func (p *Proc) getStd(stdout bool, lastSeen string) (outSlice []string, err erro
 
 	if lastSeen == "" && len(*slice) > 0 {
 		return makeCopy(*slice), nil
+	} else if !p.process.IsRunning() {
+		// We have a last seen, BUT, we're also not expecting any more lines. Therefore, return what we have
+		return getLinesAfter(lastSeen, *slice), err
 	}
 
 	// Loop as suggested by docs: https://golang.org/pkg/sync/#Cond.Wait
@@ -172,13 +188,7 @@ func (p *Proc) getStd(stdout bool, lastSeen string) (outSlice []string, err erro
 	}
 
 	// okay we have new lines. Lets send them back
-	startIdx := findReverse(*slice, lastSeen)
-	if startIdx == -1 {
-		// we ended up here because we were waiting on ANY line, therefore copy it all like above
-		return makeCopy(*slice), err
-	}
-
-	return makeCopy((*slice)[startIdx:]), err
+	return getLinesAfter(lastSeen, *slice), err
 }
 
 // GetStatus returns the current state of the transport

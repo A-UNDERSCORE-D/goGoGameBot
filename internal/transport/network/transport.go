@@ -258,14 +258,22 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 		}
 	}()
 
+	// TODO: either ensure that start behaves well when the other side is already running, or otherwise deal with that
+
 	if err := t.start(); err != nil {
 		return -1, "", fmt.Errorf("could not start game: %w", err)
 	}
 
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
 	stdioCtx, stdioCancel := context.WithCancel(context.Background())
-	defer stdioCancel()
 
-	if err := t.monitorStdio(stdioCtx); err != nil {
+	defer func() {
+		stdioCancel()
+		wg.Wait()
+	}()
+
+	if err := t.monitorStdio(stdioCtx, wg); err != nil {
 		return -1, "", err
 	}
 
@@ -298,23 +306,23 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 }
 
 // monitorStdio starts monitoring of stderr and stdout
-func (t *Transport) monitorStdio(ctx context.Context) error {
-	if err := t.setupStdMonitor(ctx, true); err != nil {
+func (t *Transport) monitorStdio(ctx context.Context, wg *sync.WaitGroup) error {
+	if err := t.setupStdMonitor(ctx, true, wg); err != nil {
 		return fmt.Errorf("could not monitor stdout on game: %w", err)
 	}
-	if err := t.setupStdMonitor(ctx, false); err != nil {
+	if err := t.setupStdMonitor(ctx, false, wg); err != nil {
 		return fmt.Errorf("could not monitor stderr on game: %w", err)
 	}
 	return nil
 }
 
 // setupStdMonitor monitors either stdin/out over the RPC connection. It starts its own goroutine after initial setup
-func (t *Transport) setupStdMonitor(ctx context.Context, stdout bool) error {
+func (t *Transport) setupStdMonitor(ctx context.Context, stdout bool, wg *sync.WaitGroup) error {
 	if !t.isConnected.Get() {
 		return errors.New("cannot monitor stdio on a non-running game")
 	}
 
-	go t.monitorStd(ctx, stdout)
+	go t.monitorStd(ctx, stdout, wg)
 
 	return nil
 }
@@ -334,14 +342,16 @@ func (t *Transport) getStdLines(ctx context.Context, methodName, lastSeen string
 	}
 }
 
-func (t *Transport) monitorStd(ctx context.Context, stdout bool) {
+func (t *Transport) monitorStd(ctx context.Context, stdout bool, wg *sync.WaitGroup) {
 	methodName := "GetStdout"
 	if !stdout {
 		methodName = "GetStderr"
 	}
 	t.logger.Tracef("monitorStd: monitoring %s started", methodName)
 	lastLine := ""
-	defer func() { t.logger.Trace("monitorStd(): exiting") }()
+
+	defer func() { t.logger.Tracef("monitorStd(%t): exiting", stdout) }()
+	defer wg.Done()
 
 	for {
 		lines, err := t.getStdLines(ctx, methodName, lastLine)
@@ -349,19 +359,27 @@ func (t *Transport) monitorStd(ctx context.Context, stdout bool) {
 			if errors.Is(err, context.Canceled) {
 				break
 			}
-			t.logger.Warnf("got an error from getStdLines: %w", err)
+			t.logger.Warnf("got an error from getStdLines: %s", err)
 		}
 
-		for _, l := range lines {
-			t.handleStdioLine(l, stdout)
-		}
+		t.handleStdioLines(lines, stdout)
 		if len(lines) > 0 {
 			lastLine = lines[len(lines)-1]
 		}
 	}
+
+	// Final clean up and last line fetch
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	lines, err := t.getStdLines(ctx, methodName, lastLine)
+	if err != nil && err.Error() != "not running" {
+		t.logger.Warnf("[%t] got an error from getStdLines: %s", stdout, err)
+		return
+	}
+	t.handleStdioLines(lines, stdout)
 }
 
-func (t *Transport) handleStdioLine(line string, isStdout bool) {
+func (t *Transport) handleStdioLines(lines []string, isStdout bool) {
 	c := t.getStdioChan(isStdout)
 
 	defer func() {
@@ -377,8 +395,9 @@ func (t *Transport) handleStdioLine(line string, isStdout bool) {
 			panic(err)
 		}
 	}()
-
-	c <- []byte(line)
+	for _, l := range lines {
+		c <- []byte(l)
+	}
 }
 
 // IsRunning returns whether or not the underlying process is currently running. For more information use GetStatus.

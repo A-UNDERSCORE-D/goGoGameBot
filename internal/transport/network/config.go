@@ -10,10 +10,10 @@ import (
 // Config is a config for a networkTransport
 type Config struct {
 	util.BaseConfig
-	Name            xml.Name `xml:"config"`
-	Address         string   `xml:"address"`
-	StartLocal      bool     `xml:"start_local"`
-	LocalWorkingDir string   `xml:"local_working_dir"`
-	IsUnix          bool     `xml:"is_unix,attr"`
-	TLS             bool     `xml:"tls,attr"`
+	Name       xml.Name `xml:"config"`
+	Address    string   `xml:"address"`
+	StartLocal bool     `xml:"start_local"`
+	WorkingDir string   `xml:"working_dir"`
+	IsUnix     bool     `xml:"is_unix,attr"`
+	TLS        bool     `xml:"tls,attr"`
 }
