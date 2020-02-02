@@ -121,7 +121,6 @@ func parseConfig(confPath string) (*network.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	conf := &network.Config{}
 
 	err = xml.Unmarshal(data, conf)
@@ -135,7 +134,7 @@ func getProcess(conf *network.Config) (*process.Process, error) {
 	workingDir := conf.WorkingDirectory
 	if workingDir == "" {
 		workingDir = path.Dir(*configPath)
-		logger.Infof("config directory inferred to %s from %q", workingDir, *configPath)
+		logger.Infof("working directory inferred to %s from %q", workingDir, *configPath)
 	}
 
 	procArgs, err := shlex.Split(conf.Args, true)

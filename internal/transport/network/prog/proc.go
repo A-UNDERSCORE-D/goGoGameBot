@@ -46,6 +46,7 @@ type Proc struct {
 
 	// TODO: Disconnection Message (eg if we're disconnected from the server on the other side)
 	// TODO: rehash/reset config method
+	// TODO: message IDs of some sort, for when a message is repeated often
 
 	doneChan chan struct{}
 }

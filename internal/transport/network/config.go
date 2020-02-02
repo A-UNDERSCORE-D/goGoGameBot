@@ -13,7 +13,6 @@ type Config struct {
 	Name       xml.Name `xml:"config"`
 	Address    string   `xml:"address"`
 	StartLocal bool     `xml:"start_local"`
-	WorkingDir string   `xml:"working_dir"`
 	IsUnix     bool     `xml:"is_unix,attr"`
 	TLS        bool     `xml:"tls,attr"`
 }
