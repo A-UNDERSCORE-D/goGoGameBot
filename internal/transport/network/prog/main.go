@@ -30,51 +30,6 @@ var (
 	// TODO: Allow passing config by means of an RPC call? at least after the first one
 )
 
-/* func main2() {
-	c, err := parseConfig("./config_test.xml")
-	if err != nil {
-		panic(err)
-	}
-	p, err := getProcess(c)
-	if err != nil {
-		panic(err)
-	}
-
-	proc := newProc(c, p, logger.Clone().SetPrefix("TEST"))
-
-	one, two := net.Pipe()
-	rpc.RegisterName("proc", proc)
-
-	go rpc.ServeConn(one)
-	client := rpc.NewClient(two)
-
-	for {
-		if err := client.Call("proc.RPCStartGame", struct{}{}, &struct{}{}); err != nil {
-			panic(err)
-		}
-
-		lastLine := ""
-
-		for {
-			var out []string
-			if err := client.Call("proc.GetStdout", lastLine, &out); err != nil {
-				if err.Error() == "not running" {
-					fmt.Println("expected")
-					break
-				}
-				logger.Warnf("error while trying to get stdout: %s", err)
-			}
-
-			logger.Infof("lines returned: %#v", out)
-			lastLine = out[len(out)-1]
-		}
-
-		fmt.Println("Sleeping, then restarting")
-		time.Sleep(time.Second)
-	}
-}
-*/
-
 func main() {
 	pflag.Parse()
 	conf, err := parseConfig(*configPath)
@@ -83,10 +38,13 @@ func main() {
 	notNil("could not create process: %s", err)
 	listener, err := getListener(conf)
 	notNil("could not get listener: %s", err)
+
 	defer listener.Close()
 
 	sigchan := make(chan os.Signal, 10)
+
 	go func() { <-sigchan; listener.Close(); os.Exit(0) }()
+
 	signal.Notify(sigchan, os.Interrupt)
 
 	proc := &Proc{
@@ -98,12 +56,14 @@ func main() {
 	}
 
 	notNil("could not register RPC: %s", rpc.RegisterName(protocol.RPCName, proc))
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			proc.log.Warnf("failed to accept connection: %s", err)
 			return
 		}
+
 		go rpc.ServeConn(conn)
 	}
 }
