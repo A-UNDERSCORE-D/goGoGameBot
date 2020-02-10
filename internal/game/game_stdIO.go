@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"sync"
 )
 
 func (g *Game) watchStdinChan() {
-	for {
-		toSend := <-g.stdinChan
+	for toSend := range g.stdinChan {
 		toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
 		if _, err := g.transport.Write(toSend); err != nil {
 			g.manager.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.name, err))
@@ -31,28 +31,22 @@ func (g *Game) WriteString(s string) (n int, err error) {
 	return g.Write([]byte(s))
 }
 
-func (g *Game) monitorStdIO(done chan struct{}) {
+func (g *Game) monitorStdIO(start chan struct{}, wg *sync.WaitGroup) {
+	<-start
 	if !g.IsRunning() {
 		g.manager.Error(errors.New(g.prefixMsg("cannot watch stdio on a non-running game")))
+		return
 	}
-	stdout := g.transport.Stdout()
-	stderr := g.transport.Stderr()
-	for {
-		select {
-		case l, ok := <-stdout:
-			if !ok {
-				break
-			}
-			g.handleStdIO(string(l), true)
-		case l, ok := <-stderr:
-			if !ok {
-				break
-			}
-			g.handleStdIO(string(l), false)
-		case <-done:
-			break
+
+	monitorChan := func(c <-chan []byte, stdout bool, wg *sync.WaitGroup) {
+		defer wg.Done()
+		for b := range c {
+			g.handleStdIO(string(b), stdout)
 		}
 	}
+
+	go monitorChan(g.transport.Stdout(), true, wg)
+	go monitorChan(g.transport.Stderr(), false, wg)
 }
 
 const (

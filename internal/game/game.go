@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -95,12 +96,14 @@ var (
 func (g *Game) runStep() bool {
 	g.sendToMsgChan("starting")
 	g.status.Set(normal)
-	done := make(chan struct{})
-	go g.monitorStdIO(done)
-	code, humanStatus, err := g.transport.Run()
-	done <- struct{}{}
-	if err != nil {
-		if !errors.Is(err, util.ErrorAlreadyRunning) {
+
+	start := make(chan struct{})
+	wg := new(sync.WaitGroup)
+	wg.Add(2) // 1 for stdout, 1 for stderr
+	go g.monitorStdIO(start, wg)
+	code, humanStatus, err := g.transport.Run(start)
+	wg.Wait()
+	if err != nil && !(errors.Is(err, util.ErrorAlreadyRunning) || strings.HasPrefix(err.Error(), "exit status")) {
 			return err
 		}
 		return false

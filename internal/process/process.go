@@ -42,8 +42,9 @@ type Process struct {
 	workingDir    string
 	cmdEnv        []string
 	commandMutex  sync.Mutex
-	Stderr        io.ReadCloser
-	Stdout        io.ReadCloser
+	stdioWg       *sync.WaitGroup
+	Stderr        io.Reader
+	Stdout        io.Reader
 	Stdin         io.WriteCloser
 	StdinMutex    sync.Mutex
 	DoneChan      chan bool
@@ -77,9 +78,10 @@ func (p *Process) UpdateCmd(command string, args []string, workingDir string, en
 func (p *Process) setupCmd() error {
 	p.commandMutex.Lock()
 
-	cmd := exec.Command(p.commandString, p.argListString...)
+	cmd := exec.Command(p.commandString, p.argListString...) //nolint:gosec // its intentional
 	cmd.Dir = p.workingDir
 	cmd.Env = p.cmdEnv
+
 	p.commandMutex.Unlock()
 
 	stdin, err := cmd.StdinPipe()
@@ -87,21 +89,23 @@ func (p *Process) setupCmd() error {
 		return err
 	}
 
-	stdout, err := cmd.StdoutPipe()
+	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
 	}
 
-	stderr, err := cmd.StderrPipe()
+	stdErr, err := cmd.StderrPipe()
 	if err != nil {
 		return err
 	}
+
+	p.stdioWg = new(sync.WaitGroup)
+	p.stdioWg.Add(2)
 
 	p.cmd = cmd // TODO: racy on really quick restarts?
 	p.Stdin = stdin
-	p.Stdout = stdout
-	p.Stderr = stderr
-
+	p.Stdout = waitGroupIoCopy(p.stdioWg, stdOut)
+	p.Stderr = waitGroupIoCopy(p.stdioWg, stdErr)
 	return nil
 }
 
@@ -206,6 +210,7 @@ func (p *Process) WriteString(toWrite string) (int, error) {
 // WaitForCompletion blocks until the Process's command has completed. If an error occurs while waiting, it is returned
 func (p *Process) WaitForCompletion() error {
 	defer close(p.DoneChan)
+	p.stdioWg.Wait()
 	err := p.cmd.Wait()
 	p.hasExited.Set(true)
 
