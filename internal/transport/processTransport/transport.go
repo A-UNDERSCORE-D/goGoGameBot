@@ -147,7 +147,7 @@ func (p *ProcessTransport) StopOrKill() error {
 }
 
 func (p *ProcessTransport) StopOrKillTimeout(duration time.Duration) error {
-	if p.IsRunning() {
+	if !p.IsRunning() {
 		return util.ErrorNotRunning
 	}
 	return p.process.StopOrKillTimeout(duration)
