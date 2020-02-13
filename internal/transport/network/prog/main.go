@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"sync"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
@@ -47,13 +46,7 @@ func main() {
 
 	signal.Notify(sigchan, os.Interrupt)
 
-	proc := &Proc{
-		process:    p,
-		conf:       conf,
-		log:        logger.Clone().SetPrefix(*name),
-		stdoutCond: sync.NewCond(&sync.Mutex{}),
-		stderrCond: sync.NewCond(&sync.Mutex{}),
-	}
+	proc := newProc(conf, p, logger.Clone().SetPrefix(*name))
 
 	notNil("could not register RPC: %s", rpc.RegisterName(protocol.RPCName, proc))
 
@@ -73,8 +66,6 @@ func notNil(format string, err error) {
 		logger.Critf(format, err)
 	}
 }
-
-const maxCache = 1000 // Max size for caches before lines are dropped
 
 func parseConfig(confPath string) (*network.Config, error) {
 	data, err := ioutil.ReadFile(confPath)
