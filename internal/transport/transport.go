@@ -1,3 +1,4 @@
+// ...
 package transport
 
 import (
@@ -8,6 +9,7 @@ import (
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/processTransport"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -15,20 +17,18 @@ import (
 
 // Transport is a way for a Game to talk to an underlying Process.
 type Transport interface {
-	// GetStatus returns the current state of
+	// GetStatus returns the current state of the transport
 	GetStatus() util.TransportStatus
 
-	// GetHumanStatus returns the status of the transport that is human readable
+	// GetHumanStatus returns the status of the transport in a human readable form
 	GetHumanStatus() string
 
 	// Stdout returns a channel that will have lines from stdout sent over it.
-	// It is valid to call Stdout multiple times for one instance, the lines will be
-	// fanned out over every channel. Close the channel if you want to stop getting lines
+	// multiple calls are not supported. This channel should be closed once the source exits
 	Stdout() <-chan []byte
 
 	// Stderr returns a channel that will have lines from stdout sent over it.
-	// It is valid to call Stdout multiple times for one instance, the lines will be
-	// fanned out over every channel. Close the channel if you want to stop getting lines
+	// multiple calls are not supported. This channel should be closed once the source exits
 	Stderr() <-chan []byte
 
 	// Update updates the Transport with a TransportConfig
@@ -40,7 +40,9 @@ type Transport interface {
 	// Run runs the underlying process on the Transport. It returns the return code of the process (or -1 if start failed)
 	// a string representation of the exit, if applicable, and an error. error should be checked first as the string
 	// may not be filled for some errors.
-	Run() (int, string, error)
+	// The passed struct should be closed when the game is started, to allow the controller to start monitoring stdio.
+	// the start chan MUST be closed sometime before run returns
+	Run(start chan struct{}) (int, string, error)
 
 	// IsRunning returns whether or not the underlying process is currently running. For more information use GetStatus.
 	IsRunning() bool
@@ -57,6 +59,8 @@ func GetTransport(name string, transportConfig config.TransportConfig, logger *l
 	switch strings.ToLower(name) {
 	case "process":
 		return processTransport.New(transportConfig, logger)
+	case "network":
+		return network.New(transportConfig, logger)
 	default:
 		return nil, fmt.Errorf("cannot create transport %q: %w", name, ErrNoTransport)
 	}
