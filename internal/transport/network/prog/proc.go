@@ -16,14 +16,16 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
+const maxCache = 10000 // Max size for caches before lines are dropped
+
 func newProc(conf *network.Config, p *process.Process, l *log.Logger) *Proc {
 	return &Proc{
 		process:    p,
 		conf:       conf,
 		log:        l,
-		stdoutCond: sync.NewCond(&sync.Mutex{}),
-		stderrCond: sync.NewCond(&sync.Mutex{}),
 		doneChan:   make(chan struct{}),
+		stdioCond:  sync.NewCond(&sync.Mutex{}),
+		stdIOLines: make([]protocol.StdIOLine, 0, maxCache),
 	}
 }
 
@@ -38,15 +40,12 @@ type Proc struct {
 	conf    *network.Config
 	log     *log.Logger
 
-	// caches for stdout/err
-	stdout     []string
-	stdoutCond *sync.Cond
-	stderr     []string
-	stderrCond *sync.Cond
+	stdioCond  *sync.Cond
+	stdIOLines []protocol.StdIOLine
+	stdioSeq   int64
 
 	// TODO: Disconnection Message (eg if we're disconnected from the server on the other side)
 	// TODO: rehash/reset config method
-	// TODO: message IDs of some sort, for when a message is repeated often
 
 	doneChan chan struct{}
 }
@@ -97,8 +96,7 @@ func (p *Proc) reset() error {
 		return err
 	}
 
-	p.stdout = p.stdout[:0]
-	p.stderr = p.stderr[:0]
+	p.stdIOLines = p.stdIOLines[:0]
 	p.doneChan = make(chan struct{})
 	return nil
 }
@@ -111,9 +109,15 @@ func (p *Proc) StopOrKillTimeout(timeout time.Duration, out *protocol.SerialiseE
 	return nil
 }
 
-func findReverse(slice []string, target string) int {
-	for i := len(slice) - 1; i >= 0; i-- {
-		if slice[i] == target {
+func makeCopy(src []protocol.StdIOLine) (out []protocol.StdIOLine) {
+	out = make([]protocol.StdIOLine, len(src))
+	copy(out, src)
+	return out
+}
+
+func findSeq(target int64, slice []protocol.StdIOLine) int {
+	for i, v := range slice {
+		if v.ID == target {
 			return i
 		}
 	}
@@ -121,75 +125,65 @@ func findReverse(slice []string, target string) int {
 	return -1
 }
 
-func makeCopy(src []string) (out []string) {
-	out = make([]string, len(src))
-	copy(out, src)
-	return out
-}
-
-func getLinesAfter(target string, slice []string) []string {
-	idx := findReverse(slice, target)
-	if idx == -1 {
+func getAllAfter(seq int64, slice []protocol.StdIOLine) []protocol.StdIOLine {
+	idx := findSeq(seq, slice)
+	if seq == -1 || idx == -1 {
 		return makeCopy(slice)
 	}
 	if len(slice) > idx {
 		return makeCopy(slice[idx+1:])
 	}
-	return []string{}
+	return []protocol.StdIOLine{}
 }
 
-// GetStdout gets the current buffered stdout lines. The lastSeen arg is the place from which to start
-// the returned lines slice, if it is omitted (== "") then all buffered lines are sent.
-// Otherwise, if lastSeen is not empty, and there are no new lines, GetStdout blocks until
-// at least one is seen.
+// GetStdioLines gets the current buffered stdio lines. The lastSeen arg is the place from which to start
+// the returned lines slice, if it less than zero, all buffered lines are sent.
+// Otherwise, if lastSeen nonzero, and there are no new lines, GetStdout blocks until at least one new line is seen.
+//
 // This method is an RPC method, which is why no error is returned but it is still marked as
 // returning one.
-func (p *Proc) GetStdout(lastSeen string, out *protocol.StdIOLines) error { //nolint:unparam // sig required by rpc
-	res, err := p.getStd(true, lastSeen)
-	*out = protocol.StdIOLines{Lines: res, Error: protocol.SErrorFromError(err), Stdout: true}
-	return nil
-}
+func (p *Proc) GetStdioLines(lastSeq int64, out *protocol.StdIOLines) error { //nolint:unparam // sig required by rpc
+	p.stdioCond.L.Lock()
+	defer p.stdioCond.L.Unlock()
 
-// GetStderr is like GetStdout but for stderr
-func (p *Proc) GetStderr(lastSeen string, out *protocol.StdIOLines) error { //nolint:unparam // sig required by rpc
-	res, err := p.getStd(false, lastSeen)
-	*out = protocol.StdIOLines{Lines: res, Error: protocol.SErrorFromError(err), Stdout: false}
-	return nil
-}
-
-func (p *Proc) getStd(stdout bool, lastSeen string) (outSlice []string, err error) {
+	var err error
 	if !p.process.IsRunning() {
 		// not returning here so that residual lines can be accessed
 		err = errors.New("not running")
 	}
 
-	cond := p.stdoutCond
-	slice := &p.stdout
-	if !stdout {
-		cond = p.stderrCond
-		slice = &p.stderr
-	}
-	cond.L.Lock()
-	defer cond.L.Unlock()
-
-	if lastSeen == "" && len(*slice) > 0 {
-		return makeCopy(*slice), nil
+	if lastSeq < 0 && len(p.stdIOLines) > 0 {
+		*out = protocol.StdIOLines{
+			Lines: makeCopy(p.stdIOLines),
+			Error: protocol.SErrorFromError(err),
+		}
+		return nil
 	} else if !p.process.IsRunning() {
 		// We have a last seen, BUT, we're also not expecting any more lines. Therefore, return what we have
-		return getLinesAfter(lastSeen, *slice), err
+		*out = protocol.StdIOLines{
+			Lines: getAllAfter(lastSeq, p.stdIOLines),
+			Error: protocol.SErrorFromError(err),
+		}
+		return nil
 	}
 
 	// Loop as suggested by docs: https://golang.org/pkg/sync/#Cond.Wait
 	for {
-		cond.Wait()
-		// Have we added new lines to the cache? not in the for clause as cond.Wait() messes with some of our locks
-		if !p.process.IsRunning() || len(*slice) > 0 && (*slice)[len(*slice)-1] != lastSeen {
+		p.stdioCond.Wait()
+		if !p.process.IsRunning() {
+			err = errors.New("not running")
+			break
+		} else if len(p.stdIOLines) > 0 && p.stdIOLines[len(p.stdIOLines)-1].ID != lastSeq {
 			break
 		}
 	}
 
-	// okay we have new lines. Lets send them back
-	return getLinesAfter(lastSeen, *slice), err
+	*out = protocol.StdIOLines{
+		Lines: getAllAfter(lastSeq, p.stdIOLines),
+		Error: protocol.SErrorFromError(err),
+	}
+
+	return nil
 }
 
 // GetStatus returns the current state of the transport
@@ -256,39 +250,22 @@ func (p *Proc) monitorStdio(stdout bool) {
 		p.cacheLine(line, stdout)
 
 		// Tell our waiters, if any, that there are new lines
-		if stdout {
-			p.stdoutCond.Broadcast()
-		} else {
-			p.stderrCond.Broadcast()
-		}
+		p.stdioCond.Broadcast()
 	}
 	if err := s.Err(); err != nil {
 		p.log.Warn(err)
 	}
 	<-p.doneChan
-	if stdout {
-		p.stdoutCond.Broadcast()
-	} else {
-		p.stderrCond.Broadcast()
-	}
+	p.stdioCond.Broadcast()
 }
 
 func (p *Proc) cacheLine(line string, stdout bool) {
-	if stdout {
-		p.stdoutCond.L.Lock()
-		defer p.stdoutCond.L.Unlock()
-		if len(p.stdout) > maxCache {
-			p.stdout = p.stdout[len(p.stdout)-maxCache:]
-		}
-
-		p.stdout = append(p.stdout, line)
-	} else {
-		p.stderrCond.L.Lock()
-		defer p.stderrCond.L.Unlock()
-		if len(p.stderr) > maxCache {
-			p.stderr = p.stderr[len(p.stdout)-maxCache:]
-		}
-
-		p.stderr = append(p.stderr, line)
+	p.stdioCond.L.Lock()
+	defer p.stdioCond.L.Unlock()
+	p.stdioSeq++
+	if len(p.stdIOLines) > maxCache {
+		p.stdIOLines = p.stdIOLines[len(p.stdIOLines)-maxCache:]
 	}
+
+	p.stdIOLines = append(p.stdIOLines, protocol.StdIOLine{Line: line, Stdout: stdout, ID: p.stdioSeq})
 }

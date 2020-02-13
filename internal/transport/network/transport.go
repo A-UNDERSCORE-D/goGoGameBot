@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/rpc"
 	"os/exec"
-	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
@@ -19,15 +18,18 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
-var debugRPC = false
+var (
+	debugRPC = false
+)
 
 // New creates a new network Transport
 func New(conf config.TransportConfig, logger *log.Logger) (*Transport, error) {
 	t := &Transport{
-		logger: logger.Clone().SetPrefix("net"),
-		stdout: make(chan []byte),
-		stderr: make(chan []byte),
-		done:   make(chan struct{}),
+		logger:  logger.Clone().SetPrefix("net"),
+		stdout:  make(chan []byte),
+		stderr:  make(chan []byte),
+		done:    make(chan struct{}),
+		lastSeq: -1,
 	}
 	if err := t.Update(conf); err != nil {
 		return nil, err
@@ -265,7 +267,7 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 	}
 
 	wg := new(sync.WaitGroup)
-	wg.Add(2)
+	wg.Add(1)
 	stdioCtx, stdioCancel := context.WithCancel(context.Background())
 
 	defer func() {
@@ -305,98 +307,86 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 	return -1, "", nil
 }
 
-// monitorStdio starts monitoring of stderr and stdout
 func (t *Transport) monitorStdio(ctx context.Context, wg *sync.WaitGroup) error {
-	if err := t.setupStdMonitor(ctx, true, wg); err != nil {
-		return fmt.Errorf("could not monitor stdout on game: %w", err)
+	if !t.IsRunning() {
+		return errors.New("cannot monitor stdio: Not running")
 	}
-	if err := t.setupStdMonitor(ctx, false, wg); err != nil {
-		return fmt.Errorf("could not monitor stderr on game: %w", err)
-	}
+
+	go func() {
+		defer func() {
+			close(t.stdout)
+			close(t.stderr)
+			t.stdout = nil
+			t.stderr = nil
+			wg.Done()
+		}()
+		for {
+			err := t.getAndHandleStdLines(ctx, t.lastSeq)
+			if err != nil && errors.Is(err, context.Canceled) {
+				break
+			} else if err != nil && err.Error() != "not running" {
+				t.logger.Warnf("error from t.getAndHandleStdLines: %s", err)
+			}
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		err := t.getAndHandleStdLines(timeoutCtx, t.lastSeq)
+
+		if errors.Is(context.DeadlineExceeded, err) {
+			return
+		} else if err != nil && err.Error() != "not running" {
+			t.logger.Warnf("got an error from t.GetStdLines: %s", err)
+		}
+
+	}()
 	return nil
 }
 
-// setupStdMonitor monitors either stdin/out over the RPC connection. It starts its own goroutine after initial setup
-func (t *Transport) setupStdMonitor(ctx context.Context, stdout bool, wg *sync.WaitGroup) error {
-	if !t.isConnected.Get() {
-		return errors.New("cannot monitor stdio on a non-running game")
-	}
-
-	go t.monitorStd(ctx, stdout, wg)
-
-	return nil
+func (t *Transport) getAndHandleStdLines(ctx context.Context, lastSeq int64) error {
+	lines, err := t.getStdLines(ctx, lastSeq)
+	t.handleStdioLines(lines)
+	return err
 }
 
-func (t *Transport) getStdLines(ctx context.Context, methodName, lastSeen string) ([]string, error) {
-	outLines := new(protocol.StdIOLines)
-	callDone, err := t.callGo(methodName, lastSeen, outLines)
+func (t *Transport) getStdLines(ctx context.Context, lastSeq int64) (*protocol.StdIOLines, error) {
+	lines := new(protocol.StdIOLines)
+	callDone, err := t.callGo("GetStdioLines", lastSeq, lines)
 	if err != nil {
-		return nil, fmt.Errorf("could not get lines from remote: %w", err)
+		return lines, err
 	}
 	select {
 	case <-ctx.Done():
-		// we were cancelled by something
-		return nil, ctx.Err()
+		return lines, ctx.Err()
 	case <-callDone:
-		return outLines.Lines, outLines.Error.ToError()
+		return lines, lines.Error.ToError()
 	}
 }
 
-func (t *Transport) monitorStd(ctx context.Context, stdout bool, wg *sync.WaitGroup) {
-	methodName := "GetStdout"
-	if !stdout {
-		methodName = "GetStderr"
-	}
-	t.logger.Tracef("monitorStd: monitoring %s started", methodName)
-	lastLine := ""
-
-	defer func() { t.logger.Tracef("monitorStd(%t): exiting", stdout) }()
-	defer wg.Done()
-
-	for {
-		lines, err := t.getStdLines(ctx, methodName, lastLine)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				break
-			}
-			t.logger.Warnf("got an error from getStdLines: %s", err)
-		}
-
-		t.handleStdioLines(lines, stdout)
-		if len(lines) > 0 {
-			lastLine = lines[len(lines)-1]
-		}
-	}
-
-	// Final clean up and last line fetch
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	lines, err := t.getStdLines(ctx, methodName, lastLine)
-	if err != nil && err.Error() != "not running" {
-		t.logger.Warnf("[%t] got an error from getStdLines: %s", stdout, err)
-		return
-	}
-	t.handleStdioLines(lines, stdout)
-}
-
-func (t *Transport) handleStdioLines(lines []string, isStdout bool) {
-	c := t.getStdioChan(isStdout)
-
+func (t *Transport) handleStdioLines(lines *protocol.StdIOLines) {
+	var c chan []byte
 	defer func() {
 		if err := recover(); err != nil && err == "send on closed channel" {
 			// TODO: there a better way to do this? maybe with a context? (cc processTransport)
-			if isStdout {
+			// TODO: Actually I think just doing a nonblocking send would be better for this. If you dont want more
+			// TODO: Lines, then just dont listen. I dont think I ever do that in game but I'd rather support it than
+			// TODO: not. And managing a possibly closed channel from the sender's side is a mess.
+
+			t.logger.Tracef("caught send on closed channel panic in networkTransport.handleStdioLines")
+			if c == t.stdout {
 				t.stdout = nil
 			} else {
 				t.stderr = nil
 			}
-
 		} else if err != nil {
 			panic(err)
 		}
 	}()
-	for _, l := range lines {
-		c <- []byte(l)
+
+	for _, v := range lines.Lines {
+		c = t.getStdioChan(v.Stdout)
+		c <- []byte(v.Line)
+		t.lastSeq = v.ID
 	}
 }
 

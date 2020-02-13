@@ -38,9 +38,9 @@ func SErrorFromString(str string) SerialiseError {
 
 // StdIOLines holds a set of lines for processing
 type StdIOLines struct {
-	Lines  []string
-	Stdout bool
-	Error  SerialiseError
+	Lines []StdIOLine
+	// Stdout bool
+	Error SerialiseError
 }
 
 // ProcessExit represents all available information regarding a process that has exited
@@ -48,4 +48,11 @@ type ProcessExit struct {
 	Return    int
 	StrReturn string
 	Error     SerialiseError
+}
+
+// StdIOLine holds a single line from a process sent over StdIO
+type StdIOLine struct {
+	Line   string
+	Stdout bool
+	ID     int64
 }
