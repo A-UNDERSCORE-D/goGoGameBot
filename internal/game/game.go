@@ -193,6 +193,13 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		g.transport = t
 	}
 
+	// TODO: add a g.transport.Type() that lets me check if this changed ever
+
+	if err := g.transport.Update(conf.Transport); err != nil {
+		return err
+	}
+	g.Info("transport reloaded successfully")
+
 	g.autoStart.Set(conf.AutoStart)
 	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
 
