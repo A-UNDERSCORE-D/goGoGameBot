@@ -86,6 +86,8 @@ func (p *Proc) Start(_ Nothing, outErr *protocol.SerialiseError) error { //nolin
 		if err := p.process.WaitForCompletion(); err != nil {
 			p.log.Warnf("error occurred with process: %s", err)
 		}
+
+		p.log.Infof("process exited with %s", p.process.GetReturnStatus())
 		close(p.doneChan)
 	}()
 	return nil
@@ -121,7 +123,6 @@ func findSeq(target int64, slice []protocol.StdIOLine) int {
 			return i
 		}
 	}
-
 	return -1
 }
 
