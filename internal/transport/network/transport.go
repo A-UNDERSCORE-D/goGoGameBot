@@ -40,87 +40,106 @@ func New(conf config.TransportConfig, logger *log.Logger) (*Transport, error) {
 
 var nothing = struct{}{}
 
-// TODO: How do we deal with a closed client? we need to detect closure and autoreconnect or similar
-
 // Transport is an implementation of the transport interface that is designed to be used over the network
 type Transport struct {
 	logger *log.Logger
 	stdout chan []byte
 	stderr chan []byte
 	*Config
-	startingLocal bool // are we currently attempting to exec it?
-	client        *rpc.Client
-	done          chan struct{}
-	isConnected   mutexTypes.Bool
+	client      *rpc.Client
+	done        chan struct{}
+	isConnected mutexTypes.Bool
 
 	pings []time.Duration
+
+	// TODO: when this is > than the size on the other side, we get an empty list. we should set it to -1 across proc
+	// TODO: restarts
+	lastSeq int64 // TODO: How to store this across restarts?
+
+	// TODO: if autostarting, allow non-unix socket based?
 }
 
-func formatRPCCall(target, methodName string, args, res interface{}) string {
+func formatRPCCall(target, methodName string, args, res interface{}) string { //nolint:unparam // I might use others
 	return fmt.Sprintf("%s.%s(%#v) = %#v", target, methodName, args, res)
 }
 
-func (t *Transport) call(methodName string, arg, res interface{}) error {
-	if t.client == nil {
-		t.logger.Warnf(
-			"attempt to make RPC call with nil transport client: %s",
-			formatRPCCall(protocol.RPCName, methodName, arg, res),
-		)
-		t.logger.Debug(string(debug.Stack()))
-		return errors.New("transport client is nil, cannot make call")
-	}
-	if debugRPC {
-		t.logger.Debugf("Making RPC Call: %s", formatRPCCall(protocol.RPCName, methodName, arg, res))
+func (t *Transport) connectToRPC() error {
+	typ := "tcp"
+	if t.IsUnix {
+		typ = "unix"
 	}
 
-	err := t.client.Call(protocol.RPCName+"."+methodName, arg, res)
+	client, err := rpc.Dial(typ, t.Config.Address)
 	if err != nil {
-		t.logger.Warnf("got an error from client.Call: %s", err)
-		t.isConnected.Set(false) // TODO: does this need more?
+		return err
 	}
-	return err
+	t.client = client
+	return nil
+}
+
+const retries = 5
+
+func (t *Transport) callOrConnect(methodName string, arg, res interface{}) (<-chan *rpc.Call, error) {
+	if debugRPC {
+		t.logger.Debugf("making RPC call: %s", formatRPCCall(protocol.RPCName, methodName, arg, res))
+	}
+	if t.client == nil {
+		var err error
+		// We dont have a client, therefore it needs to be connected, try said connections a few times
+		for i := 0; i < retries; i++ {
+			if err = t.connectToRPC(); err != nil {
+				t.logger.Warnf("error while attempting to dial RPC (%d retries): %s", i, err)
+			} else {
+				break
+			}
+		}
+
+		// all retries failed. Return an error
+		if t.client == nil {
+			return nil, fmt.Errorf("unable to make call, cannot connect to RPC: %w", err)
+		}
+
+		t.isConnected.Set(true)
+	}
+
+	internalChan := make(chan *rpc.Call, 3)
+	outChan := make(chan *rpc.Call, 3)
+	call := t.client.Go(protocol.RPCName+"."+methodName, arg, res, internalChan)
+
+	go func() {
+		res := <-call.Done
+		if res.Error != nil {
+			t.logger.Warnf("got an error from client.Call: %s", res.Error)
+			t.client = nil
+			t.isConnected.Set(false)
+		}
+		outChan <- res
+	}()
+
+	return outChan, nil
+}
+
+func (t *Transport) call(methodName string, arg, res interface{}) error {
+	outChan, err := t.callOrConnect(methodName, arg, res)
+	if err != nil {
+		return err
+	}
+	<-outChan
+	return nil
 }
 
 // callGo is like call, it wraps the client Go method for status monitoring of the Client. In the case of an error,
 // it is handled gracefully
 func (t *Transport) callGo(methodName string, arg, res interface{}) (<-chan *rpc.Call, error) {
-	if t.client == nil {
-		t.logger.Warnf(
-			"attempt to make RPC call with nil transport client: %s",
-			formatRPCCall(protocol.RPCName, methodName, arg, res),
-		)
-		t.logger.Debug(debug.Stack())
-		return nil, errors.New("transport client is nil, cannot make call")
-	}
-
-	if debugRPC {
-		t.logger.Debugf("Making async RPC Call: %s", formatRPCCall(protocol.RPCName, methodName, arg, res))
-	}
-
-	// make the Go call, start our own goroutine to wrap it, check the error before passing the value outwards
-	internalChan := make(chan *rpc.Call, 1)
-	outChan := make(chan *rpc.Call, 1)
-	call := t.client.Go(protocol.RPCName+"."+methodName, arg, res, internalChan)
-	go func() {
-		goRes := <-call.Done
-		if goRes.Error != nil {
-			t.logger.Warnf("got an error from client.Call: %s", goRes.Error)
-			t.isConnected.Set(false) // TODO: does this need more?
-		}
-		outChan <- goRes
-	}()
-
-	return outChan, nil
+	return t.callOrConnect(methodName, arg, res)
 }
 
 // GetStatus returns the current state of the transport
 func (t *Transport) GetStatus() util.TransportStatus {
 	res := new(util.TransportStatus)
 	if err := t.call("GetStatus", nothing, res); err != nil {
-		t.logger.Warn("asd", err)
 		return util.Unknown
 	}
-	t.logger.Infof("sd %#v", res)
 	return *res
 }
 
@@ -251,7 +270,6 @@ func (t *Transport) start() error {
 // a string representation of the exit, if applicable, and an error. error should be checked first as the string
 // may not be filled for some errors.
 func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) {
-	// TODO: try and connect when we are created, or on any call
 	closed := false
 
 	defer func() {
@@ -266,6 +284,7 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 		return -1, "", fmt.Errorf("could not start game: %w", err)
 	}
 
+	go t.monitorLatency() // TODO: do this elsewhere, as currently a restart could happen and not stop this
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	stdioCtx, stdioCancel := context.WithCancel(context.Background())
