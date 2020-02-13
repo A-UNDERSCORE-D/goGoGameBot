@@ -145,7 +145,11 @@ func (t *Transport) GetStatus() util.TransportStatus {
 
 // GetHumanStatus returns the status of the transport that is human readable
 func (t *Transport) GetHumanStatus() string {
-	panic("not implemented")
+	res := ""
+	if err := t.call("GetHumanStatus", nothing, &res); err != nil {
+		return fmt.Sprintf("Error: %s", err)
+	}
+	return res
 }
 
 func (t *Transport) getStdioChan(stdout bool) chan []byte {
