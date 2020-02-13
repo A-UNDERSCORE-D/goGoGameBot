@@ -215,57 +215,57 @@ func (t *Transport) StopOrKillWaitgroup(group *sync.WaitGroup) {
 	group.Done()
 }
 
-func (t *Transport) dialOrStart(typ, address string) (*rpc.Client, error) {
-	client, err := rpc.Dial(typ, address)
-	if err != nil && !t.StartLocal || t.startingLocal {
-		return nil, err
-	} else if err == nil {
-		// okay we're done, it worked
-		return client, nil
-	}
-
-	// Start a Proc instance. This assumes there's a compiled version in our working directory
+func (t *Transport) startLocal() error {
 	// TODO: allow the config to specify how to go about this. With the requirement that we can tack on args as we want
 	cmd := exec.Command("./proc")
 
 	// Set this to its own process group -- prevents killing it if we're ^C-ed
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	t.startingLocal = true
-
-	defer func() { t.StartLocal = false }()
-
 	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	time.Sleep(time.Microsecond * 50)
-	return t.dialOrStart(typ, address)
-
-}
-
-func (t *Transport) start() error {
-	typ := "tcp"
-	if t.IsUnix {
-		typ = "unix"
-	}
-
-	client, err := t.dialOrStart(typ, t.Address)
-	if err != nil {
 		return err
 	}
 
-	t.isConnected.Set(true)
-	go t.monitorLatency()
+	time.Sleep(time.Microsecond * 50)
+	return nil
+}
 
-	t.client = client
-	outError := new(protocol.SerialiseError)
-	if err := t.call("Start", nothing, outError); err != nil {
-		return fmt.Errorf("could not make call: %w", err)
+func (t *Transport) dialOrStart() error {
+	outErr := new(protocol.SerialiseError)
+	callErr := t.call("Start", nothing, outErr)
+
+	if callErr != nil && !t.StartLocal {
+		return fmt.Errorf("could not call start: %w", callErr)
+	} else if callErr == nil {
+		if outErr.IsError {
+			return outErr.ToError()
+		}
+		return nil
 	}
 
-	if outError.IsError {
-		return fmt.Errorf("could not start process: %w", outError.ToError())
+	// Okay, we failed to connect, assume that we want to start it now, as we have been instructed to
+	if err := t.startLocal(); err != nil {
+		return fmt.Errorf("could not start process: %w", callErr)
+	}
+
+	outErr = new(protocol.SerialiseError)
+	callErr = t.call("Start", nothing, outErr)
+	if callErr != nil {
+		return fmt.Errorf("could not call start: %w", callErr)
+	}
+
+	return outErr.ToError()
+}
+
+func (t *Transport) start() error {
+	if !t.IsRunning() {
+		if err := t.dialOrStart(); err != nil {
+			return err
+		}
+	}
+
+	if !t.IsRunning() {
+		return errors.New("we're still not running after trying to do so. No idea why")
 	}
 	return nil
 }
