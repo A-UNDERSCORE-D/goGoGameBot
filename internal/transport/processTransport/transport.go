@@ -1,3 +1,4 @@
+// ...
 package processTransport
 
 import (
@@ -57,16 +58,23 @@ func (p *ProcessTransport) monitorStdIO() error {
 	}
 	go func() {
 		s := bufio.NewScanner(p.process.Stdout)
+		last := ""
 		for s.Scan() {
-			p.handleStdio(s.Bytes(), true)
+			b := s.Bytes()
+			p.getStdioChan(true) <- b
+			last = string(b)
 		}
+		close(p.getStdioChan(true))
+		p.log.Infof("stdout exit: %q", last)
 	}()
 
 	go func() {
 		s := bufio.NewScanner(p.process.Stderr)
 		for s.Scan() {
-			p.handleStdio(s.Bytes(), false)
+			p.getStdioChan(false) <- s.Bytes()
 		}
+		close(p.getStdioChan(false))
+		p.log.Info("stderr exit")
 	}()
 
 	return nil
@@ -83,23 +91,6 @@ func (p *ProcessTransport) getStdioChan(stdout bool) chan []byte {
 		p.stderr = make(chan []byte)
 	}
 	return p.stderr
-}
-
-func (p *ProcessTransport) handleStdio(line []byte, isStdout bool) {
-	c := p.getStdioChan(isStdout)
-	defer func() {
-		if err := recover(); err != nil && err == "send on closed channel" {
-			if isStdout {
-				p.stdout = nil
-			} else {
-				p.stderr = nil
-			}
-		} else if err != nil {
-			panic(err)
-		}
-	}()
-
-	c <- line
 }
 
 // Stdout returns a channel that will have lines from stdout sent over it.
@@ -162,7 +153,15 @@ func (p *ProcessTransport) StopOrKillWaitgroup(group *sync.WaitGroup) {
 }
 
 // Run runs the process once, if it is not already running. It blocks until the process exits
-func (p *ProcessTransport) Run() (int, string, error) {
+func (p *ProcessTransport) Run(start chan struct{}) (int, string, error) {
+	closed := false
+
+	defer func() {
+		if !closed {
+			close(start)
+		}
+	}()
+
 	if p.IsRunning() {
 		return -1, "", fmt.Errorf("could not start game: %w", util.ErrorAlreadyRunning)
 	}
@@ -171,9 +170,14 @@ func (p *ProcessTransport) Run() (int, string, error) {
 		return -1, "", fmt.Errorf("could not reset process: %w", err)
 	}
 
+	p.stdout = nil
+	p.stderr = nil
 	if err := p.process.Start(); err != nil {
 		return -1, "", fmt.Errorf("could not start process: %w", err)
 	}
+
+	close(start)
+	closed = true
 
 	if err := p.monitorStdIO(); err != nil {
 		go p.StopOrKill()
