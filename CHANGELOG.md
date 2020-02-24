@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - The Minecraft transformer no longer causes latent formatting issues when the first part of a message is formatted
+- Setting the version during compilation would transparently fail
 
 ## Changed
 
@@ -18,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - There is now a reconnect command to force a reconnection to the chat platform
+- Nullconn -- Its what it says on the tin, its a bot implementation that does nothing (except log a little)
+- Polite little goodbye message when the bot exits
+- More messages have been added to the keepalive system
 
 ## [0.4.7] - 2019-11-24
 
