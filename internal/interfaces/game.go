@@ -58,5 +58,6 @@ type AutoStarter interface {
 
 // Statuser refers to any type that can report its status as a string
 type Statuser interface {
+	// Status returns a human readable status string
 	Status() string
 }
