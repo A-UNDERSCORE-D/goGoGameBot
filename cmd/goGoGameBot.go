@@ -15,6 +15,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/nullconn"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
@@ -127,6 +128,8 @@ func getConn(conf *config.Config, logger *log.Logger) (interfaces.Bot, error) {
 	switch strings.ToLower(conf.ConnConfig.ConnType) {
 	case "irc":
 		return irc.New(conf.ConnConfig.Config, logger.Clone().SetPrefix("IRC"))
+	case "null":
+		return nullconn.New(logger.Clone().SetPrefix("null")), nil
 	default:
 		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.ConnType)
 	}
