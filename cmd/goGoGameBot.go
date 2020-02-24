@@ -38,7 +38,7 @@ var (
 func main() {
 	pflag.Parse()
 	rl, _ := readline.New("> ")
-	l := log.New(log.FTimestamp, rl, "MAIN", log.DEBUG)
+	l := log.New(log.FTimestamp, rl, "MAIN", log.TRACE) // TODO: set back to debug (or add a thing to change it at runtime)
 	logger = l
 
 	for _, line := range strings.Split(asciiArt, "\n") {
@@ -72,6 +72,8 @@ func main() {
 		l.Warnf("Got an error from bot on exit: %s", err)
 	}
 
+	l.Info("Goodbye")
+
 	if restart {
 		execSelf()
 	}
@@ -91,18 +93,16 @@ func execSelf() {
 	if err != nil {
 		panic(err) // This should never fail and if it does we should explode violently
 	}
-	panic(syscall.Exec(executable, os.Args, []string{})) // This should never fail and if it does we should explode violently
+	// This should never fail and if it does we should explode violently
+	panic(syscall.Exec(executable, os.Args, []string{}))
 }
 
 type terminalUtil struct{}
 
-//noinspection GoExportedElementShouldHaveComment
 func (terminalUtil) AdminLevel(string) int { return 1337 }
 
-//noinspection GoExportedElementShouldHaveComment
 func (terminalUtil) SendMessage(_, message string) { logger.Info(message) }
 
-//noinspection GoExportedElementShouldHaveComment
 func (terminalUtil) SendNotice(_, message string) { logger.Info(message) }
 
 func runCLI(gm *game.Manager, rl *readline.Instance) {
@@ -112,7 +112,8 @@ func runCLI(gm *game.Manager, rl *readline.Instance) {
 			line, err := rl.Readline()
 			if err != nil {
 				close(lineChan)
-				gm.Stop("SIGINT", false)
+				gm.Stop("Internal Error", false)
+				fmt.Println(err)
 				return
 			}
 			lineChan <- line
