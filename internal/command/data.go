@@ -19,7 +19,7 @@ type Data struct {
 
 // DataUtil provides methods for Data to use when returning messages or checking admin levels
 type DataUtil interface {
-	interfaces.AdminLeveler
+	interfaces.AdminLeveller
 	interfaces.Messager
 }
 
