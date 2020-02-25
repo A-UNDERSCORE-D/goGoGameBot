@@ -329,15 +329,18 @@ func (m *Manager) setupCommands() error {
 	)
 
 	var errs []error
-	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp))
-	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp))
-	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "raw", 3, m.rawGameCmd, rawHelp))
-	errs = append(errs, m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp))
-	errs = append(errs, m.Cmd.AddCommand("stop", 3, m.stopCmd, stopMHelp))
-	errs = append(errs, m.Cmd.AddCommand("restart", 3, m.restartCmd, restartMHelp))
-	errs = append(errs, m.Cmd.AddCommand("reload", 3, m.reloadCmd, reloadHelp))
-	errs = append(errs, m.Cmd.AddCommand("status", 0, m.statusCmd, statusHelp))
-	errs = append(errs, m.Cmd.AddCommand("reconnect", 3, m.reconnectCmd, reconnHelp))
+	errs = append(
+		errs,
+		m.Cmd.AddSubCommand(gamectl, "start", 2, m.startGameCmd, startHelp),
+		m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp),
+		m.Cmd.AddSubCommand(gamectl, "raw", 3, m.rawGameCmd, rawHelp),
+		m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp),
+		m.Cmd.AddCommand("stop", 3, m.stopCmd, stopMHelp),
+		m.Cmd.AddCommand("restart", 3, m.restartCmd, restartMHelp),
+		m.Cmd.AddCommand("reload", 3, m.reloadCmd, reloadHelp),
+		m.Cmd.AddCommand("status", 0, m.statusCmd, statusHelp),
+		m.Cmd.AddCommand("reconnect", 3, m.reconnectCmd, reconnHelp),
+	)
 
 	outErr := strings.Builder{}
 
