@@ -89,17 +89,16 @@ func attrToBytes(a xml.Attr) []byte {
 
 func tokenToBytes(t xml.Token) []byte {
 	buf := bytes.Buffer{}
-	switch t.(type) {
+	switch realTok := t.(type) {
 	case xml.StartElement:
-		se := t.(xml.StartElement)
 		buf.WriteRune('<')
-		if se.Name.Space != "" {
-			buf.WriteString(se.Name.Space)
+		if realTok.Name.Space != "" {
+			buf.WriteString(realTok.Name.Space)
 			buf.WriteRune(':')
 		}
 
-		buf.WriteString(se.Name.Local)
-		for _, v := range se.Attr {
+		buf.WriteString(realTok.Name.Local)
+		for _, v := range realTok.Attr {
 			buf.WriteRune(' ')
 			buf.Write(attrToBytes(v))
 		}
@@ -107,16 +106,15 @@ func tokenToBytes(t xml.Token) []byte {
 		buf.WriteRune('>')
 
 	case xml.EndElement:
-		ee := t.(xml.EndElement)
 		buf.WriteString("</")
-		buf.Write(nameToBytes(ee.Name))
+		buf.Write(nameToBytes(realTok.Name))
 		buf.WriteRune('>')
 
 	case xml.CharData:
-		buf.Write(t.(xml.CharData))
+		buf.Write(realTok)
 	case xml.Comment:
 		buf.WriteString("<!-- ")
-		buf.Write(t.(xml.Comment))
+		buf.Write(realTok)
 		buf.WriteString(" -->")
 
 	default:
