@@ -213,6 +213,7 @@ func TestIdxOrEmpty(t *testing.T) {
 		slice []string
 		idx   int
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -221,6 +222,7 @@ func TestIdxOrEmpty(t *testing.T) {
 		{"good", args{[]string{"test", "string"}, 1}, "string"},
 		{"bad", args{[]string{"test", "string"}, 1337}, ""},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := IdxOrEmpty(tt.args.slice, tt.args.idx); got != tt.want {
@@ -232,6 +234,7 @@ func TestIdxOrEmpty(t *testing.T) {
 
 func ExampleIdxOrEmpty() {
 	s := []string{"test", "string", "is", "testy"}
+
 	fmt.Printf("%q\n", IdxOrEmpty(s, 0))
 	fmt.Printf("%q\n", IdxOrEmpty(s, 5))
 	// output:
@@ -245,6 +248,7 @@ func TestJoinToMaxLength(t *testing.T) {
 		sep       string
 		maxLength int
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -296,6 +300,7 @@ func TestJoinToMaxLength(t *testing.T) {
 			[]string{"this is a test"},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := JoinToMaxLength(tt.args.toJoin, tt.args.sep, tt.args.maxLength); !reflect.DeepEqual(got, tt.want) {
@@ -329,6 +334,7 @@ func TestReverseIdx(t *testing.T) {
 		{"inverse out of bounds", -1337, ""},
 		{"middle idx", 7, "incredibly"},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ReverseIdx(testArr, tt.idx); got != tt.want {

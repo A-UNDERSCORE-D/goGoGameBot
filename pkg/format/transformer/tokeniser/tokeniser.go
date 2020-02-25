@@ -22,9 +22,11 @@ type Token struct {
 // required to parse the intermediate format
 func Tokenise(in string) []Token {
 	var out []Token
+
 	buf := strings.Builder{}
 	seenSentinel := false
 	skip := 0
+
 	for i, r := range in {
 		if skip > 0 {
 			skip--
@@ -35,7 +37,9 @@ func Tokenise(in string) []Token {
 		case intermediate.Sentinel:
 			if seenSentinel || len(in) == i+1 {
 				seenSentinel = false
+
 				buf.WriteRune(r)
+
 				break
 			}
 
@@ -47,36 +51,45 @@ func Tokenise(in string) []Token {
 				if len(in)-i < 7 {
 					// Dont have enough space -- write out as if we didnt see it
 					seenSentinel = false
+
 					buf.WriteString(intermediate.SColourString)
+
 					continue
 				}
 
 				col, err := ParseColour(in[i+1:])
 				if err != nil {
 					buf.WriteString(intermediate.SColourString)
+
 					continue
 				}
 
 				if buf.Len() > 0 {
 					out = append(out, Token{TokenType: StringToken, Colour: nil, OriginalString: buf.String()})
+
 					buf.Reset()
 				}
 
 				out = append(out, Token{TokenType: int(r), Colour: col, OriginalString: ""})
 				skip += 6
+
 				continue
 			}
+
 			fallthrough
 
 		case intermediate.Bold, intermediate.Italic, intermediate.Underline, intermediate.Strikethrough, intermediate.Reset:
 			if seenSentinel {
 				seenSentinel = false
+
 				if buf.Len() > 0 {
 					out = append(out, Token{TokenType: StringToken, Colour: nil, OriginalString: buf.String()})
+
 					buf.Reset()
 				}
 
 				out = append(out, Token{TokenType: int(r), Colour: nil, OriginalString: ""})
+
 				continue
 			}
 
@@ -87,7 +100,9 @@ func Tokenise(in string) []Token {
 				// Invalid trailing char after sentinel
 				buf.WriteRune(intermediate.Sentinel)
 			}
+
 			seenSentinel = false // Always reset this, just in case.
+
 			buf.WriteRune(r)
 		}
 	}
@@ -95,5 +110,6 @@ func Tokenise(in string) []Token {
 	if buf.Len() > 0 {
 		out = append(out, Token{TokenType: StringToken, Colour: nil, OriginalString: buf.String()})
 	}
+
 	return out
 }

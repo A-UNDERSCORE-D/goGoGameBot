@@ -80,6 +80,7 @@ var tests = []struct {
 func findFirstDiff(s1, s2 string) {
 	longer := s1
 	shorter := s2
+
 	if len(s1) < len(s2) {
 		longer = s2
 		shorter = s1
@@ -93,6 +94,7 @@ func findFirstDiff(s1, s2 string) {
 			break
 		}
 	}
+
 	if differencesStartAt > 0 {
 		fmt.Println("1:", shorter)
 		fmt.Println("2:", longer)

@@ -47,6 +47,7 @@ func levelToString(level int) string {
 	case PANIC:
 		return "PANIC"
 	}
+
 	return "?????"
 }
 
@@ -93,12 +94,14 @@ func New(flags int, output io.Writer, prefix string, minLevel int) *Logger {
 
 func shortenFilename(filename string) string {
 	out := filename
+
 	for i := len(filename) - 1; i > 0; i-- {
 		if filename[i] == '/' {
 			out = filename[i+1:]
 			break
 		}
 	}
+
 	return out
 }
 
@@ -112,6 +115,7 @@ func (l *Logger) writeOut(msg string, level int) {
 	}
 
 	outStr := bytes.Buffer{}
+
 	if l.flags&FTimestamp != 0 {
 		outStr.WriteRune(openBrace)
 		outStr.WriteString(time.Now().Format("15:04:05.000"))
@@ -126,6 +130,7 @@ func (l *Logger) writeOut(msg string, level int) {
 
 	if l.flags&FShowFile != 0 {
 		outStr.WriteRune(openBrace)
+
 		_, file, line, ok := runtime.Caller(2)
 		if !ok {
 			outStr.WriteString("???")

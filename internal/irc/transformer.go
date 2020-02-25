@@ -56,6 +56,7 @@ func reverseLookupMap(r rune) rune {
 			return k
 		}
 	}
+
 	return 0
 }
 
@@ -78,6 +79,7 @@ func (Transformer) Transform(in string) string {
 func (Transformer) MakeIntermediate(in string) string {
 	out := strings.Builder{}
 	skip := 0
+
 	for i, r := range in {
 		if skip > 0 {
 			skip--
@@ -94,6 +96,7 @@ func (Transformer) MakeIntermediate(in string) string {
 			toSkip, col := extractColour(in[i:])
 			if toSkip != -1 {
 				skip += toSkip
+
 				out.WriteString(tokeniser.EmitColour(col))
 			}
 
@@ -101,6 +104,7 @@ func (Transformer) MakeIntermediate(in string) string {
 			out.WriteRune(r)
 		}
 	}
+
 	return out.String()
 }
 
@@ -114,11 +118,13 @@ func extractColour(in string) (int, color.Color) {
 	fg := strings.Builder{}
 	c := 0
 	seenComma := false
+
 	for i, r := range in[1:] {
 		if !unicode.IsDigit(r) && !(r == ',' && i == 2) {
 			if seenComma {
 				c--
 			}
+
 			break
 		} else if r == ',' && i == 2 {
 			seenComma = true
@@ -131,13 +137,14 @@ func extractColour(in string) (int, color.Color) {
 		if c < 2 {
 			fg.WriteRune(r)
 		}
+
 		c++
 		if c == 5 {
 			break
 		}
 	}
-	idx, err := strconv.Atoi(fg.String())
 
+	idx, err := strconv.Atoi(fg.String())
 	if err != nil || (idx > 15 || idx < 0) {
 		return -1, nil
 	}

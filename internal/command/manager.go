@@ -18,6 +18,7 @@ func NewManager(logger *log.Logger, prefixes ...string) *Manager {
 	if err := m.AddCommand("help", 0, m.helpImpl, "prints command help"); err != nil {
 		panic(err)
 	}
+
 	return m
 }
 
@@ -39,12 +40,14 @@ func (m *Manager) AddPrefix(name string) {
 // method is a noop
 func (m *Manager) RemovePrefix(name string) {
 	toRemove := -1
+
 	for i, pfx := range m.commandPrefixes {
 		if pfx == name {
 			toRemove = i
 			break
 		}
 	}
+
 	if toRemove != -1 {
 		m.commandPrefixes = append(m.commandPrefixes[:toRemove], m.commandPrefixes[toRemove+1:]...)
 	}
@@ -70,10 +73,12 @@ func (m *Manager) RemoveCommand(name string) error {
 	if m.getCommandByName(name) == nil {
 		return fmt.Errorf("command %q does not exist on %v", name, m)
 	}
+
 	m.Logger.Debugf("removing command %s", name)
 	m.cmdMutex.Lock()
 	defer m.cmdMutex.Unlock()
 	delete(m.commands, name)
+
 	return nil
 }
 
@@ -87,19 +92,23 @@ func (m *Manager) internalAddCommand(cmd Command) error {
 	if m.getCommandByName(cmd.Name()) != nil {
 		return fmt.Errorf("command %q already exists on %v", cmd.Name(), m)
 	}
+
 	m.Logger.Debugf("adding command %s: %v", cmd.Name(), cmd)
 	m.cmdMutex.Lock()
 	m.commands[strings.ToLower(cmd.Name())] = cmd
 	m.cmdMutex.Unlock()
+
 	return nil
 }
 
 func (m *Manager) getCommandByName(name string) Command {
 	m.cmdMutex.RLock()
 	defer m.cmdMutex.RUnlock()
+
 	if c, ok := m.commands[strings.ToLower(name)]; ok {
 		return c
 	}
+
 	return nil
 }
 
@@ -117,11 +126,15 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 		}
 	}
 
-	var cmd *SubCommandList
-	var ok bool
+	var (
+		cmd *SubCommandList
+		ok  bool
+	)
+
 	if cmd, ok = m.getCommandByName(rootName).(*SubCommandList); !ok {
 		return fmt.Errorf("command %s is not a command that can have subcommands", rootName)
 	}
+
 	return cmd.addSubcommand(&SingleCommand{name: name, adminRequired: requiresAdmin, callback: callback, help: help})
 }
 
@@ -129,11 +142,16 @@ func (m *Manager) AddSubCommand(rootName, name string, requiresAdmin int, callba
 // or name does not exist on rootName, RemoveSubCommand errors
 func (m *Manager) RemoveSubCommand(rootName, name string) error {
 	var cmd Command
+
 	if cmd = m.getCommandByName(rootName); cmd == nil {
 		return fmt.Errorf("command %q does not exist on %v", rootName, m)
 	}
-	var realCmd *SubCommandList
-	var ok bool
+
+	var (
+		realCmd *SubCommandList
+		ok      bool
+	)
+
 	if realCmd, ok = cmd.(*SubCommandList); !ok {
 		return fmt.Errorf("command %q is not a command that has subcommands", rootName)
 	}
@@ -143,11 +161,14 @@ func (m *Manager) RemoveSubCommand(rootName, name string) error {
 
 func (m *Manager) stripPrefix(line string) (string, bool) {
 	hasPrefix := false
+
 	var out string
+
 	for _, pfx := range m.commandPrefixes {
 		if strings.HasPrefix(strings.ToUpper(line), strings.ToUpper(pfx)) {
 			hasPrefix = true
 			out = line[len(pfx):]
+
 			break
 		}
 	}
@@ -175,10 +196,12 @@ func (m *Manager) ParseLine(line string, fromTerminal bool, source, target strin
 
 	cmdName := lineSplit[0]
 	cmd := m.getCommandByName(cmdName)
+
 	if cmd == nil {
 		if fromTerminal {
 			m.Logger.Infof("unknown command %q", cmdName)
 		}
+
 		return
 	}
 
@@ -197,24 +220,31 @@ func (m *Manager) ParseLine(line string, fromTerminal bool, source, target strin
 // String implements the stringer interface
 func (m *Manager) String() string {
 	var cmds []string
+
 	m.cmdMutex.RLock()
 	for k := range m.commands {
 		cmds = append(cmds, k)
 	}
+
 	m.cmdMutex.RUnlock()
+
 	return fmt.Sprintf("command.Manager containing commands: %s", strings.Join(cmds, ", "))
 }
 
 func (m *Manager) helpImpl(data *Data) {
 	var toSend string
+
 	if len(data.Args) == 0 {
 		// just dump the available commands
 		var commandNames []string
+
 		m.cmdMutex.RLock()
 		for _, c := range m.commands {
 			commandNames = append(commandNames, c.Name())
 		}
+
 		m.cmdMutex.RUnlock()
+
 		toSend = fmt.Sprintf("Available commands are %s", strings.Join(commandNames, ", "))
 	} else {
 		// specific help on a command requested
@@ -230,6 +260,7 @@ func (m *Manager) helpImpl(data *Data) {
 			toSend = fmt.Sprintf("%s: %s", data.Args[0], cmd.Help())
 		}
 	}
+
 	if data.FromTerminal {
 		m.Logger.Info(toSend)
 	} else {

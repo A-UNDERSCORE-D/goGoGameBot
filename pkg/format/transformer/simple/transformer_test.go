@@ -12,7 +12,9 @@ func cmpSliceNoOrder(s1, s2 []color.Color) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
+
 	seen := make(map[color.Color]int)
+
 	for i, v := range s1 {
 		seen[v]++
 		seen[s2[i]]++
@@ -23,6 +25,7 @@ func cmpSliceNoOrder(s1, s2 []color.Color) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -31,6 +34,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
 	}
+
 	tests := []struct {
 		name string
 		args args

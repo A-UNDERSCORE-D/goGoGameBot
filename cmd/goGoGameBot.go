@@ -37,6 +37,7 @@ var (
 
 func main() {
 	pflag.Parse()
+
 	rl, _ := readline.New("> ")
 	l := log.New(log.FTimestamp, rl, "MAIN", log.TRACE) // TODO: set back to debug (or add a thing to change it at runtime)
 	logger = l
@@ -44,6 +45,7 @@ func main() {
 	for _, line := range strings.Split(asciiArt, "\n") {
 		l.Info(line)
 	}
+
 	l.Infof("goGoGameBot version %s loading....", version.Version)
 
 	conf, err := config.GetConfig(*configFile)
@@ -67,6 +69,7 @@ func main() {
 	go func() { sig := <-sigChan; gm.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
 
 	go runCLI(gm, rl)
+
 	restart, err := gm.Run()
 	if err != nil {
 		l.Warnf("Got an error from bot on exit: %s", err)
@@ -85,6 +88,7 @@ func main() {
 
 		os.Exit(0)
 	}()
+
 	_ = rl.Close()
 }
 
@@ -107,6 +111,7 @@ func (terminalUtil) SendNotice(_, message string) { logger.Info(message) }
 
 func runCLI(gm *game.Manager, rl *readline.Instance) {
 	lineChan := make(chan string, 1)
+
 	go func() {
 		for {
 			line, err := rl.Readline()
@@ -114,6 +119,7 @@ func runCLI(gm *game.Manager, rl *readline.Instance) {
 				close(lineChan)
 				gm.Stop("Internal Error", false)
 				fmt.Println(err)
+
 				return
 			}
 			lineChan <- line

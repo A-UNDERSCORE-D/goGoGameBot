@@ -28,6 +28,7 @@ type BaseEvent struct {
 func (b *BaseEvent) IsCancelled() bool {
 	b.m.RLock()
 	defer b.m.RUnlock()
+
 	return b.cancelled
 }
 
@@ -37,6 +38,7 @@ func (b *BaseEvent) SetCancelled(c bool) bool {
 	old := b.cancelled
 	b.cancelled = c
 	b.m.Unlock()
+
 	return old
 }
 

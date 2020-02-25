@@ -16,9 +16,11 @@ func getTestMap() map[string]interface{} {
 		"false":          false,
 	}
 	nm := make(map[string]interface{})
+
 	for k, v := range m {
 		nm[k] = v
 	}
+
 	return nm
 }
 
@@ -82,6 +84,7 @@ func TestStorage_GetBool(t *testing.T) {
 			true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetBool(tt.targetName, tt.default_); got != tt.want {
@@ -124,6 +127,7 @@ func TestStorage_GetInt(t *testing.T) {
 			1337,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetInt(tt.targetName, tt.default_); got != tt.want {
@@ -160,6 +164,7 @@ func TestStorage_GetString(t *testing.T) {
 			"this doesnt exist",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetString(tt.targetName, tt.default_); got != tt.want {
@@ -182,6 +187,7 @@ func TestStorage_SetBool(t *testing.T) {
 			true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetBool(tt.targetName, tt.setting)
@@ -210,6 +216,7 @@ func TestStorage_SetInt(t *testing.T) {
 			1337,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetInt(tt.targetName, tt.setting)
@@ -238,6 +245,7 @@ func TestStorage_SetString(t *testing.T) {
 			"so I heard ",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetString(tt.targetName, tt.setting)

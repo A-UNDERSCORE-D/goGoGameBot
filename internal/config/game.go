@@ -86,7 +86,9 @@ func (t *TransformerConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement)
 	if err != nil {
 		return fmt.Errorf("could not reconstruct XML for TransformerConfig: %w", err)
 	}
+
 	t.Config = res
+
 	return nil
 }
 

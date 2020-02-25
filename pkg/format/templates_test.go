@@ -133,6 +133,7 @@ func cleanExecuteTests() {
 
 func TestFormat_ExecuteBytes(t *testing.T) {
 	cleanExecuteTests()
+
 	for _, tt := range testsForExecute {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.f.Compile("test_"+tt.name, nil, nil); err != nil {
@@ -156,7 +157,8 @@ func TestFormat_ExecuteBytes(t *testing.T) {
 }
 
 func BenchmarkFormat_ExecuteBytes(b *testing.B) {
-	cleanExecuteTests()
+	cleanExecuteTests() // TODO: use testing.cleanup when its a thing
+
 	for _, tt := range testsForExecute {
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()
@@ -173,6 +175,7 @@ func BenchmarkFormat_ExecuteBytes(b *testing.B) {
 
 func TestFormat_Execute(t *testing.T) {
 	cleanExecuteTests()
+
 	for _, tt := range testsForExecute {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.f.Compile("test_"+tt.name, nil, nil); err != nil {
@@ -193,6 +196,7 @@ func TestFormat_Execute(t *testing.T) {
 
 func BenchmarkFormat_Execute(b *testing.B) {
 	cleanExecuteTests()
+
 	for _, tt := range testsForExecute {
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()

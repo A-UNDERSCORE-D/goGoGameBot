@@ -175,6 +175,7 @@ func TestGlobToRegexp(t *testing.T) {
 func BenchmarkGlobToRegexp(b *testing.B) {
 	for _, tt := range globToRegexpTests {
 		regexpCache = make(map[string]*regexp.Regexp)
+
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				GlobToRegexp(tt.mask)

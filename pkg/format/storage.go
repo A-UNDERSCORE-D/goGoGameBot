@@ -28,6 +28,7 @@ func (s *Storage) get(name string) (interface{}, bool) {
 	s.RLock()
 	defer s.RUnlock()
 	data, ok := s.data[name]
+
 	return data, ok // Cant just return data[testName] apparently
 }
 
@@ -42,6 +43,7 @@ func (s *Storage) GetInt(name string, def int) int {
 	if data, ok := s.get(name); ok {
 		return data.(int)
 	}
+
 	return def
 }
 
@@ -56,6 +58,7 @@ func (s *Storage) GetBool(name string, def bool) bool {
 	if res, ok := s.get(name); ok {
 		return res.(bool)
 	}
+
 	return def
 }
 
@@ -70,6 +73,7 @@ func (s *Storage) GetString(name, def string) string {
 	if res, ok := s.get(name); ok {
 		return res.(string)
 	}
+
 	return def
 }
 
@@ -78,5 +82,6 @@ func (s *Storage) Delete(name string) string {
 	s.Lock()
 	delete(s.data, name)
 	s.Unlock()
+
 	return name
 }

@@ -61,6 +61,7 @@ func (m *Manager) nextID() int {
 	m.m.Lock()
 	defer m.m.Unlock()
 	m.curId++
+
 	return m.curId
 }
 
@@ -69,6 +70,7 @@ func (m *Manager) HasEvent(name string) bool {
 	m.m.RLock()
 	defer m.m.RUnlock()
 	_, ok := m.events[name]
+
 	return ok
 }
 
@@ -77,9 +79,11 @@ func (m *Manager) attachDirect(name string, f HandlerFunc, priority, id int) int
 	if m.events == nil {
 		m.events = make(Map)
 	}
+
 	m.events[name] = append(m.events[name], Handler{f, priority, id})
 	sort.Sort(m.events[name])
 	m.m.Unlock()
+
 	return id
 }
 
@@ -101,6 +105,7 @@ func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, coun
 	id := m.nextID()
 	wrapped := func(e Event) {
 		callCount++
+
 		defer func() {
 			if callCount >= count {
 				m.Detach(id)
@@ -108,13 +113,16 @@ func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, coun
 		}()
 		f(e)
 	}
+
 	return m.attachDirect(name, wrapped, priority, id)
 }
 
 // Detach removes a given ID from the event Manager. If the event is not found, Detach returns False
 func (m *Manager) Detach(id int) bool {
 	var targetName string
+
 	targetIdx := -1 // Dont mutate while iterating--fun things happen
+
 	m.m.Lock()
 loop:
 	for name, hl := range m.events {
@@ -134,6 +142,7 @@ loop:
 		m.m.Lock()
 		m.events[targetName] = append(m.events[targetName][:targetIdx], m.events[targetName][targetIdx+1:]...)
 		m.m.Unlock()
+
 		return true
 	}
 
@@ -141,7 +150,9 @@ loop:
 		for _, id := range ids {
 			m.Detach(id)
 		}
+
 		delete(m.multiAttaches, id)
+
 		return true
 	}
 
@@ -154,6 +165,7 @@ func (m *Manager) Dispatch(event Event) {
 	m.m.RLock()
 	toIterate, ok := m.events[event.Name()]
 	m.m.RUnlock()
+
 	if !ok {
 		return
 	}
@@ -167,10 +179,12 @@ func (m *Manager) Dispatch(event Event) {
 // over the channel. The channel has a buffer, to prevent blocking of the event's dispatch
 func (m *Manager) WaitForChan(name string) <-chan Event {
 	c := make(chan Event, 1)
+
 	m.AttachOneShot(name, func(event Event) {
 		c <- event
 		close(c)
 	}, PriNorm)
+
 	return c
 }
 
@@ -192,5 +206,6 @@ func (m *Manager) AttachMany(f HandlerFunc, priority int, names ...string) int {
 	for _, name := range names {
 		m.multiAttaches[rootId] = append(m.multiAttaches[rootId], m.Attach(name, f, priority))
 	}
+
 	return rootId
 }

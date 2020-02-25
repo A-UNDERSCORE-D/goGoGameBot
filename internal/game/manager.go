@@ -103,6 +103,7 @@ func (m *Manager) runBot() {
 		if err := m.bot.Run(); err != nil {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
 		}
+
 		m.sendStatusMessageToAllGames("Chat connected.")
 
 		if m.status.Get() != normal {
@@ -128,6 +129,7 @@ func (m *Manager) sendStatusMessageToAllGames(msg string) {
 func (m *Manager) String() string {
 	m.gamesMutex.RLock()
 	defer m.gamesMutex.RUnlock()
+
 	return fmt.Sprintf("game.Manager at %p with %d games attached", m, len(m.games))
 }
 
@@ -137,26 +139,32 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 	// No need to hold the games mutex as of yet as we're not iterating the games list itself
 	m.Debug("reloading games")
 	defer m.Debug("games reload complete")
+
 	for _, conf := range configs {
 		switch i := m.gameIdxFromName(conf.Name); i {
 		case -1: // Game does not exist
 			m.Debugf("adding a new game during reload: %s", conf.Name)
+
 			g, err := NewGame(conf, m)
 			if err != nil {
 				m.Error(err)
 				continue
 			}
+
 			if err := m.AddGame(g); err != nil {
 				m.Error(err)
 				continue
 			}
 		default:
 			m.Debugf("updating config on %s", conf.Name)
-			m.gamesMutex.RLock() // use RLock here because we're only reading the slice, and mutating an index on that slice
+			// use RLock here because we're only reading the slice, and mutating an index on that slice
+			m.gamesMutex.RLock()
+
 			g := m.games[i]
 			if err := g.UpdateFromConfig(conf); err != nil {
 				m.Error(fmt.Errorf("reloading game %s errored: %s", g, err))
 			}
+
 			m.gamesMutex.RUnlock()
 		}
 	}
@@ -165,11 +173,13 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 func (m *Manager) gameIdxFromName(name string) int {
 	m.gamesMutex.RLock()
 	defer m.gamesMutex.RUnlock()
+
 	for i, g := range m.games {
 		if g.GetName() == name {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -179,6 +189,7 @@ func (m *Manager) GetGameFromName(name string) interfaces.Game {
 	if i := m.gameIdxFromName(name); i != -1 {
 		return m.games[i]
 	}
+
 	return nil
 }
 
@@ -192,9 +203,11 @@ func (m *Manager) AddGame(g interfaces.Game) error {
 	if m.GameExists(g.GetName()) {
 		return fmt.Errorf("cannot add game %s to manager %v as it already exists", g.GetName(), m)
 	}
+
 	m.gamesMutex.Lock()
 	m.games = append(m.games, g)
 	m.gamesMutex.Unlock()
+
 	return nil
 }
 
@@ -204,26 +217,33 @@ func skipContains(game interfaces.Game, skip []interfaces.Game) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 // ForEachGame allows you to run a function on every game the Manager manages. Note that this read locks the mutex
 // protecting the games list. Any panics that occur will be recovered and logged as an error on the bot
 func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.Game) {
-	var i int
-	var g interfaces.Game
+	var (
+		i int
+		g interfaces.Game
+	)
+
 	defer func() {
 		if err := recover(); err != nil {
 			// TODO: s/: %s/: %w
 			m.Error(fmt.Errorf("recovered a panic from function %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
 		}
 	}()
+
 	m.gamesMutex.RLock()
 	defer m.gamesMutex.RUnlock()
+
 	for i, g = range m.games {
 		if skipContains(g, skip) {
 			continue
 		}
+
 		gameFunc(g)
 	}
 }
@@ -236,7 +256,9 @@ var (
 // StopAllGames stops all the games on the manager, blocking until they all close or are killed
 func (m *Manager) StopAllGames() {
 	m.status.Set(shutdown)
+
 	wg := sync.WaitGroup{}
+
 	m.ForEachGame(func(game interfaces.Game) { wg.Add(1); game.StopOrKillWaitgroup(&wg) }, nil)
 	wg.Wait()
 }
@@ -252,9 +274,12 @@ func (m *Manager) StartGame(name string) error {
 		if g.IsRunning() {
 			return ErrAlreadyRunning
 		}
+
 		go g.Run()
+
 		return nil
 	}
+
 	return ErrGameNotExist
 }
 
@@ -269,6 +294,7 @@ func (m *Manager) StopGame(name string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -276,6 +302,7 @@ func (m *Manager) StopGame(name string) error {
 func (m *Manager) Error(err error) {
 	m.bot.SendAdminMessage(fmt.Sprintf("game.Manager: %s", err))
 	m.Logger.Warn(err)
+
 	for _, l := range strings.Split(string(debug.Stack()), "\n") {
 		m.Logger.Warn(l)
 	}
@@ -340,9 +367,12 @@ func (m *Manager) Stop(msg string, restart bool) {
 func (m *Manager) reload(conf *config.Config) error {
 	m.rootConf = conf
 	m.ReloadGames(conf.GameManager.Games)
+
 	if err := m.bot.Reload(conf.ConnConfig.Config); err != nil {
 		return err
 	}
+
 	m.Cmd.SetPrefixes(m.bot.CommandPrefixes())
+
 	return nil
 }

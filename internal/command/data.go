@@ -30,7 +30,9 @@ func (d *Data) CheckPerms(requiredLevel int) bool {
 	if d.FromTerminal || d.util.AdminLevel(d.Source) >= requiredLevel {
 		return true
 	}
+
 	d.ReturnNotice(notAllowed)
+
 	return false
 }
 

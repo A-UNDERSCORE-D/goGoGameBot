@@ -12,9 +12,11 @@ func TestSingleCommand_Fire(t *testing.T) {
 		help          string
 		name          string
 	}
+
 	type args struct {
 		data *Data
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -22,6 +24,7 @@ func TestSingleCommand_Fire(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &SingleCommand{
@@ -90,9 +93,11 @@ func TestSubCommandList_findSubcommand(t *testing.T) {
 		help: "some help",
 		name: "test",
 	}
+
 	type fields struct {
 		subCommands map[string]Command
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -129,9 +134,11 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 	type fields struct {
 		subCommands map[string]Command
 	}
+
 	type args struct {
 		command Command
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -153,6 +160,7 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SubCommandList{
@@ -169,13 +177,17 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 func TestSubCommandList_Fire(t *testing.T) {
 	messager := &mockMessager{}
 	manager := NewManager(baseLogger)
+
 	type fields struct {
 		subCommands map[string]Command
 	}
+
 	type args struct {
 		data *Data
 	}
+
 	const testSource = "test!testIdent@testHost"
+
 	tests := []struct {
 		name        string
 		fields      fields

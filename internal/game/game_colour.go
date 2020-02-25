@@ -16,6 +16,8 @@ func (g *Game) setupTransformer(game config.Game) error {
 	if err != nil {
 		return fmt.Errorf("could not add transformer to game %s: %w", game.Name, err)
 	}
+
 	g.chatBridge.transformer = t
+
 	return nil
 }

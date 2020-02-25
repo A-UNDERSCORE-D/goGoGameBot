@@ -31,6 +31,7 @@ func (c *ConnConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	if start.Name.Local != "conn_config" {
 		return nil
 	}
+
 	for _, attr := range start.Attr {
 		if attr.Name.Local == "conn_type" {
 			c.ConnType = attr.Value
@@ -44,11 +45,13 @@ func (c *ConnConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	}
 
 	c.Config = conf
+
 	return nil
 }
 
 func reconstructXML(decoder *xml.Decoder, start xml.StartElement) (string, error) {
 	buf := bytes.NewBuffer(tokenToBytes(start))
+
 	for {
 		t, err := decoder.Token()
 		if err != nil {
@@ -56,10 +59,12 @@ func reconstructXML(decoder *xml.Decoder, start xml.StartElement) (string, error
 		}
 
 		buf.Write(tokenToBytes(t))
+
 		if t == start.End() {
 			break
 		}
 	}
+
 	return buf.String(), nil
 }
 
@@ -68,7 +73,9 @@ func nameToBytes(name xml.Name) (out []byte) {
 		out = append(out, name.Space...)
 		out = append(out, ':')
 	}
+
 	out = append(out, name.Local...)
+
 	return
 }
 
@@ -78,26 +85,31 @@ func attrToBytes(a xml.Attr) []byte {
 		// reconstruct this easily / at all because of how its parsed out
 		return nil
 	}
+
 	out := bytes.Buffer{}
 	out.Write(nameToBytes(a.Name))
 	out.WriteRune('=')
 	out.WriteRune('"')
 	out.WriteString(a.Value)
 	out.WriteRune('"')
+
 	return out.Bytes()
 }
 
 func tokenToBytes(t xml.Token) []byte {
 	buf := bytes.Buffer{}
+
 	switch realTok := t.(type) {
 	case xml.StartElement:
 		buf.WriteRune('<')
+
 		if realTok.Name.Space != "" {
 			buf.WriteString(realTok.Name.Space)
 			buf.WriteRune(':')
 		}
 
 		buf.WriteString(realTok.Name.Local)
+
 		for _, v := range realTok.Attr {
 			buf.WriteRune(' ')
 			buf.Write(attrToBytes(v))
@@ -130,11 +142,14 @@ func readAllFromFile(name string) ([]byte, error) {
 		return nil, err
 	}
 
+	// TODO: ioutil.readfile
 	data, err := ioutil.ReadAll(f)
 	_ = f.Close()
+
 	if err != nil {
 		return nil, err
 	}
+
 	return data, nil
 }
 
@@ -149,6 +164,7 @@ func getXMLConf(filename string) (*Config, error) {
 	if err = xml.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
+
 	return conf, nil
 }
 
@@ -160,6 +176,8 @@ func GetConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	conf.ConfigPath = filename
+
 	return conf, nil
 }

@@ -39,14 +39,18 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 		stdinChan: make(chan []byte),
 	}
 	g.status.Set(normal)
+
 	go g.watchStdinChan()
+
 	g.regexpManager = NewRegexpManager(g)
 	if err := g.UpdateFromConfig(conf); err != nil {
 		return nil, err
 	}
+
 	for _, c := range g.chatBridge.channels {
 		manager.bot.JoinChannel(c)
 	}
+
 	return g, nil
 }
 
@@ -104,6 +108,7 @@ func (g *Game) Run() {
 
 		shouldBreak := false
 		cleanExit, err := g.runGame()
+
 		if err == ErrAlreadyRunning {
 			shouldBreak = true
 		} else if err != nil && !strings.HasPrefix(err.Error(), "exit status") {
@@ -135,9 +140,11 @@ func (g *Game) runGame() (bool, error) {
 
 	g.sendToMsgChan("starting")
 	g.status.Set(normal)
+
 	if err := g.process.Start(); err != nil {
 		return false, err
 	}
+
 	g.monitorStdIO()
 
 	if err := g.process.WaitForCompletion(); err != nil && g.status.Get() != killed {
@@ -179,11 +186,13 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 
 	var preRollRe *regexp.Regexp
+
 	if conf.PreRoll.Regexp != "" {
 		re, err := regexp.Compile(conf.PreRoll.Regexp)
 		if err != nil {
 			return fmt.Errorf("could not compile preroll regexp: %w", err)
 		}
+
 		preRollRe = re
 	}
 
@@ -204,15 +213,18 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 			return err
 		}
 	}
+
 	procArgs, err := shlex.Split(conf.Args, true)
 	if err != nil {
 		return fmt.Errorf("could not parse game arguments: %w", err)
 	}
+
 	if g.process == nil {
 		p, err := process.NewProcess(conf.Path, procArgs, wd, g.Logger.Clone(), conf.Env, !conf.DontCopyEnv)
 		if err != nil {
 			return err
 		}
+
 		g.process = p
 	} else {
 		g.process.UpdateCmd(conf.Path, procArgs, wd, conf.Env, !conf.DontCopyEnv)
@@ -240,6 +252,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	gf.quit = f.Quit
 	gf.kick = f.Kick
 	gf.external = f.External
+
 	if gf.storage == nil {
 		gf.storage = new(format.Storage)
 	}
@@ -250,6 +263,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	g.chatBridge.format.root = root
 
 	g.Info("reload completed successfully")
+
 	return nil
 }
 
@@ -258,38 +272,49 @@ func compileOrNil(targetFmt *format.Format, name string, root *template.Template
 		targetFmt = nil
 		return nil
 	}
+
 	return targetFmt.Compile(name, root)
 }
 
 func (g *Game) compileFormats(gameConf *config.Game, root *template.Template) error {
 	fmts := &gameConf.Chat.Formats
+
 	const cantCompile = "could not compile format %s: %w"
+
 	if err := compileOrNil(fmts.Message, "message", root); err != nil {
 		return fmt.Errorf(cantCompile, "message", err)
 	}
+
 	if err := compileOrNil(fmts.Join, "join", root); err != nil {
 		return fmt.Errorf(cantCompile, "join", err)
 	}
+
 	if err := compileOrNil(fmts.Part, "part", root); err != nil {
 		return fmt.Errorf(cantCompile, "part", err)
 	}
+
 	if err := compileOrNil(fmts.Nick, "nick", root); err != nil {
 		return fmt.Errorf(cantCompile, "nick", err)
 	}
+
 	if err := compileOrNil(fmts.Quit, "quit", root); err != nil {
 		return fmt.Errorf(cantCompile, "quit", err)
 	}
+
 	if err := compileOrNil(fmts.Kick, "kick", root); err != nil {
 		return fmt.Errorf(cantCompile, "kick", err)
 	}
+
 	if err := compileOrNil(fmts.External, "external", root); err != nil {
 		return fmt.Errorf(cantCompile, "external", err)
 	}
+
 	for _, v := range fmts.Extra {
 		if err := v.Compile(v.Name, root); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -317,11 +342,13 @@ func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 		if g.manager.status.Get() != shutdown {
 			g.sendToMsgChan("cannot stop a non-running game")
 		}
+
 		return nil
 	}
 
 	g.sendToMsgChan("stopping")
 	g.status.Set(killed)
+
 	return g.process.StopOrKillTimeout(timeout)
 }
 

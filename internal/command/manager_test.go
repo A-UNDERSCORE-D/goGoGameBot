@@ -29,6 +29,7 @@ func getNick(source string) string {
 	if strings.HasPrefix(source, "#") {
 		return source
 	}
+
 	return ircutils.ParseUserhost(source).Nick
 }
 
@@ -53,11 +54,13 @@ func (m *mockMessager) checkMap() {
 
 func (m *mockMessager) AdminLevel(source string) int {
 	m.checkMap()
+
 	for mask, level := range m.admins {
 		if util.GlobToRegexp(mask).MatchString(source) {
 			return level
 		}
 	}
+
 	return 0
 }
 
@@ -70,9 +73,11 @@ func cmpSlice(a, b [][2]string) bool {
 	if len(b) != len(a) {
 		return false
 	}
+
 	if a == nil && b == nil {
 		return true
 	}
+
 	for i, v := range a {
 		if b[i][0] != v[0] || b[i][1] != v[1] {
 			return false
@@ -89,11 +94,13 @@ func (m *mockMessager) Clear() {
 func TestManager_AddCommand(t *testing.T) {
 	preExisting := NewManager(baseLogger)
 	_ = preExisting.AddCommand("dupe", 0, nil, "dupe command is duped")
+
 	type args struct {
 		name          string
 		requiresAdmin int
 		help          string
 	}
+
 	tests := []struct {
 		name    string
 		m       *Manager
@@ -175,6 +182,7 @@ func TestManager_getCommandByName(t *testing.T) {
 			nil,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.getCommandByName(tt.cmdName); !reflect.DeepEqual(got, tt.want) {
@@ -192,6 +200,7 @@ func TestManager_AddSubCommand(t *testing.T) {
 		SingleCommand: SingleCommand{0, nil, "baseCmd", "baseCmd"},
 		subCommands:   make(map[string]Command)},
 	)
+
 	type args struct {
 		rootName      string
 		name          string
@@ -199,6 +208,7 @@ func TestManager_AddSubCommand(t *testing.T) {
 		callback      Callback
 		help          string
 	}
+
 	tests := []struct {
 		name    string
 		m       *Manager
@@ -234,6 +244,7 @@ func TestManager_AddSubCommand(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.m.AddSubCommand(
@@ -329,12 +340,14 @@ func TestManager_ParseLine(t *testing.T) {
 		"test cmd",
 	)
 	messager := &mockMessager{}
+
 	type args struct {
 		line         string
 		fromTerminal bool
 		source       string
 		target       string
 	}
+
 	tests := []struct {
 		name             string
 		args             args
@@ -395,7 +408,8 @@ func TestManager_ParseLine(t *testing.T) {
 				line:         "testNoAccess",
 				fromTerminal: true,
 			},
-			expectedMessages: [][2]string{{"", "huzzah!"}}, // It tries to send a message anyway, but thats not our fault.
+			// It tries to send a message anyway, but that's not our fault.
+			expectedMessages: [][2]string{{"", "huzzah!"}},
 		},
 		{
 			name: "privileged call without access",

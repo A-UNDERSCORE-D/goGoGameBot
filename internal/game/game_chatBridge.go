@@ -53,12 +53,14 @@ func (d *dataForFmt) InvokeTemplate(name string, args interface{}) (string, erro
 	if err := d.game.chatBridge.format.root.ExecuteTemplate(out, name, args); err != nil {
 		return "", err
 	}
+
 	return out.String(), nil
 }
 
 // This should always be given intermediate format data
 func (g *Game) makeDataForFormat(source string, target, msg string) *dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
+
 	return &dataForFmt{
 		game:         g,
 		SourceRaw:    source,
@@ -80,6 +82,7 @@ func (g *Game) shouldBridge(target string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -93,6 +96,7 @@ func (g *Game) OnMessage(source, target, msg string, isAction bool) {
 	if !g.shouldBridge(target) || g.chatBridge.format.message == nil {
 		return
 	}
+
 	data := dataForPrivmsg{*g.makeDataForFormat(source, target, msg), isAction}
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.message))
 }
@@ -102,6 +106,7 @@ func (g *Game) OnJoin(source, channel string) {
 	if !g.shouldBridge(channel) || g.chatBridge.format.join == nil {
 		return
 	}
+
 	g.checkError(g.SendFormattedLine(g.makeDataForFormat(source, channel, ""), g.chatBridge.format.join))
 }
 
@@ -110,6 +115,7 @@ func (g *Game) OnPart(source, target, message string) {
 	if !g.shouldBridge(target) || g.chatBridge.format.part == nil {
 		return
 	}
+
 	g.checkError(g.SendFormattedLine(g.makeDataForFormat(source, target, message), g.chatBridge.format.part))
 }
 
@@ -123,6 +129,7 @@ func (g *Game) OnNick(source, newnick string) {
 	if g.chatBridge.format.nick == nil {
 		return
 	}
+
 	data := dataForNick{*g.makeDataForFormat(source, "", ""), newnick}
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.nick))
 }
@@ -132,6 +139,7 @@ func (g *Game) OnQuit(source, message string) {
 	if g.chatBridge.format.quit == nil {
 		return
 	}
+
 	data := g.makeDataForFormat(source, "", message)
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.quit))
 }
@@ -146,6 +154,7 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 	if !g.shouldBridge(channel) || g.chatBridge.format.kick == nil {
 		return
 	}
+
 	data := dataForKick{*g.makeDataForFormat(source, channel, message), kickee}
 	g.checkError(g.SendFormattedLine(&data, g.chatBridge.format.kick))
 }
@@ -156,7 +165,9 @@ func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if !g.chatBridge.allowForwards || g.chatBridge.format.external == nil {
 		return
 	}
+
 	name := "LOCAL"
+
 	if source != g {
 		name = source.GetName()
 	}
@@ -180,11 +191,14 @@ func (g *Game) SendFormattedLine(d interface{}, fmt *format.Format) error {
 	if err != nil {
 		return err
 	}
+
 	if len(res) == 0 {
 		return nil
 	}
+
 	if _, err := g.WriteString(res); err != nil {
 		return err
 	}
+
 	return nil
 }

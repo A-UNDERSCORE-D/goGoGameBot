@@ -26,9 +26,11 @@ func NewProcess(cmd string, args []string, workingDir string, logger *log.Logger
 		log: logger,
 	}
 	p.UpdateCmd(cmd, args, workingDir, env, copySystemEnv)
+
 	if err := p.Reset(); err != nil {
 		return nil, err
 	}
+
 	return p, nil
 }
 
@@ -55,7 +57,9 @@ func getEnv(baseEnvs []string, copySystemEnv bool) []string {
 	if copySystemEnv {
 		envs = append(envs, os.Environ()...)
 	}
+
 	envs = append(envs, baseEnvs...) // Do this second for overriding
+
 	return envs
 }
 
@@ -72,11 +76,14 @@ func (p *Process) UpdateCmd(command string, args []string, workingDir string, en
 
 func (p *Process) setupCmd() error {
 	p.commandMutex.Lock()
+
 	cmd := exec.Command(p.commandString, p.argListString...)
 	cmd.Dir = p.workingDir
 	cmd.Env = p.cmdEnv
 	p.log.Info(fmt.Sprintf("%#v", p.cmdEnv))
+
 	p.commandMutex.Unlock()
+
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -96,6 +103,7 @@ func (p *Process) setupCmd() error {
 	p.Stdin = stdin
 	p.Stdout = stdout
 	p.Stderr = stderr
+
 	return nil
 }
 
@@ -104,17 +112,20 @@ func (p *Process) Reset() error {
 	p.DoneChan = make(chan bool) // TODO: This causes a data race. In theory it's not an issue, but it'd be nice to fix it
 	p.hasStarted.Set(false)
 	p.hasExited.Set(false)
+
 	return p.setupCmd()
 }
 
 // Start starts the process, if startup errors, that error is returned
 func (p *Process) Start() error {
 	p.log.Info("Starting")
+
 	if err := p.cmd.Start(); err != nil {
 		return fmt.Errorf("could not start process: %v", err)
 	}
 
 	p.hasStarted.Set(true)
+
 	return nil
 }
 
@@ -137,10 +148,12 @@ func (p *Process) GetReturnCode() int {
 // GetStatus returns the current status of the process, including memory and CPU usage
 func (p *Process) GetStatus() string {
 	out := strings.Builder{}
+
 	if !p.IsRunning() {
 		out.WriteString("$cFF0000$bNot running$r")
 		return out.String()
 	}
+
 	ps, err := psutilProc.NewProcess(int32(p.cmd.Process.Pid))
 
 	if err != nil {
@@ -149,8 +162,8 @@ func (p *Process) GetStatus() string {
 
 	out.WriteString("$c00FC00$bRunning$r: ")
 	out.WriteString("CPU usage: ")
-	cpuPercentage, err := ps.CPUPercent()
 
+	cpuPercentage, err := ps.CPUPercent()
 	if err != nil {
 		out.WriteString("Error ")
 	} else {
@@ -168,6 +181,7 @@ func (p *Process) GetStatus() string {
 	if m, err := ps.MemoryPercent(); err == nil {
 		out.WriteString(fmt.Sprintf(" (%.2f%%)", m))
 	}
+
 	return out.String()
 }
 
@@ -181,6 +195,7 @@ func (p *Process) Write(data []byte) (int, error) {
 	p.StdinMutex.Lock()
 	defer p.StdinMutex.Unlock()
 	p.log.Infof("[STDIN] %s", data)
+
 	return p.Stdin.Write(toWrite)
 }
 
@@ -195,9 +210,11 @@ func (p *Process) WaitForCompletion() error {
 	defer close(p.DoneChan)
 	err := p.cmd.Wait()
 	p.hasExited.Set(true)
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -211,6 +228,7 @@ func (p *Process) SendSignal(sig os.Signal) error {
 		p.log.Warnf("could not send signal %s to process: %s", sig.String(), err)
 		return err
 	}
+
 	return nil
 }
 

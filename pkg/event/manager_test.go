@@ -43,6 +43,7 @@ func TestManager_HasEvent(t *testing.T) {
 	m := Manager{}
 	m.Attach("test1", nil, 20)
 	m.Attach("spaces are fun", nil, 20)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.HasEvent(tt.args); got != tt.want {
@@ -60,7 +61,9 @@ func TestManager_Attach(t *testing.T) {
 		{"test", "test"},
 		{"test with spaces", "space test"},
 	}
+
 	m := Manager{}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m.Attach(tt.args, nil, -1)
@@ -111,6 +114,7 @@ func TestManager_Detach(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.Detach(tt.args); got != tt.want {
@@ -201,21 +205,25 @@ func TestManager_Dispatch(t *testing.T) {
 func TestManager_AttachOneShot(t *testing.T) {
 	m := new(Manager)
 	callCount := 0
+
 	m.AttachOneShot("test", func(event Event) { callCount++ }, PriHighest)
+
 	for i := 0; i < 5; i++ {
 		m.Dispatch(NewSimpleEvent("test"))
 	}
+
 	if callCount != 1 {
 		t.Errorf("Manager.AttachOneShot based hook called more than once: %d", callCount)
 	}
-
 }
 
 func createManagerWithEvent(name string, handlers ...Handler) *Manager {
 	m := Manager{}
+
 	for _, h := range handlers {
 		m.Attach(name, h.Func, h.Priority)
 	}
+
 	return &m
 }
 

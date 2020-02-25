@@ -1,3 +1,4 @@
+// Package simple implements a Transformer that supports basic replacement based transformations
 package simple
 
 import (
@@ -34,7 +35,9 @@ func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
 		intermediate.Strikethrough: s.ReplaceMap.Strikethrough,
 		intermediate.Reset:         s.ReplaceMap.Reset,
 	}
+
 	colourMap := make(map[color.Color]string)
+
 	for _, cc := range s.ColourMap {
 		c := color.RGBA{
 			R: cc.R,
@@ -44,6 +47,7 @@ func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
 		}
 		colourMap[c] = cc.Mapped
 	}
+
 	return replaceMap, colourMap
 }
 
@@ -64,11 +68,14 @@ func New(replaceMap map[rune]string, colourMap map[color.Color]string) *Transfor
 	for col := range colourMap {
 		palette = append(palette, col)
 	}
+
 	var repl []string
+
 	for k, v := range replaceMap {
 		if v == "" {
 			continue
 		}
+
 		repl = append(repl, v, intermediate.SentinelString+string(k))
 	}
 
@@ -84,7 +91,6 @@ func New(replaceMap map[rune]string, colourMap map[color.Color]string) *Transfor
 		colMap:   colourMap,
 		replacer: strings.NewReplacer(repl...), // the repl slice is reversed from the map* maps, this way it does an inverse
 	}
-
 }
 
 // Transform implements the Transformer interface. Applies the simple conversions setup in the constructor
@@ -106,6 +112,7 @@ func (s *Transformer) reverseColour(in string) color.Color {
 			return c
 		}
 	}
+
 	return nil
 }
 

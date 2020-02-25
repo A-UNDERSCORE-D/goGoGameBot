@@ -42,13 +42,17 @@ func (f *Format) Compile(name string, root *template.Template, funcMaps ...templ
 	if f.FormatString == "" {
 		return ErrEmptyFormat
 	}
+
 	var toSet *template.Template
+
 	if root == nil {
 		toSet = template.New(name)
 	} else {
 		toSet = root.New(name)
 	}
+
 	toSet.Funcs(UtilFuncs)
+
 	for _, entry := range funcMaps {
 		toSet.Funcs(entry)
 	}
@@ -57,8 +61,10 @@ func (f *Format) Compile(name string, root *template.Template, funcMaps ...templ
 	if err != nil {
 		return err
 	}
+
 	f.CompiledFormat = res
 	f.compiled = true
+
 	return nil
 }
 
@@ -67,11 +73,14 @@ func (f *Format) ExecuteBytes(data interface{}) ([]byte, error) {
 	if !f.compiled {
 		return nil, errors.New("util.Format: cannot execute an uncompiled Format")
 	}
+
 	buf := new(bytes.Buffer)
+
 	err := f.CompiledFormat.Execute(buf, data)
 	if err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 

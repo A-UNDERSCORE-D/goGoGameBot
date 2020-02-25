@@ -16,6 +16,7 @@ func TestData_CheckPerms(t *testing.T) {
 		util:         &mockMessager{},
 	}
 	d.util.(*mockMessager).AddAdmin("*!*@test", 1)
+
 	if d.CheckPerms(2) {
 		t.Errorf("Data.CheckAdmin() = %v, want %v", true, false)
 	}
@@ -31,6 +32,7 @@ func TestData_SendTargetNotice(t *testing.T) {
 	d.SendTargetNotice("test")
 	n := d.util.(*mockMessager).lastNotices
 	want := [][2]string{{"#test", "test"}}
+
 	if !cmpSlice(n, want) {
 		t.Errorf("Data.SendTargetNotice() did not send expected data: got %v, want %v", n, want)
 	}
@@ -46,6 +48,7 @@ func TestData_SendTargetMessage(t *testing.T) {
 	d.SendTargetMessage("test")
 	n := d.util.(*mockMessager).lastMessages
 	want := [][2]string{{"#test", "test"}}
+
 	if !cmpSlice(n, want) {
 		t.Errorf("Data.SendTargetMessage() did not send expected data: got %v, want %v", n, want)
 	}
@@ -61,6 +64,7 @@ func TestData_SendSourceNotice(t *testing.T) {
 	d.SendSourceNotice("test message")
 	n := d.util.(*mockMessager).lastNotices
 	want := [][2]string{{"test", "test message"}}
+
 	if !cmpSlice(n, want) {
 		t.Errorf("Data.SendSourceNotice() did not send expected data: got %v, want %v", n, want)
 	}
@@ -76,6 +80,7 @@ func TestData_SendSourceMessage(t *testing.T) {
 	d.SendSourceMessage("test message")
 	n := d.util.(*mockMessager).lastMessages
 	want := [][2]string{{"test", "test message"}}
+
 	if !cmpSlice(n, want) {
 		t.Errorf("Data.SendSourceNotice() did not send expected data: got %v, want %v", n, want)
 	}

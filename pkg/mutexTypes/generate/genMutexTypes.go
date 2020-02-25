@@ -56,6 +56,7 @@ func main() {
 		if err := t.Execute(b, map[string]string{"Name": name[0], "Type": name[1]}); err != nil {
 			panic(err)
 		}
+
 		b.WriteByte('\n')
 	}
 
@@ -68,6 +69,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer f.Close()
 	f.Write(formatted)
 }

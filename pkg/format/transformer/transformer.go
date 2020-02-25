@@ -34,9 +34,11 @@ func GetTransformer(conf config.TransformerConfig) (Transformer, error) {
 		if err := xml.Unmarshal([]byte(conf.Config), &stc); err != nil {
 			return nil, fmt.Errorf("could not create new SimpleTransformer: %w", err)
 		}
+
 		return simple.New(stc.MakeMaps()), nil
 	case "minecraft":
 		return minecraft.Transformer{}, nil
 	}
+
 	return nil, fmt.Errorf("unknown transformer type %q", x)
 }

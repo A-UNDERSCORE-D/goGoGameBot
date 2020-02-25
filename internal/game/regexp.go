@@ -43,6 +43,7 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 	}
 
 	var templ *format.Format
+
 	if err := conf.Format.Compile("regexp_"+conf.Name, root, funcs); err != nil {
 		if err != format.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
@@ -78,6 +79,7 @@ type Regexp struct {
 
 func (r *Regexp) matchToMap(line string) (map[string]string, bool) {
 	out := make(map[string]string)
+
 	match := r.regexp.FindStringSubmatch(line)
 	if match == nil {
 		return nil, false
@@ -87,6 +89,7 @@ func (r *Regexp) matchToMap(line string) (map[string]string, bool) {
 		if i == 0 {
 			continue
 		}
+
 		if name != "" {
 			out[name] = match[i]
 		} else {
@@ -154,6 +157,7 @@ type RegexpManager struct {
 func (r *RegexpManager) checkAndExecute(line string, isStdout bool) {
 	r.RLock()
 	defer r.RUnlock()
+
 	for _, reg := range r.regexps {
 		if matched, err := reg.checkAndExecute(line, isStdout); err != nil {
 			r.game.manager.Error(err)
@@ -172,19 +176,24 @@ func (r *RegexpManager) String() string {
 // only applies changes if none of the regexps failed to be created with NewRegexp. It is safe for concurrent use
 func (r *RegexpManager) UpdateFromConf(res []config.Regexp, root *template.Template) error {
 	var reList RegexpList
+
 	r.game.Debug("regex manager reloading")
+
 	for _, reConf := range res {
 		re, err := NewRegexp(reConf, r, root)
 		if err != nil {
 			return err
 		}
+
 		r.game.Debugf("adding regexp %#v", re)
 		reList = append(reList, re)
 	}
+
 	sort.Sort(reList)
 	r.Lock()
 	r.regexps = reList
 	r.Unlock()
 	r.game.Debug("regexp manager reload complete")
+
 	return nil
 }

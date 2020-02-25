@@ -33,10 +33,12 @@ func (g *Game) sendToAdminChan(args ...interface{}) {
 
 func (g *Game) writeToAllOthers(msg string) {
 	msg = strings.ReplaceAll(msg, "\u200b", "")
+
 	g.manager.ForEachGame(func(game interfaces.Game) {
 		if !game.IsRunning() {
 			return
 		}
+
 		game.SendLineFromOtherGame(msg, g)
 	}, []interfaces.Game{g})
 }
@@ -44,12 +46,14 @@ func (g *Game) writeToAllOthers(msg string) {
 func (g *Game) templSendToAdminChan(v ...interface{}) string {
 	msg := fmt.Sprint(v...)
 	g.sendToAdminChan(msg)
+
 	return msg
 }
 
 func (g *Game) templSendToMsgChan(v ...interface{}) string {
 	msg := fmt.Sprint(v...)
 	g.sendToMsgChan(msg)
+
 	return msg
 }
 
@@ -60,6 +64,7 @@ func (g *Game) templSendMessage(c string, v ...interface{}) (string, error) {
 
 	msg := fmt.Sprint(v...)
 	g.manager.bot.SendMessage(c, msg)
+
 	return msg, nil
 }
 

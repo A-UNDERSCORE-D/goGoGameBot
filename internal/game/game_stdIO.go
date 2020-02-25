@@ -11,6 +11,7 @@ func (g *Game) watchStdinChan() {
 	for {
 		toSend := <-g.stdinChan
 		toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
+
 		if _, err := g.process.Write(toSend); err != nil {
 			g.manager.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.name, err))
 		}
@@ -23,6 +24,7 @@ func (g *Game) Write(p []byte) (n int, err error) {
 		return 0, errors.New("cannot write to a non-running game")
 	}
 	g.stdinChan <- p
+
 	return len(p), nil
 }
 
@@ -35,6 +37,7 @@ func (g *Game) monitorStdIO() {
 	if !g.IsRunning() {
 		g.manager.Error(errors.New(g.prefixMsg("cannot watch stdio on a non-running game")))
 	}
+
 	go func() {
 		s := bufio.NewScanner(g.process.Stdout)
 		for s.Scan() {
@@ -42,6 +45,7 @@ func (g *Game) monitorStdIO() {
 		}
 		g.checkError(s.Err())
 	}()
+
 	go func() {
 		s := bufio.NewScanner(g.process.Stderr)
 		for s.Scan() {
@@ -60,6 +64,7 @@ func pickString(s1, s2 string, b bool) string {
 	if b {
 		return s1
 	}
+
 	return s2
 }
 
@@ -72,6 +77,7 @@ func (g *Game) handleStdIO(text string, isStdout bool) {
 	text = g.chatBridge.transformer.MakeIntermediate(text)
 
 	g.Info(pickString(stdout, stderr, isStdout), " ", text)
+
 	if (g.chatBridge.dumpStdout && isStdout) || (g.chatBridge.dumpStderr && !isStdout) {
 		g.sendToMsgChan(pickString(stdout, stderr, isStdout), " ", text)
 	}

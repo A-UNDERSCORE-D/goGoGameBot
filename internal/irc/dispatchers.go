@@ -9,6 +9,7 @@ func event2RawEvent(e event.Event) *RawEvent {
 	if !ok {
 		return nil
 	}
+
 	return raw
 }
 
@@ -18,6 +19,7 @@ func (i *IRC) dispatchMessage(e event.Event) {
 		i.log.Warnf("Got a NOTICE or PRIVMSG message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewMessageEvent("MSG", raw.Line, raw.Time))
 }
 
@@ -27,6 +29,7 @@ func (i *IRC) dispatchJoin(e event.Event) {
 		i.log.Warnf("Got a JOIN message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewJoinEvent("JOIN", raw.Line, raw.Time))
 }
 
@@ -36,6 +39,7 @@ func (i *IRC) dispatchPart(e event.Event) {
 		i.log.Warnf("Got a PART message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewPartEvent("PART", raw.Line, raw.Time))
 }
 
@@ -45,6 +49,7 @@ func (i *IRC) dispatchQuit(e event.Event) {
 		i.log.Warnf("Got a QUIT message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewQuitEvent("QUIT", raw.Line, raw.Time))
 }
 
@@ -54,6 +59,7 @@ func (i *IRC) dispatchKick(e event.Event) {
 		i.log.Warnf("Got a KICK message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewKickEvent("KICK", raw.Line, raw.Time))
 }
 
@@ -63,5 +69,6 @@ func (i *IRC) dispatchNick(e event.Event) {
 		i.log.Warnf("Got a NICK message that was invalid: %v", raw)
 		return
 	}
+
 	i.ParsedEvents.Dispatch(NewNickEvent("NICK", raw.Line, raw.Time))
 }

@@ -8,14 +8,17 @@ import (
 // CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array
 // for repeated spaces
 func CleanSplitOnSpace(s string) []string {
-	split := strings.Split(s, " ")
 	var out []string
+
+	split := strings.Split(s, " ")
 	for _, v := range split {
 		if len(v) == 0 {
 			continue
 		}
+
 		out = append(out, v)
 	}
+
 	return out
 }
 
@@ -25,6 +28,7 @@ func WordEol(s string, wordIdx int) string {
 	if wordIdx > -1 && len(split) >= wordIdx {
 		return strings.Join(split[wordIdx:], " ")
 	}
+
 	return ""
 }
 
@@ -43,6 +47,7 @@ func StripAll(s string) string {
 		if r < ' ' || r == zwsp {
 			return -1
 		}
+
 		return r
 	}, s)
 }
@@ -52,6 +57,7 @@ func IdxOrEmpty(slice []string, idx int) string {
 	if len(slice) > idx {
 		return slice[idx]
 	}
+
 	return ""
 }
 
@@ -60,8 +66,10 @@ func IdxOrEmpty(slice []string, idx int) string {
 // own to an entry in the resulting slice
 func JoinToMaxLength(toJoin []string, sep string, maxLength int) []string {
 	var out []string
+
 	curBuilder := strings.Builder{}
 	curBuilder.Grow(maxLength)
+
 	for _, s := range toJoin {
 		entryLen := len(s)
 		if curBuilder.Len() == 0 && entryLen > maxLength {
@@ -73,15 +81,18 @@ func JoinToMaxLength(toJoin []string, sep string, maxLength int) []string {
 			out = append(out, curBuilder.String())
 			curBuilder.Reset()
 		}
+
 		if curBuilder.Len() != 0 {
 			curBuilder.WriteString(sep)
 		}
-		curBuilder.WriteString(s)
 
+		curBuilder.WriteString(s)
 	}
+
 	if curBuilder.Len() > 0 {
 		out = append(out, curBuilder.String())
 	}
+
 	return out
 }
 
@@ -89,6 +100,7 @@ func abs(n int) int {
 	if n >= 0 {
 		return n
 	}
+
 	return -n
 }
 

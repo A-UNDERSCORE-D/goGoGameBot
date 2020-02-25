@@ -18,6 +18,7 @@ func entryOrEmpty(r rune, mapping map[rune]string) string {
 	if res, ok := mapping[r]; ok {
 		return res
 	}
+
 	return ""
 }
 
@@ -25,17 +26,23 @@ const alpha = 0xFF
 
 // ParseColour Converts a string hex colour to a color.RGBA colour
 func ParseColour(in string) (color.RGBA, error) {
-	var r, g, b uint64
-	var err error
+	var (
+		r, g, b uint64
+		err     error
+	)
+
 	if r, err = strconv.ParseUint(in[0:2], 16, 8); err != nil {
 		return color.RGBA{}, err
 	}
+
 	if g, err = strconv.ParseUint(in[2:4], 16, 8); err != nil {
 		return color.RGBA{}, err
 	}
+
 	if b, err = strconv.ParseUint(in[4:6], 16, 8); err != nil {
 		return color.RGBA{}, err
 	}
+
 	return color.RGBA{A: alpha, R: uint8(r), G: uint8(g), B: uint8(b)}, nil
 }
 
@@ -50,8 +57,9 @@ func EmitColour(in color.Color) string {
 // to easily implement simple swapping for a Transformer implementation. If colourFn returns false, the sentinel and
 // colour rune are added to the string as they are
 func Map(in string, mapping map[rune]string, fn func(color.Color) string) string {
-	tokenised := Tokenise(in)
 	out := strings.Builder{}
+
+	tokenised := Tokenise(in)
 	for _, tok := range tokenised {
 		switch tok.TokenType {
 		case StringToken:
@@ -62,8 +70,10 @@ func Map(in string, mapping map[rune]string, fn func(color.Color) string) string
 			if fn == nil {
 				continue // eat colour if unsupported
 			}
+
 			out.WriteString(fn(tok.Colour))
 		}
 	}
+
 	return out.String()
 }

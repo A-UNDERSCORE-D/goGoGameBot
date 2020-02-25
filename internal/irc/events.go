@@ -27,6 +27,7 @@ func (r *RawEvent) CommandIs(names ...string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

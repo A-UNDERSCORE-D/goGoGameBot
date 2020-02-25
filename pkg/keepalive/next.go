@@ -25,12 +25,15 @@ var curIdx = 0
 func Next() string {
 	if curIdx > len(sets[curSet])-1 {
 		curIdx = 0
+
 		curSet++
 		if curSet > len(sets)-1 {
 			curSet = 0
 		}
 	}
+
 	out := sets[curSet][curIdx]
 	curIdx++
+
 	return out
 }

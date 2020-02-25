@@ -12,9 +12,8 @@ import (
 )
 
 // IRC SASL numerics
-// noinspection ALL
+//nolint:golint // These refer to external things and should be as they are
 const (
-	//revive:disable:var-naming
 	RPL_LOGGEDIN    = "900"
 	RPL_LOGGEDOUT   = "901"
 	RPL_NICKLOCKED  = "902"
@@ -24,7 +23,6 @@ const (
 	RPL_SASLABORTED = "906"
 	RPL_SASLALREADY = "907"
 	RPL_SASLMECHS   = "908"
-	//revive:enable:var-naming
 )
 
 // MakeSimpleIRCLine is a helper function that creates an ircmsg.IrcMessage with no tags and no prefix.
@@ -50,6 +48,7 @@ func GlobToRegexp(mask string) *regexp.Regexp {
 	cacheMutex.Lock()
 	re, ok := regexpCache[mask]
 	cacheMutex.Unlock()
+
 	if ok {
 		return re
 	}
@@ -66,9 +65,11 @@ func GlobToRegexp(mask string) *regexp.Regexp {
 	}
 
 	re = regexp.MustCompile(out.String())
+
 	cacheMutex.Lock()
 	regexpCache[mask] = re
 	cacheMutex.Unlock()
+
 	return re
 }
 
@@ -79,6 +80,7 @@ func AnyMaskMatch(toCheck string, masks []string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -86,13 +88,16 @@ func AnyMaskMatch(toCheck string, masks []string) bool {
 func UserHost2Canonical(uh ircutils.UserHost) string {
 	out := strings.Builder{}
 	out.WriteString(uh.Nick)
+
 	if uh.User != "" {
 		out.WriteRune('!')
 		out.WriteString(uh.Host)
 	}
+
 	if uh.Host != "" {
 		out.WriteRune('@')
 		out.WriteString(uh.Host)
 	}
+
 	return out.String()
 }

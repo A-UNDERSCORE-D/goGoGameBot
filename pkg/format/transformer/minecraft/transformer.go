@@ -1,3 +1,5 @@
+// Package minecraft contains a Transformer implementation for the JSON specification of minecraft format strings
+// see https://minecraft.gamepedia.com/Raw_JSON_text_format for a full look at the format itself
 package minecraft
 
 import (
@@ -91,9 +93,11 @@ func getJSONColour(s *state) string {
 		s.resetColour = false
 		return "reset"
 	}
+
 	if s.currentColour == nil {
 		return ""
 	}
+
 	return colourMap[palette.Convert(s.currentColour)]
 }
 
@@ -113,6 +117,7 @@ func urlState(s *state) *state {
 	outState := *s
 	outState.currentColour = blue
 	outState.underline = true
+
 	return &outState
 }
 
@@ -129,20 +134,27 @@ func splitOnURLs(in string, s *state) []jsonSection {
 		return []jsonSection{jsonSectionFromState(in, s, nil)}
 	}
 
-	var out []jsonSection
-	curIdx := 0
+	var (
+		out    []jsonSection
+		curIdx = 0
+	)
+
 	for _, idxPair := range URLLocations {
-		prefix := in[curIdx:idxPair[0]]
 		url := in[idxPair[0]:idxPair[1]]
 		curIdx = idxPair[1]
+
+		prefix := in[curIdx:idxPair[0]]
 		if len(prefix) > 0 {
 			out = append(out, jsonSectionFromState(prefix, s, nil))
 		}
+
 		out = append(out, jsonSectionFromState(url, urlState(s), makeClickEvent(url)))
 	}
+
 	if curIdx < len(in)-1 {
 		out = append(out, jsonSectionFromState(in[curIdx:], s, nil))
 	}
+
 	return out
 }
 
@@ -154,7 +166,9 @@ type Transformer struct{}
 func (Transformer) Transform(in string) string {
 	s := &state{}
 	tokens := tokeniser.Tokenise(in)
+
 	var out []jsonSection
+
 	for _, tok := range tokens {
 		switch tok.TokenType {
 		case tokeniser.StringToken:
@@ -186,8 +200,11 @@ func (Transformer) Transform(in string) string {
 		out = append([]jsonSection{{}}, out...)
 	}
 
-	var res []byte
-	var err error
+	var (
+		res []byte
+		err error
+	)
+
 	switch len(out) {
 	case 0:
 		return ""
@@ -200,6 +217,7 @@ func (Transformer) Transform(in string) string {
 	if err != nil {
 		return "ERROR! " + err.Error()
 	}
+
 	return string(res)
 }
 

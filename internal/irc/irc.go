@@ -84,6 +84,7 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 	}
 
 	out.setupParsers()
+
 	return out, nil
 }
 
@@ -122,19 +123,24 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
+
 	if !bytes.HasSuffix(toSend, []byte{'\r', '\n'}) {
 		toSend = append(toSend, '\r', '\n')
 	}
+
 	i.log.Debug("<< ", string(toSend))
+
 	return i.socket.Write(toSend)
 }
 
 func (i *IRC) writeLine(command string, args ...string) (int, error) {
 	l := util.MakeSimpleIRCLine(command, args...)
 	lBytes, err := l.LineBytes()
+
 	if err != nil {
 		return -1, err
 	}
+
 	return i.write(lBytes)
 }
 
@@ -142,11 +148,21 @@ func (i *IRC) writeLine(command string, args ...string) (int, error) {
 // that have been requested
 func (i *IRC) Connect() error {
 	i.setupCapManager()
+
 	target := net.JoinHostPort(i.Host, i.Port)
-	var s net.Conn
-	var err error
+
+	var (
+		s   net.Conn
+		err error
+	)
+
 	if i.SSL {
+		// nolint:gosec // The user explicitly asked for it and we warn about it
 		s, err = tls.Dial("tcp", target, &tls.Config{InsecureSkipVerify: i.DontVerifyCerts})
+
+		if i.DontVerifyCerts {
+			i.log.Warnf("**** Not verifying certs. THIS IS INSECURE ****")
+		}
 	} else {
 		s, err = net.Dial("tcp", target)
 	}
@@ -154,8 +170,10 @@ func (i *IRC) Connect() error {
 	if err != nil {
 		return fmt.Errorf("IRC.Connect(): could not open socket: %s", err)
 	}
+
 	i.socket = s
 	i.Connected.Set(true)
+
 	go i.readLoop()
 
 	if i.HostPasswd != "" {
@@ -165,9 +183,11 @@ func (i *IRC) Connect() error {
 	}
 
 	i.capabilityManager.negotiateCaps()
+
 	if _, err := i.writeLine("USER", i.Ident, "*", "*", i.Gecos); err != nil {
 		return err
 	}
+
 	if _, err := i.writeLine("NICK", i.Nick); err != nil {
 		return err
 	}
@@ -188,6 +208,7 @@ func (i *IRC) Connect() error {
 	for _, name := range i.channels.Get() {
 		_, _ = i.writeLine("JOIN", name)
 	}
+
 	go i.pingLoop()
 
 	return nil
@@ -201,9 +222,12 @@ func (i *IRC) Disconnect(msg string) {
 	} else {
 		_, _ = i.writeLine("QUIT", "Disconnecting")
 	}
+
 	i.StopRequested.Set(true)
+
 	go func() {
 		time.Sleep(time.Millisecond * 30)
+
 		if i.Connected.Get() {
 			i.socket.Close()
 		}
@@ -224,6 +248,7 @@ func (i *IRC) Run() error {
 	defer i.Connected.Set(false)
 	defer i.lag.Set(time.Duration(0))
 	defer i.lastPong.Set(time.Time{})
+
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
 		if !i.StopRequested.Get() {
@@ -232,6 +257,7 @@ func (i *IRC) Run() error {
 	case <-i.socketDoneChan:
 		return fmt.Errorf("IRC socket closed")
 	}
+
 	return nil
 }
 
@@ -239,11 +265,13 @@ func (i *IRC) pingLoop() {
 	for i.Connected.Get() {
 		time.Sleep(time.Second * 5)
 		msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
+
 		if _, err := i.writeLine("PING", msg); err != nil {
 			i.log.Warnf("could not write our PING message: %s", err)
 			// Something broke. No idea what. Bail out the entire bot
 			i.socket.Close()
 		}
+
 		i.checkLag()
 	}
 }
@@ -254,7 +282,9 @@ func (i *IRC) pongHandler(e event.Event) {
 		i.log.Warnf("Got an invalid PONG")
 		return
 	}
+
 	ts := strings.SplitN(rawEvent.Line.Params[len(rawEvent.Line.Params)-1], " ", 2)[0]
+
 	thyme, err := time.Parse(time.RFC3339Nano, ts)
 	if err != nil {
 		i.log.Warnf("could not parse time for PONG: %s", err)
@@ -278,6 +308,7 @@ func (i *IRC) readLoop() {
 	for s.Scan() {
 		str := s.Text()
 		i.log.Debug(">> ", str)
+
 		line, err := ircmsg.ParseLine(str)
 		if err != nil {
 			i.log.Warnf("IRC.readLoop(): Discarding invalid Line %q: %s", str, err)
@@ -288,19 +319,22 @@ func (i *IRC) readLoop() {
 			if _, err := i.writeLine("PONG", line.Params...); err != nil {
 				i.log.Warnf("IRC.readloop(): could not create ping: %s", err)
 			}
-
 		}
+
 		i.checkLag()
 		i.handleLine(line)
 	}
+
 	i.log.Info("IRC socket closed")
 	i.socketDoneChan <- struct{}{}
 }
 
 func (i *IRC) handleLine(line ircmsg.IrcMessage) {
 	t := time.Now()
+
 	if i.capabilityManager.capEnabled("server-time") && line.HasTag("time") {
 		_, timeFromServer := line.GetTag("time")
+
 		serverTime, err := time.Parse(time.RFC3339, timeFromServer)
 		if err != nil {
 			i.log.Warnf("server offered server-time %q which does not fit RFC 3339 format: %s", timeFromServer, err)
@@ -315,8 +349,10 @@ func (i *IRC) handleLine(line ircmsg.IrcMessage) {
 
 func (i *IRC) authenticateWithSasl(e event.Event) {
 	const authenticate = "AUTHENTICATE"
-	capab := e.(*capEvent).cap
-	_ = capab
+
+	capab := e.(*capEvent).cap // TODO: wtf?
+	_ = capab                  // TODO: wtf?
+
 	capChan := make(chan event.Event, 1)
 	exiting := make(chan struct{})
 	id := i.RawEvents.AttachMany(func(e event.Event) {
@@ -336,12 +372,14 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 		util.RPL_SASLALREADY,
 		util.RPL_SASLMECHS,
 	)
+
 	defer close(exiting)
 	defer i.RawEvents.Detach(id)
 
 	if _, err := i.writeLine(authenticate, "PLAIN"); err != nil {
 		i.log.Warn("authenticateWithSasl(): could not send SASL authentication request. Aborting SASL")
 		i.SASL = false
+
 		return
 	}
 
@@ -351,6 +389,7 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 			i.log.Warn("authenticateWithSasl(): got an unexpected event over the event channel: ", e)
 			continue
 		}
+
 		switch raw.Line.Command {
 		case authenticate:
 			if raw.Line.Params[0] == "+" {
@@ -358,6 +397,7 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 				if err != nil {
 					i.log.Warn("authenticateWithSasl(): could not send SASL authentication. Aborting")
 					i.SASL = false
+
 					return
 				}
 			}
@@ -366,6 +406,7 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 			util.RPL_SASLALREADY, util.RPL_SASLMECHS:
 			i.log.Warn("authenticateWithSasl(): SASL negotiation failed. Aborting")
 			i.SASL = false
+
 			return
 		case util.RPL_LOGGEDIN, util.RPL_SASLSUCCESS:
 			// it worked \o/
@@ -374,7 +415,6 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 			i.log.Warn("authenticateWithSasl(): got an unexpected command over the event channel: ", raw)
 		}
 	}
-
 }
 
 func nickOrOriginal(toParse string) string {
@@ -382,6 +422,7 @@ func nickOrOriginal(toParse string) string {
 	if parsed.Nick != "" {
 		return parsed.Nick
 	}
+
 	return toParse
 }
 
@@ -412,6 +453,7 @@ func (i *IRC) AdminLevel(source string) int {
 			return a.Level
 		}
 	}
+
 	return 0
 }
 
@@ -447,7 +489,9 @@ func (i *IRC) Reload(conf string) error {
 	if err := xml.Unmarshal([]byte(conf), newConf); err != nil {
 		return fmt.Errorf("could not parse config: %s", err)
 	}
+
 	i.Conf = newConf
+
 	return nil
 }
 
