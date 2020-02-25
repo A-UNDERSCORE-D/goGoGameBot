@@ -350,15 +350,12 @@ func (i *IRC) handleLine(line ircmsg.IrcMessage) {
 func (i *IRC) authenticateWithSasl(e event.Event) {
 	const authenticate = "AUTHENTICATE"
 
-	capab := e.(*capEvent).cap // TODO: wtf?
-	_ = capab                  // TODO: wtf?
-
 	capChan := make(chan event.Event, 1)
 	exiting := make(chan struct{})
 	id := i.RawEvents.AttachMany(func(e event.Event) {
 		select {
 		case capChan <- e:
-		case _, _ = <-exiting:
+		case <-exiting:
 		}
 	}, event.PriNorm,
 		authenticate,

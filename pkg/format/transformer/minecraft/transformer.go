@@ -89,7 +89,7 @@ func (j *jsonSection) hasFormatting() bool {
 }
 
 func getJSONColour(s *state) string {
-	if s.resetColour == true {
+	if s.resetColour {
 		s.resetColour = false
 		return "reset"
 	}
