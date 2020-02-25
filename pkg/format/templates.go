@@ -30,8 +30,9 @@ var (
 )
 
 // Compile compiles the given format string into a text.template, evaluating IRC colours if requested, and adding the
-// default functions plus any passed to the template. if the template is invalid or the format has already been compiled,
-// Compile errors. An optional root text/template can be passed, and if so, the compiled format's internal template will
+// default functions plus any passed to the template.
+// If the template is invalid or the format has already been compiled, Compile errors.
+// An optional root text/template can be passed, and if so, the compiled format's internal template will
 // be associated with the passed root
 func (f *Format) Compile(name string, root *template.Template, funcMaps ...template.FuncMap) error {
 	if f.compiled {

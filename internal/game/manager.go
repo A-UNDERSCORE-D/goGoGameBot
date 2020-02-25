@@ -290,8 +290,10 @@ func (m *Manager) setupCommands() error {
 		rawHelp     = "sends the arguments provided directly to the standard in of the running game"
 
 		stopMHelp    = "stops the running bot instance, disconnects all connections, and stops all games"
-		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, and then starts it all back up"
-		reloadHelp   = "reloads the config file from disk and applies it to the running bot. Note that some configuration changes require a restart of the bot"
+		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, " +
+			"and then starts it all back up"
+		reloadHelp = "reloads the config file from disk and applies it to the running bot." +
+			" Note that some configuration changes require a restart of the bot"
 
 		statusHelp = "returns the status of the bot. If a list of games is provided as arguments, " +
 			"gets the status for each game. If all is provided as the first arg, all game's statuses are reported"

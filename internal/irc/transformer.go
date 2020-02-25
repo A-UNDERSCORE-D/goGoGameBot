@@ -61,12 +61,17 @@ func reverseLookupMap(r rune) rune {
 
 var ircTransformer = Transformer{} // Copy of ircTransformer for use in internal stuff
 
-// Transformer is a dummy struct that holds methods for IRC's implementation of format/transformer's transformer interface
+// Transformer is a dummy struct that holds methods for IRC's implementation of format/transformer's
+// transformer interface
 type Transformer struct{}
 
 // Transform implments Transformer.Transform, colours are converted via a palette to the 15 IRC colours
 func (Transformer) Transform(in string) string {
-	return tokeniser.Map(in, ircFmtMapping, func(c color.Color) string { return fmt.Sprintf("%c%02d", colour, ircPalette.Index(c)) })
+	return tokeniser.Map(
+		in,
+		ircFmtMapping,
+		func(c color.Color) string { return fmt.Sprintf("%c%02d", colour, ircPalette.Index(c)) },
+	)
 }
 
 // MakeIntermediate implements Transformer.MakeIntermediate

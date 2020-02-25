@@ -78,7 +78,10 @@ func (c *capabilityManager) negotiateCaps() {
 	for c.doingInitialNegotiation {
 		ev := <-c.capChan
 		if ev.CommandIs("001") {
-			c.irc.log.Warn("got an unexpected 001 while waitingForMoreCaps on capabilities. Assuming the server does not support caps and aborting negotiation")
+			c.irc.log.Warn(
+				"got an unexpected 001 while waitingForMoreCaps on capabilities." +
+					"Assuming the server does not support caps and aborting negotiation",
+			)
 			return
 		}
 

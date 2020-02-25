@@ -1,3 +1,4 @@
+// Package process holds process management code for direct interaction with processes
 package process
 
 import (
@@ -20,11 +21,11 @@ import (
 
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
 // setup, they are returned
-func NewProcess(command string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) {
+func NewProcess(cmd string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) { //nolint:lll
 	p := &Process{
 		log: logger,
 	}
-	p.UpdateCmd(command, args, workingDir, env, copySystemEnv)
+	p.UpdateCmd(cmd, args, workingDir, env, copySystemEnv)
 	if err := p.Reset(); err != nil {
 		return nil, err
 	}

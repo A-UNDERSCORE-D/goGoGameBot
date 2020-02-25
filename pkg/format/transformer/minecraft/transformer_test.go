@@ -24,41 +24,56 @@ var tests = []struct {
 	{
 		name:  "random interleaves",
 		input: "this$b has$i some random $s chars put $b throughout $i it $u have fun $r with this",
-		want:  `[{"text":"this"},{"text":" has","bold":true},{"text":" some random ","bold":true,"italic":true},{"text":" chars put ","bold":true,"italic":true,"strikethrough":true},{"text":" throughout ","italic":true,"strikethrough":true},{"text":" it ","strikethrough":true},{"text":" have fun ","underlined":true,"strikethrough":true},{"text":" with this","color":"reset"}]`,
+		want: `[{"text":"this"},{"text":" has","bold":true},{"text":" some random ","bold":true,"italic":true},` +
+			`{"text":" chars put ","bold":true,"italic":true,"strikethrough":true},` +
+			`{"text":" throughout ","italic":true,"strikethrough":true},{"text":" it ","strikethrough":true},` +
+			`{"text":" have fun ","underlined":true,"strikethrough":true},{"text":" with this","color":"reset"}]`,
 	},
 	{
 		name:  "colour spam",
 		input: "this $cFFFFFFhas a bunch of $c000000colours in it so$c012345 it can test $r colour barf",
-		want:  `[{"text":"this "},{"text":"has a bunch of ","color":"white"},{"text":"colours in it so","color":"black"},{"text":" it can test ","color":"black"},{"text":" colour barf","color":"reset"}]`,
+		want: `[{"text":"this "},{"text":"has a bunch of ","color":"white"},` +
+			`{"text":"colours in it so","color":"black"},{"text":" it can test ","color":"black"},` +
+			`{"text":" colour barf","color":"reset"}]`,
 	},
 	{
 		name:  "extra formatting",
 		input: "A thing$b with$b$bsome weird$iformats$b$i$i and $b stuff",
-		want:  `[{"text":"A thing"},{"text":" with","bold":true},{"text":"some weird","bold":true},{"text":"formats","bold":true,"italic":true},{"text":" and ","italic":true},{"text":" stuff","bold":true,"italic":true}]`,
+		want: `[{"text":"A thing"},{"text":" with","bold":true},{"text":"some weird","bold":true},` +
+			`{"text":"formats","bold":true,"italic":true},{"text":" and ","italic":true},` +
+			`{"text":" stuff","bold":true,"italic":true}]`,
 	},
 	{
 		name:  "URL test",
 		input: "hey check out this thing! https://git.ferricyanide.solutions/A_D/goGoGameBot it has cool stuff!",
-		want:  `[{"text":"hey check out this thing! "},{"text":"https://git.ferricyanide.solutions/A_D/goGoGameBot","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://git.ferricyanide.solutions/A_D/goGoGameBot"}},{"text":" it has cool stuff!"}]`,
+		want: `[{"text":"hey check out this thing! "},` +
+			`{"text":"https://git.ferricyanide.solutions/A_D/goGoGameBot",` +
+			`"underlined":true,"color":"blue","clickEvent":{"action":"open_url",` +
+			`"value":"https://git.ferricyanide.solutions/A_D/goGoGameBot"}},{"text":" it has cool stuff!"}]`,
 	},
 	{
 		name:  "url test 2",
 		input: "https://google.com",
-		want:  `{"text":"https://google.com","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://google.com"}}`,
+		want: `{"text":"https://google.com","underlined":true,"color":"blue",` +
+			`"clickEvent":{"action":"open_url","value":"https://google.com"}}`,
 	},
 	{
 		name:  "url test 3",
 		input: "this is a test https://google.com",
-		want:  `[{"text":"this is a test "},{"text":"https://google.com","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://google.com"}}]`,
+		want: `[{"text":"this is a test "},` +
+			`{"text":"https://google.com","underlined":true,"color":"blue","clickEvent":` +
+			`{"action":"open_url","value":"https://google.com"}}]`,
 	}, {
 		name:  "url leader",
 		input: "https://github.com/ this is a test",
-		want:  `[{"text":""},{"text":"https://github.com/","underlined":true,"color":"blue","clickEvent":{"action":"open_url","value":"https://github.com/"}},{"text":" this is a test"}]`,
+		want: `[{"text":""},{"text":"https://github.com/","underlined":true,"color":"blue",` +
+			`"clickEvent":{"action":"open_url","value":"https://github.com/"}},{"text":" this is a test"}]`,
 	},
 	{
 		name:  "test using actual line",
 		input: "$c666666$i[#totallynotgames]$rtest message",
-		want:  `[{"text":""},{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},{"text":"test message","color":"reset"}]`,
+		want: `[{"text":""},{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},` +
+			`{"text":"test message","color":"reset"}]`,
 	},
 }
 

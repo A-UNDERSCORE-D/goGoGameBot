@@ -77,7 +77,8 @@ func (m *Manager) RemoveCommand(name string) error {
 	return nil
 }
 
-// internalAddCommand adds the actual Command to the manager, it is used by both of the exported command addition methods
+// internalAddCommand adds the actual Command to the manager,
+// it is used by both of the exported command addition methods
 func (m *Manager) internalAddCommand(cmd Command) error {
 	if strings.Contains(cmd.Name(), " ") {
 		return errors.New("commands cannot contain spaces")

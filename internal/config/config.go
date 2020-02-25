@@ -154,7 +154,8 @@ func getXMLConf(filename string) (*Config, error) {
 	return conf, nil
 }
 
-// GetConfig parses the config found at the given path and returns it. If a read error occurs while parsing, it is returned
+// GetConfig parses the config found at the given path and returns it.
+// If a read error occurs while parsing, it is returned
 func GetConfig(filename string) (*Config, error) {
 	conf, err := getXMLConf(filename)
 

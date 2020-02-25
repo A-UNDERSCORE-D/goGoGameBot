@@ -159,8 +159,8 @@ func (l *Logger) Trace(args ...interface{}) {
 	l.writeOut(fmt.Sprint(args...), TRACE)
 }
 
-// Tracef logs the passed data at the Tracef level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Tracef logs the passed data at the Tracef level using the format string passed as the first argument to
+// format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Tracef(format string, args ...interface{}) {
 	l.writeOut(fmt.Sprintf(format, args...), TRACE)
 }
@@ -170,8 +170,8 @@ func (l *Logger) Debug(args ...interface{}) {
 	l.writeOut(fmt.Sprint(args...), DEBUG)
 }
 
-// Debugf logs the passed data at the Debugf level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Debugf logs the passed data at the Debugf level using the format string passed as the first argument to
+// format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.writeOut(fmt.Sprintf(format, args...), DEBUG)
 }
@@ -181,8 +181,8 @@ func (l *Logger) Info(args ...interface{}) {
 	l.writeOut(fmt.Sprint(args...), INFO)
 }
 
-// Infof logs the passed data at the Infof level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Infof logs the passed data at the Infof level using the format string passed as the first argument to
+// format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Infof(format string, args ...interface{}) {
 	l.writeOut(fmt.Sprintf(format, args...), INFO)
 }
@@ -192,8 +192,8 @@ func (l *Logger) Warn(args ...interface{}) {
 	l.writeOut(fmt.Sprint(args...), WARN)
 }
 
-// Warnf logs the passed data at the Warnf level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Warnf logs the passed data at the Warnf level using the format string passed as the first argument
+// to format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Warnf(format string, args ...interface{}) {
 	l.writeOut(fmt.Sprintf(format, args...), WARN)
 }
@@ -204,8 +204,8 @@ func (l *Logger) Crit(args ...interface{}) {
 	os.Exit(1)
 }
 
-// Critf logs the passed data at the Critf level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Critf logs the passed data at the Critf level using the format string passed as the first argument to
+// format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Critf(format string, args ...interface{}) {
 	l.writeOut(fmt.Sprintf(format, args...), CRIT)
 	os.Exit(1)
@@ -218,8 +218,8 @@ func (l *Logger) Panic(args ...interface{}) {
 	panic(msg)
 }
 
-// Panicf logs the passed data at the Panicf level using the format string passed as the first argument to format the message.
-// The passed arguments are run through fmt.Sprintf before logging
+// Panicf logs the passed data at the Panicf level using the format string passed as the first argument to
+// format the message. The passed arguments are run through fmt.Sprintf before logging
 func (l *Logger) Panicf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.writeOut(msg, PANIC)

@@ -193,7 +193,8 @@ func (i *IRC) Connect() error {
 	return nil
 }
 
-// Disconnect disconnects the bot from IRC either with the given message, or the message "Disconnecting" when none is passed
+// Disconnect disconnects the bot from IRC either with the given message.
+// If no message is passed, it defaults to "Disconnecting"
 func (i *IRC) Disconnect(msg string) {
 	if msg != "" {
 		_, _ = i.writeLine("QUIT", msg)

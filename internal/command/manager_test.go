@@ -236,7 +236,10 @@ func TestManager_AddSubCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.m.AddSubCommand(tt.args.rootName, tt.args.name, tt.args.requiresAdmin, tt.args.callback, tt.args.help); (err != nil) != tt.wantErr {
+			err := tt.m.AddSubCommand(
+				tt.args.rootName, tt.args.name, tt.args.requiresAdmin, tt.args.callback, tt.args.help,
+			)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Manager.AddSubCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -285,10 +288,12 @@ func TestManager_CheckAdmin(t *testing.T) {
 				t.Errorf("Manager.CheckAdmin() = %v, want %v", got, tt.want)
 			}
 			if !cmpSlice(realMessanger.lastNotices, tt.expectedNotices) {
-				t.Errorf("Manager.CheckAdmin() did not send expected notices. got %v, want %v", realMessanger.lastNotices, tt.expectedNotices)
+				t.Errorf("Manager.CheckAdmin() did not send expected notices. got %v, want %v",
+				 realMessanger.lastNotices, tt.expectedNotices)
 			}
 			if !cmpSlice(realMessanger.lastMessages, tt.expectedMessages) {
-				t.Errorf("Manager.CheckAdmin() did not send expected messages. got %v, want %v", realMessanger.lastMessages, tt.expectedMessages)
+				t.Errorf("Manager.CheckAdmin() did not send expected messages. got %v, want %v",
+				 realMessanger.lastMessages, tt.expectedMessages)
 			}
 		})
 	}
@@ -489,7 +494,11 @@ func TestManager_ParseLine(t *testing.T) {
 			messager.AddAdmin("picard!jean-luc@*", 1337)
 			m.ParseLine(tt.args.line, tt.args.fromTerminal, tt.args.source, tt.args.target, messager)
 			if !cmpSlice(tt.expectedMessages, messager.lastMessages) {
-				t.Errorf("Manager.Parse() did not send expected messages. got %v, want %v", messager.lastMessages, tt.expectedMessages)
+				t.Errorf(
+					"Manager.Parse() did not send expected messages. got %v, want %v",
+					messager.lastMessages,
+					tt.expectedMessages,
+				)
 			}
 			if !cmpSlice(tt.expectedNotices, messager.lastNotices) {
 				t.Errorf("Manager.Parse() did not send expected notices. got %v, want %v", messager.lastNotices, tt.expectedNotices)

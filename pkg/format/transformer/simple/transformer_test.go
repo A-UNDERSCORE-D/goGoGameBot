@@ -39,22 +39,50 @@ func TestNewSimpleTransformer(t *testing.T) {
 		{
 			name: "normal setup",
 			args: args{
-				replaceMap: map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
-				colourMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
+				replaceMap: map[rune]string{
+					intermediate.Bold:          "BOLD",
+					intermediate.Italic:        "ITALIC",
+					intermediate.Underline:     "UNDERLINE",
+					intermediate.Strikethrough: "STRIKETHROUGH",
+					intermediate.Reset:         "RESET",
+				},
+				colourMap: map[color.Color]string{
+					color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE",
+				},
 			},
 			want: &Transformer{
-				rplMap:  map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "STRIKETHROUGH", intermediate.Reset: "RESET"},
+				rplMap: map[rune]string{
+					intermediate.Bold:          "BOLD",
+					intermediate.Italic:        "ITALIC",
+					intermediate.Underline:     "UNDERLINE",
+					intermediate.Strikethrough: "STRIKETHROUGH",
+					intermediate.Reset:         "RESET",
+				},
 				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
 				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
 		}, {
 			name: "normal setup with empty strikethrough",
 			args: args{
-				replaceMap: map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "", intermediate.Reset: "RESET"},
-				colourMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
+				replaceMap: map[rune]string{
+					intermediate.Bold:          "BOLD",
+					intermediate.Italic:        "ITALIC",
+					intermediate.Underline:     "UNDERLINE",
+					intermediate.Strikethrough: "",
+					intermediate.Reset:         "RESET",
+				},
+				colourMap: map[color.Color]string{
+					color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE",
+				},
 			},
 			want: &Transformer{
-				rplMap:  map[rune]string{intermediate.Bold: "BOLD", intermediate.Italic: "ITALIC", intermediate.Underline: "UNDERLINE", intermediate.Strikethrough: "", intermediate.Reset: "RESET"},
+				rplMap: map[rune]string{
+					intermediate.Bold:          "BOLD",
+					intermediate.Italic:        "ITALIC",
+					intermediate.Underline:     "UNDERLINE",
+					intermediate.Strikethrough: "",
+					intermediate.Reset:         "RESET",
+				},
 				palette: []color.Color{color.Gray{Y: 42}, color.Black, color.White},
 				colMap:  map[color.Color]string{color.Gray{Y: 42}: "GREY", color.Black: "BLACK", color.White: "WHITE"},
 			},
@@ -81,7 +109,13 @@ func TestSimpleTransformer_MakeIntermediate(t *testing.T) {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
 	}{
-		replaceMap: map[rune]string{intermediate.Bold: "bold", intermediate.Italic: "italic", intermediate.Underline: "underline", intermediate.Strikethrough: "strikethrough", intermediate.Reset: "reset"},
+		replaceMap: map[rune]string{
+			intermediate.Bold:          "bold",
+			intermediate.Italic:        "italic",
+			intermediate.Underline:     "underline",
+			intermediate.Strikethrough: "strikethrough",
+			intermediate.Reset:         "reset",
+		},
 		colourMap: map[color.Color]string{
 			color.RGBA{R: 0xF9, G: 0x4B, B: 0xA3, A: 0xFF}: "ONE",
 			color.RGBA{R: 0x91, G: 0x82, B: 0xBA, A: 0xFF}: "TWO",
@@ -125,7 +159,13 @@ func TestSimpleTransformer_Transform(t *testing.T) {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
 	}{
-		replaceMap: map[rune]string{intermediate.Bold: "bold", intermediate.Italic: "italic", intermediate.Underline: "underline", intermediate.Strikethrough: "strikethrough", intermediate.Reset: "reset"},
+		replaceMap: map[rune]string{
+			intermediate.Bold:          "bold",
+			intermediate.Italic:        "italic",
+			intermediate.Underline:     "underline",
+			intermediate.Strikethrough: "strikethrough",
+			intermediate.Reset:         "reset",
+		},
 		colourMap: map[color.Color]string{
 			color.RGBA{R: 0xF9, G: 0x4B, B: 0xA3, A: 0xFF}: "ONE",
 			color.RGBA{R: 0x91, G: 0x82, B: 0xBA, A: 0xFF}: "TWO",

@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array for
-// repeated spaces
+// CleanSplitOnSpace splits the given string on space specifically without adding empty strings to the resulting array
+// for repeated spaces
 func CleanSplitOnSpace(s string) []string {
 	split := strings.Split(s, " ")
 	var out []string

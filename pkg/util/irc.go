@@ -32,8 +32,8 @@ func MakeSimpleIRCLine(command string, args ...string) ircmsg.IrcMessage {
 	return ircmsg.MakeMessage(nil, "", command, args...)
 }
 
-// GenerateSASLString generates a base64 encoded string from the given parameters that can be used for SASL PLAIN authentication
-// with an IRC server
+// GenerateSASLString generates a base64 encoded string from the given parameters that can be used for
+// SASL PLAIN authentication with an IRC server
 func GenerateSASLString(nick, saslUsername, saslPasswd string) string {
 	return base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s\x00%s\x00%s", nick, saslUsername, saslPasswd)),
