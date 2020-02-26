@@ -71,9 +71,6 @@ type clickEvent struct {
 	Value  string `json:"value"`
 }
 
-// TODO: this needs to be made to not omitEmpty because minecraft is dumb. Alternatively, an empty text element at the start
-// 		 could work
-
 type jsonSection struct {
 	Text          string      `json:"text"` // The text to actually display
 	Bold          bool        `json:"bold,omitempty"`
@@ -141,9 +138,9 @@ func splitOnURLs(in string, s *state) []jsonSection {
 
 	for _, idxPair := range URLLocations {
 		url := in[idxPair[0]:idxPair[1]]
-		curIdx = idxPair[1]
-
 		prefix := in[curIdx:idxPair[0]]
+
+		curIdx = idxPair[1]
 		if len(prefix) > 0 {
 			out = append(out, jsonSectionFromState(prefix, s, nil))
 		}
