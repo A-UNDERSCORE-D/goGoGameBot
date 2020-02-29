@@ -21,7 +21,6 @@ var _ DataUtil = &mockMessager{}
 type mockMessager struct {
 	lastMessages [][2]string
 	lastNotices  [][2]string
-	lastRaw      []string
 	admins       map[string]int
 }
 
@@ -192,7 +191,7 @@ func TestManager_getCommandByName(t *testing.T) {
 	}
 }
 
-func TestManager_AddSubCommand(t *testing.T) {
+func TestManager_AddSubCommand(t *testing.T) { //nolint:funlen // Its got the test data in it
 	sCmdManager := NewManager(baseLogger)
 	_ = sCmdManager.internalAddCommand(&SingleCommand{0, nil, "single_command", "single"})
 	mCmdManager := NewManager(baseLogger)
@@ -257,10 +256,6 @@ func TestManager_AddSubCommand(t *testing.T) {
 	}
 }
 
-func makeDataWithSourceAndUtil(mask string, dataUtil DataUtil) *Data {
-	return &Data{Source: mask, FromTerminal: false, util: dataUtil}
-}
-
 /*
 TODO: replace with TestData_checkAdmin or similar
 func TestManager_CheckAdmin(t *testing.T) {
@@ -310,7 +305,7 @@ func TestManager_CheckAdmin(t *testing.T) {
 	}
 }*/
 
-func TestManager_ParseLine(t *testing.T) {
+func TestManager_ParseLine(t *testing.T) { //nolint:funlen // it has test data in it
 	m := NewManager(baseLogger, "~")
 	_ = m.AddCommand(
 		"testNoAccess",

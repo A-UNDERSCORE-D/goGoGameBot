@@ -73,9 +73,7 @@ type Manager struct {
 	bot          interfaces.Bot
 	reconnecting mutexTypes.Bool
 	Cmd          *command.Manager
-	stripMasks   []string
 	done         *sync.Cond
-	statusMutex  sync.Mutex // covers both restarting and status
 	restarting   mutexTypes.Bool
 	status       mutexTypes.Int
 	*log.Logger

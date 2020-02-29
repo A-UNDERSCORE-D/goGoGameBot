@@ -54,8 +54,6 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 	return g, nil
 }
 
-type status int
-
 type formatSet struct {
 	root     *template.Template
 	message  *format.Format

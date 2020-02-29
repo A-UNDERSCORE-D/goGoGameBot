@@ -24,7 +24,6 @@ func (i *IRC) HookMessage(f func(source, channel, message string, isAction bool)
 			act = true
 		}
 		f(util.UserHost2Canonical(messageEvent.Source), messageEvent.Channel, ircTransformer.MakeIntermediate(msg), act)
-
 	}, event.PriNorm)
 }
 
@@ -35,7 +34,6 @@ func (i *IRC) HookPrivateMessage(f func(source, channel, message string)) {
 			return
 		}
 		f(util.UserHost2Canonical(msg.Source), msg.Channel, ircTransformer.MakeIntermediate(msg.Message))
-
 	}, event.PriNorm)
 }
 

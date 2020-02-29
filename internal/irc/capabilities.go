@@ -27,7 +27,6 @@ type capabilityManager struct {
 	caps      []*capability
 	irc       *IRC
 	capChan   chan *RawEvent
-	counter   int
 	CapEvents *event.Manager
 	// for use during negotiation
 	doingInitialNegotiation bool

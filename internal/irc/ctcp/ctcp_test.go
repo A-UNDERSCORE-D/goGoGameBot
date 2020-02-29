@@ -22,7 +22,6 @@ func TestIsCTCP(t *testing.T) {
 			if IsCTCP(str) != isCtcp {
 				t.Errorf("string %q expected to be %t, was returned as %t", str, isCtcp, !isCtcp)
 			}
-		})
 	}
 }
 
@@ -32,7 +31,6 @@ func BenchmarkIsCTCP(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				_ = IsCTCP(str)
 			}
-		})
 	}
 }
 
