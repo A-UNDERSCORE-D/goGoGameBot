@@ -64,7 +64,11 @@ func (m *Manager) stopGameCmd(data *command.Data) {
 			continue
 		}
 
-		go g.StopOrKill()
+		go func(g interfaces.Game) {
+			if err := g.StopOrKill(); err != nil {
+				m.Warnf("error occurred while stopping game %s: %q", g.GetName(), err)
+			}
+		}(g)
 	}
 }
 
