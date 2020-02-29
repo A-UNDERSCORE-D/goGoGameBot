@@ -243,7 +243,7 @@ func ExampleIdxOrEmpty() {
 	// ""
 }
 
-func TestJoinToMaxLength(t *testing.T) {
+func TestJoinToMaxLength(t *testing.T) { //nolint:funlen // it contains test data
 	type args struct {
 		toJoin    []string
 		sep       string
