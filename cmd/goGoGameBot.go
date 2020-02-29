@@ -82,7 +82,6 @@ func main() {
 	}
 
 	go func() {
-		// TODO: write to stdin?
 		<-time.After(time.Second * 1)
 		fmt.Println("Hang on close detected. forcing an exit")
 
