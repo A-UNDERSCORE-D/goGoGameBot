@@ -138,7 +138,9 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 	m.Debug("reloading games")
 	defer m.Debug("games reload complete")
 
-	for _, conf := range configs {
+	for i := 0; i < len(configs); i++ { // indexing because a range would copy quite a lot
+		conf := configs[i]
+
 		switch i := m.gameIdxFromName(conf.Name); i {
 		case -1: // Game does not exist
 			m.Debugf("adding a new game during reload: %s", conf.Name)
@@ -229,8 +231,11 @@ func (m *Manager) ForEachGame(gameFunc func(interfaces.Game), skip []interfaces.
 
 	defer func() {
 		if err := recover(); err != nil {
-			// TODO: s/: %s/: %w
-			m.Error(fmt.Errorf("recovered a panic from function %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err))
+			m.Error(
+				fmt.Errorf(
+					"recovered a panic from function %p in ForEachGame on game %d (%s): %s", gameFunc, i, g, err,
+				),
+			)
 		}
 	}()
 
