@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"go/format"
 	"html/template"
-	"os"
+	"io/ioutil"
 )
 
 var toGen = [][]string{
@@ -65,11 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	f, err := os.OpenFile("mutexTypes.go", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
-	if err != nil {
+	if err := ioutil.WriteFile("mutexTypes.go", formatted, 0666); err != nil {
 		panic(err)
 	}
-
-	defer f.Close()
-	f.Write(formatted)
 }
