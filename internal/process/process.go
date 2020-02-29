@@ -21,7 +21,7 @@ import (
 
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and
 // setup, they are returned
-func NewProcess(cmd string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) { //nolint:lll
+func NewProcess(cmd string, args []string, workingDir string, logger *log.Logger, env []string, copySystemEnv bool) (*Process, error) { //nolint:lll // unavoidable
 	p := &Process{
 		log: logger,
 	}
