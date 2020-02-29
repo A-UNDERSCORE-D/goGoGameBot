@@ -180,7 +180,7 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	}
 
 	if err := g.regexpManager.UpdateFromConf(conf.Regexps, root); err != nil {
-		return fmt.Errorf("could not update regepxs from config: %s", err)
+		return fmt.Errorf("could not update regexps from config: %s", err)
 	}
 
 	var preRollRe *regexp.Regexp
