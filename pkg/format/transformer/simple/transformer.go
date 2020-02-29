@@ -2,7 +2,7 @@
 package simple
 
 import (
-	"image/color"
+	"image/color" //nolint:misspell // I dont control others' package names
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"

@@ -26,7 +26,7 @@ func TestManager_HasEvent(t *testing.T) {
 		},
 		{
 			"bad entry",
-			"doesntExist",
+			"doesn't exist",
 			false,
 		},
 		{
@@ -124,7 +124,7 @@ func TestManager_Detach(t *testing.T) {
 	}
 }
 
-func TestManager_Dispatch(t *testing.T) {
+func TestManager_Dispatch(t *testing.T) { //nolint:funlen // It contains test data
 	tests := []struct {
 		name            string
 		eventName       string

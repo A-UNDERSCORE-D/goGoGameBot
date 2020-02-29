@@ -56,7 +56,7 @@ func TestStorage_GetBool(t *testing.T) {
 	tests := []struct {
 		testName   string
 		targetName string
-		default_   bool
+		default_   bool //nolint:golint // It's to avoid the default keyword
 		want       bool
 	}{
 		{
@@ -73,13 +73,13 @@ func TestStorage_GetBool(t *testing.T) {
 		},
 		{
 			"get nonexistent false default",
-			"thisDoesntExist",
+			"thisDoesn'tExist",
 			false,
 			false,
 		},
 		{
 			"get nonexistent true default",
-			"thisDoesntExist",
+			"thisDoesn'tExist",
 			true,
 			true,
 		},
@@ -99,7 +99,7 @@ func TestStorage_GetInt(t *testing.T) {
 	tests := []struct {
 		testName   string
 		targetName string
-		default_   int
+		default_   int //nolint:golint // It's to avoid the default keyword
 		want       int
 	}{
 		{
@@ -122,7 +122,7 @@ func TestStorage_GetInt(t *testing.T) {
 		},
 		{
 			"default",
-			"noexist",
+			"no exist",
 			1337,
 			1337,
 		},

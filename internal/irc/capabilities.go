@@ -28,6 +28,7 @@ type capabilityManager struct {
 	irc       *IRC
 	capChan   chan *RawEvent
 	CapEvents *event.Manager
+
 	// for use during negotiation
 	doingInitialNegotiation bool
 	waitingForMoreCaps      bool
@@ -112,7 +113,9 @@ func (c *capabilityManager) negotiateCaps() {
 		c.CapEvents.Dispatch(&capEvent{BaseEvent: event.BaseEvent{Name_: capab.name}, cap: capab})
 	}
 
-	c.irc.writeLine("CAP", "END")
+	if _, err := c.irc.writeLine("CAP", "END"); err != nil {
+		c.irc.log.Warn("unable to write CAP END")
+	}
 }
 
 func (c *capabilityManager) handleLS(args []string) {
@@ -239,7 +242,9 @@ func (c *capabilityManager) requestCaps() {
 	c.irc.log.Info("requesting capabilities: ", strings.Join(toReq, ", "))
 
 	for _, capSet := range util.JoinToMaxLength(toReq, " ", 50) {
-		c.irc.writeLine("CAP", "REQ", capSet)
+		if _, err := c.irc.writeLine("CAP", "REQ", capSet); err != nil {
+			c.irc.log.Warnf("unable to write CAP REQ: %s", err)
+		}
 	}
 }
 

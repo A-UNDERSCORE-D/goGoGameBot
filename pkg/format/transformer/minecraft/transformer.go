@@ -156,7 +156,7 @@ func splitOnURLs(in string, s *state) []jsonSection {
 }
 
 // Transformer implements the transformer interface for Minecraft 1.8+ JSON formatting. The implementation is one way,
-// ie, intermed -> minecraft. minecraft -> intermed simply escapes all sentinals
+// ie, intermed -> minecraft. minecraft -> intermed simply escapes all sentinels
 type Transformer struct{}
 
 // Transform implements the transformer interface for Minecraft servers.

@@ -1,3 +1,5 @@
+// Package interfaces ...
+//nolint:misspell // I know, BUT, I cant fix it
 package interfaces
 
 import (
@@ -25,7 +27,7 @@ type Game interface {
 	StopOrKiller
 	Runner
 	AutoStarter
-	Statuser
+	Statuser //nolint:misspell // Its Status-er not a misspelling of stature
 	io.Writer
 	io.StringWriter
 
@@ -57,7 +59,7 @@ type AutoStarter interface {
 }
 
 // Statuser refers to any type that can report its status as a string
-type Statuser interface {
+type Statuser interface { //nolint:misspell // Its Status-er not a misspelling of stature
 	// Status returns a human readable status string
 	Status() string
 }
