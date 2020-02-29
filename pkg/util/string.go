@@ -12,7 +12,7 @@ func CleanSplitOnSpace(s string) []string {
 
 	split := strings.Split(s, " ")
 	for _, v := range split {
-		if len(v) == 0 {
+		if v == "" {
 			continue
 		}
 
