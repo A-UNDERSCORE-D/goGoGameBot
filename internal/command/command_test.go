@@ -174,7 +174,7 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 	}
 }
 
-func TestSubCommandList_Fire(t *testing.T) {
+func TestSubCommandList_Fire(t *testing.T) { //nolint:funlen // it contains test data
 	messager := &mockMessager{}
 	manager := NewManager(baseLogger)
 

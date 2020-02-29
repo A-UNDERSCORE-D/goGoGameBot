@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize" //nolint:misspell // I dont control the names of others' packages
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
 

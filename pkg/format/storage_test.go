@@ -142,7 +142,7 @@ func TestStorage_GetString(t *testing.T) {
 	tests := []struct {
 		testName   string
 		targetName string
-		default_   string
+		default_   string //nolint:golint // It's to avoid the default keyword
 		want       string
 	}{
 		{

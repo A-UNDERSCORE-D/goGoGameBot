@@ -21,7 +21,7 @@ type Event interface {
 type BaseEvent struct {
 	m         sync.RWMutex
 	cancelled bool
-	Name_     string
+	Name_     string //nolint:golint // Needs to be exported AND needs to have a getter
 }
 
 // IsCancelled returns the cancellation state of the BaseEvent

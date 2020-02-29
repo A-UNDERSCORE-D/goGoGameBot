@@ -237,6 +237,7 @@ func ExampleIdxOrEmpty() {
 
 	fmt.Printf("%q\n", IdxOrEmpty(s, 0))
 	fmt.Printf("%q\n", IdxOrEmpty(s, 5))
+	//nolint:gocritic // its output :P
 	// output:
 	// "test"
 	// ""
