@@ -141,6 +141,7 @@ func splitOnURLs(in string, s *state) []jsonSection {
 		prefix := in[curIdx:idxPair[0]]
 
 		curIdx = idxPair[1]
+
 		if len(prefix) > 0 {
 			out = append(out, jsonSectionFromState(prefix, s, nil))
 		}
@@ -220,5 +221,5 @@ func (Transformer) Transform(in string) string {
 
 // MakeIntermediate just returns the given strings escaped, as MineCraft servers dont output formatted strings ever
 func (Transformer) MakeIntermediate(in string) string {
-	return strings.Replace(in, intermediate.SentinelString, intermediate.SSentinelString, -1)
+	return strings.ReplaceAll(in, intermediate.SentinelString, intermediate.SSentinelString)
 }
