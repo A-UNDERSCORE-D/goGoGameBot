@@ -5,10 +5,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
 )
 
-// Config is the top level struct that GGGB's XML config file is unpacked into
+// Config is the top level struct that GGGBs XML config file is unpacked into
 type Config struct {
 	XMLName     xml.Name   `xml:"bot"`
 	ConnConfig  ConnConfig `xml:"conn_config"`
@@ -49,6 +48,7 @@ func (c *ConnConfig) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	return nil
 }
 
+//nolint:interfacer // This follows xml.Unmarshaler
 func reconstructXML(decoder *xml.Decoder, start xml.StartElement) (string, error) {
 	buf := bytes.NewBuffer(tokenToBytes(start))
 
@@ -137,15 +137,7 @@ func tokenToBytes(t xml.Token) []byte {
 }
 
 func readAllFromFile(name string) ([]byte, error) {
-	f, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: ioutil.readfile
-	data, err := ioutil.ReadAll(f)
-	_ = f.Close()
-
+	data, err := ioutil.ReadFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +153,7 @@ func getXMLConf(filename string) (*Config, error) {
 
 	conf := new(Config)
 
-	if err = xml.Unmarshal(data, conf); err != nil {
+	if err := xml.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
 
