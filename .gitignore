@@ -17,3 +17,7 @@
 .idea
 factorio
 factorio.tar.xz
+
+gggb.code-workspace
+__debug_bin
+internal/transport/network/prog/test_binaries/*
