@@ -178,7 +178,7 @@ func (m *Manager) stripPrefix(line string) (string, bool) {
 
 // ParseLine checks the given string for a valid command. If it finds one, it fires that command.
 func (m *Manager) ParseLine(line string, fromTerminal bool, source, target string, util DataUtil) {
-	if len(line) == 0 {
+	if line == "" {
 		return
 	}
 

@@ -58,7 +58,7 @@ func (d *dataForFmt) InvokeTemplate(name string, args interface{}) (string, erro
 }
 
 // This should always be given intermediate format data
-func (g *Game) makeDataForFormat(source string, target, msg string) *dataForFmt {
+func (g *Game) makeDataForFormat(source, target, msg string) *dataForFmt {
 	deZwsp := strings.ReplaceAll(msg, "\u200b", "")
 
 	return &dataForFmt{
@@ -162,7 +162,7 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 // SendLineFromOtherGame Is a frontend for sending messages to a game from other games. If the game in source is the
 // same as the current game, the name is switched to "LOCAL"
 func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
-	if !g.chatBridge.allowForwards || g.chatBridge.format.external == nil {
+	if !g.chatBridge.allowForwards || g.chatBridge.format.external == nil || !g.allowForwards {
 		return
 	}
 
@@ -192,7 +192,7 @@ func (g *Game) SendFormattedLine(d interface{}, fmt *format.Format) error {
 		return err
 	}
 
-	if len(res) == 0 {
+	if res == "" {
 		return nil
 	}
 

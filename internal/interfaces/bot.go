@@ -17,11 +17,11 @@ type Bot interface {
 	JoinChannel(name string)
 	// Reload reloads the Bot using the given (string) config
 	Reload(conf string) error
-	// CommandPrefixes returns the bot's current command prefixes
+	// CommandPrefixes returns the bots current command prefixes
 	CommandPrefixes() []string
 	// HumanReadableSource converts the given message source to one that is human readable
 	HumanReadableSource(source string) string
-	Statuser
+	Statuser //nolint:misspell // intentional.
 }
 
 // Messager represents a type that can send messages to a chat system. Implementations should expect and handle
@@ -52,8 +52,7 @@ type Hooker interface {
 	// HookNick hoops on a user changing their nickname
 	HookNick(func(source, newNick string))
 
-	// TODO: bans
-	// TODO: system notices (this is where modes etc will go)
+	// TODO: bans, system notices (this is where modes etc will go)
 }
 
 // CommandResponder provides helper methods for responding to command calls with Messages, and Notices
