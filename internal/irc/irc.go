@@ -357,17 +357,8 @@ func (i *IRC) authenticateWithSasl(e event.Event) {
 		case capChan <- e:
 		case <-exiting:
 		}
-	}, event.PriNorm,
-		authenticate,
-		util.RPL_LOGGEDIN,
-		util.RPL_LOGGEDOUT,
-		util.RPL_NICKLOCKED,
-		util.RPL_SASLSUCCESS,
-		util.RPL_SASLFAIL,
-		util.RPL_SASLTOOLONG,
-		util.RPL_SASLABORTED,
-		util.RPL_SASLALREADY,
-		util.RPL_SASLMECHS,
+	}, event.PriNorm, authenticate, util.RPL_LOGGEDIN, util.RPL_LOGGEDOUT, util.RPL_NICKLOCKED, util.RPL_SASLSUCCESS,
+		util.RPL_SASLFAIL, util.RPL_SASLTOOLONG, util.RPL_SASLABORTED, util.RPL_SASLALREADY, util.RPL_SASLMECHS,
 	)
 
 	defer close(exiting)
@@ -507,6 +498,7 @@ func (i *IRC) HumanReadableSource(source string) string {
 	return source
 }
 
+// Status returns a human readable status string
 func (i *IRC) Status() string {
 	return fmt.Sprintf("IRC: Connected: %t Lag: %s", i.Connected.Get(), i.lag.Get())
 }

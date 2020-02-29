@@ -8,6 +8,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
 )
 
+// HookMessage hooks on messages to a channel
 func (i *IRC) HookMessage(f func(source, channel, message string, isAction bool)) {
 	i.ParsedEvents.Attach("MSG", func(e event.Event) {
 		messageEvent := e.(*MessageEvent)
@@ -27,6 +28,7 @@ func (i *IRC) HookMessage(f func(source, channel, message string, isAction bool)
 	}, event.PriNorm)
 }
 
+// HookPrivateMessage hooks on messages to us directly
 func (i *IRC) HookPrivateMessage(f func(source, channel, message string)) {
 	i.ParsedEvents.Attach("MSG", func(e event.Event) {
 		msg := e.(*MessageEvent)
@@ -37,6 +39,7 @@ func (i *IRC) HookPrivateMessage(f func(source, channel, message string)) {
 	}, event.PriNorm)
 }
 
+// HookJoin hooks on users joining a channel
 func (i *IRC) HookJoin(f func(source, channel string)) {
 	i.ParsedEvents.Attach("JOIN", func(e event.Event) {
 		join := e.(*JoinEvent)
@@ -44,6 +47,7 @@ func (i *IRC) HookJoin(f func(source, channel string)) {
 	}, event.PriNorm)
 }
 
+// HookPart hooks on users leaving a channel
 func (i *IRC) HookPart(f func(source, channel, message string)) {
 	i.ParsedEvents.Attach("PART", func(e event.Event) {
 		part := e.(*PartEvent)
@@ -51,6 +55,7 @@ func (i *IRC) HookPart(f func(source, channel, message string)) {
 	}, event.PriNorm)
 }
 
+// HookQuit hooks on users disconnecting
 func (i *IRC) HookQuit(f func(source, message string)) {
 	i.ParsedEvents.Attach("QUIT", func(e event.Event) {
 		quit := e.(*QuitEvent)
@@ -58,6 +63,7 @@ func (i *IRC) HookQuit(f func(source, message string)) {
 	}, event.PriNorm)
 }
 
+// HookKick hooks on a user being kicked from a channel
 func (i *IRC) HookKick(f func(source, channel, target, message string)) {
 	i.ParsedEvents.Attach("KICK", func(e event.Event) {
 		kick := e.(*KickEvent)
@@ -65,6 +71,7 @@ func (i *IRC) HookKick(f func(source, channel, target, message string)) {
 	}, event.PriNorm)
 }
 
+// HookNick hoops on a user changing their nickname
 func (i *IRC) HookNick(f func(source, newNick string)) {
 	i.ParsedEvents.Attach("NICK", func(e event.Event) {
 		nick := e.(*NickEvent)
