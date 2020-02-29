@@ -40,7 +40,7 @@ type Transport interface {
 	// Run runs the underlying process on the Transport. It returns the return code of the process (or -1 if start failed)
 	// a string representation of the exit, if applicable, and an error. error should be checked first as the string
 	// may not be filled for some errors.
-	// The passed struct should be closed when the game is started, to allow the controller to start monitoring stdio.
+	// The passed channel should be closed when the game is started, to allow the controller to start monitoring stdio.
 	// the start chan MUST be closed sometime before run returns
 	Run(start chan struct{}) (int, string, error)
 

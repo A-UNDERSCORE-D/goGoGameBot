@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize" // nolint:misspell // I dont control others' package names
 	psutilProc "github.com/shirou/gopsutil/process"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"

@@ -100,12 +100,13 @@ func (g *Game) runStep() bool {
 	start := make(chan struct{})
 	wg := new(sync.WaitGroup)
 	wg.Add(2) // 1 for stdout, 1 for stderr
+
 	go g.monitorStdIO(start, wg)
+
 	code, humanStatus, err := g.transport.Run(start)
 	wg.Wait()
+
 	if err != nil && !(errors.Is(err, util.ErrorAlreadyRunning) || strings.HasPrefix(err.Error(), "exit status")) {
-			return err
-		}
 		return false
 	}
 
@@ -119,11 +120,12 @@ func (g *Game) runStep() bool {
 
 // Run starts the given game if it is not already running. Note that this method blocks until the game exits, meaning
 // you will probably want to use it in a goroutine
-func (g *Game) Run() {
+func (g *Game) Run() error {
 	for g.runStep() {
 		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
 		time.Sleep(time.Second * time.Duration(g.autoRestart))
 	}
+	return nil
 }
 
 func (g *Game) validateConfig(conf *config.Game) error {
@@ -198,8 +200,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	if err := g.transport.Update(conf.Transport); err != nil {
 		return err
 	}
-	g.Info("transport reloaded successfully")
 
+	g.Info("transport reloaded successfully")
 	g.autoStart.Set(conf.AutoStart)
 	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
 
