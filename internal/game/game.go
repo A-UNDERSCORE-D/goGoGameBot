@@ -95,36 +95,40 @@ var (
 	ErrGameNotRunning = errors.New("game is not running")
 )
 
+func (g *Game) runStep() bool {
+	if err := g.process.Reset(); err != nil {
+		g.manager.Error(fmt.Errorf("error occurred while resetting process. not restarting: %s", err))
+		return false
+	}
+
+	shouldBreak := false
+	cleanExit, err := g.runGame()
+
+	if errors.Is(err, ErrAlreadyRunning) {
+		shouldBreak = true
+	} else if err != nil && !strings.HasPrefix(err.Error(), "exit status") {
+		g.manager.Error(err)
+	}
+
+	if !cleanExit {
+		shouldBreak = true
+	}
+
+	g.sendToMsgChan(g.process.GetReturnStatus())
+
+	if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart <= 0 {
+		return false
+	}
+
+	return true
+}
+
 // Run starts the given game if it is not already running. Note that this method blocks until the game exits, meaning
 // you will probably want to use it in a goroutine
 func (g *Game) Run() {
-	for {
-		if err := g.process.Reset(); err != nil {
-			g.manager.Error(fmt.Errorf("error occurred while resetting process. not restarting: %s", err))
-			break
-		}
-
-		shouldBreak := false
-		cleanExit, err := g.runGame()
-
-		if err == ErrAlreadyRunning {
-			shouldBreak = true
-		} else if err != nil && !strings.HasPrefix(err.Error(), "exit status") {
-			g.manager.Error(err)
-		}
-
-		if !cleanExit {
-			shouldBreak = true
-		}
-
-		g.sendToMsgChan(g.process.GetReturnStatus())
-
-		if shouldBreak || g.status.Get() == killed || g.process.GetReturnCode() != 0 || g.autoRestart <= 0 {
-			break
-		}
-
+	for g.runStep() {
 		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
-		time.Sleep(time.Second * (time.Duration)(g.autoRestart))
+		time.Sleep(time.Second * time.Duration(g.autoRestart))
 	}
 }
 
