@@ -27,8 +27,8 @@ type Conf struct {
 	} `xml:"colour_map>colour"`
 }
 
-func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
-	replaceMap := map[rune]string{
+func (s *Conf) MakeMaps() (replaceMap map[rune]string, colourMap map[color.Color]string) {
+	replaceMap = map[rune]string{
 		intermediate.Bold:          s.ReplaceMap.Bold,
 		intermediate.Italic:        s.ReplaceMap.Italic,
 		intermediate.Underline:     s.ReplaceMap.Underline,
@@ -36,7 +36,7 @@ func (s *Conf) MakeMaps() (map[rune]string, map[color.Color]string) {
 		intermediate.Reset:         s.ReplaceMap.Reset,
 	}
 
-	colourMap := make(map[color.Color]string)
+	colourMap = make(map[color.Color]string)
 
 	for _, cc := range s.ColourMap {
 		c := color.RGBA{
