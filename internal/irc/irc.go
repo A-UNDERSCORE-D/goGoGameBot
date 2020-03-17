@@ -3,6 +3,7 @@ package irc
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/xml"
 	"errors"
@@ -209,8 +210,6 @@ func (i *IRC) Connect() error {
 		_, _ = i.writeLine("JOIN", name)
 	}
 
-	go i.pingLoop()
-
 	return nil
 }
 
@@ -245,9 +244,14 @@ func (i *IRC) Run() error {
 	if err := i.Connect(); err != nil {
 		return err
 	}
+
+	pingCtx, cancel := context.WithCancel(context.Background())
+	go i.pingLoop(pingCtx)
+
 	defer i.Connected.Set(false)
 	defer i.lag.Set(time.Duration(0))
 	defer i.lastPong.Set(time.Time{})
+	defer cancel()
 
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
@@ -261,19 +265,30 @@ func (i *IRC) Run() error {
 	return nil
 }
 
-func (i *IRC) pingLoop() {
-	for i.Connected.Get() {
-		time.Sleep(time.Second * 5)
-		msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
+func (i *IRC) pingLoop(ctx context.Context) {
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
 
-		if _, err := i.writeLine("PING", msg); err != nil {
-			i.log.Warnf("could not write our PING message: %s", err)
-			// Something broke. No idea what. Bail out the entire bot
-			i.socket.Close()
+	for {
+		select {
+		case <-ticker.C:
+			i.doPing()
+		case <-ctx.Done():
+			return
 		}
-
-		i.checkLag()
 	}
+}
+
+func (i *IRC) doPing() {
+	msg := fmt.Sprintf("%s %s", time.Now().Format(time.RFC3339Nano), keepalive.Next())
+
+	if _, err := i.writeLine("PING", msg); err != nil {
+		i.log.Warnf("could not write our PING message: %s", err)
+		// Something broke. No idea what. Bail out the entire bot
+		i.socket.Close()
+	}
+
+	i.checkLag()
 }
 
 func (i *IRC) pongHandler(e event.Event) {
