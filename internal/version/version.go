@@ -2,4 +2,4 @@
 package version
 
 // Version is the current bot version
-var Version string = "0.4.7"
+var Version string = "0.4.9"

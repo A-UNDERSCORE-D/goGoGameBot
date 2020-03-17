@@ -39,7 +39,7 @@ func main() {
 	pflag.Parse()
 
 	rl, _ := readline.New("> ")
-	l := log.New(log.FTimestamp, rl, "MAIN", log.TRACE) // TODO: set back to debug (or add a thing to change it at runtime)
+	l := log.New(log.FTimestamp, rl, "MAIN", log.DEBUG)
 	logger = l
 
 	for _, line := range strings.Split(asciiArt, "\n") {
