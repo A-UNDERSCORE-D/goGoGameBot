@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- TODO: stuff about the updated transports and configs
+
+## [0.4.8] - 2020-03-17
+
 ## Fixed
 
 - The Minecraft transformer no longer causes latent formatting issues when the first part of a message is formatted
 - Setting the version during compilation would transparently fail
-
-## Changed
-
-- TODO: stuff about the updated transports and configs
 
 ## Added
 
