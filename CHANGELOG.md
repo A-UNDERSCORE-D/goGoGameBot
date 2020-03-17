@@ -11,14 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: stuff about the updated transports and configs
 
+## [0.4.9] - 2020-03-17
+
+### Fixed
+
+- Previous release had an incorrect version
+- Previous release had TRACE logging enabled
+
 ## [0.4.8] - 2020-03-17
 
-## Fixed
+### Fixed
 
 - The Minecraft transformer no longer causes latent formatting issues when the first part of a message is formatted
 - Setting the version during compilation would transparently fail
 
-## Added
+### Added
 
 - There is now a reconnect command to force a reconnection to the chat platform
 - Nullconn -- Its what it says on the tin, its a bot implementation that does nothing (except log a little)
@@ -291,6 +298,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.9]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/662cc0a9d6b16cb879171e5d7fece9c2f94813e7...0f3fb07ae2e6971c70ff318971da3e7e9dbe2985
 [0.4.8]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0563e36d876550fa2e77413f2f43cbedb6389663...662cc0a9d6b16cb879171e5d7fece9c2f94813e7
 [0.4.7]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/41e314f473987a85db1bff74aecbe2b878dc6462...0563e36d876550fa2e77413f2f43cbedb6389663
 [0.4.6]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/121712681fb22f0099251f83249bb8451b58f212...41e314f473987a85db1bff74aecbe2b878dc6462
