@@ -291,6 +291,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.8]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0563e36d876550fa2e77413f2f43cbedb6389663...662cc0a9d6b16cb879171e5d7fece9c2f94813e7
 [0.4.7]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/41e314f473987a85db1bff74aecbe2b878dc6462...0563e36d876550fa2e77413f2f43cbedb6389663
 [0.4.6]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/121712681fb22f0099251f83249bb8451b58f212...41e314f473987a85db1bff74aecbe2b878dc6462
 [0.4.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/933d526afe8f7c31d0c809d03ec2182b8d205d51...121712681fb22f0099251f83249bb8451b58f212
