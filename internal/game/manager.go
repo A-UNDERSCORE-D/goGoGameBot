@@ -329,6 +329,9 @@ func (m *Manager) setupCommands() error {
 			"gets the status for each game. If all is provided as the first arg, all game's statuses are reported"
 
 		reconnHelp = "reconnects the bot to the chat layer. "
+
+		bot        = "bot"
+		botRawHelp = "Sends a raw line directly to the chat platform in use"
 	)
 
 	var errs []error
@@ -343,6 +346,7 @@ func (m *Manager) setupCommands() error {
 		m.Cmd.AddCommand("reload", 3, m.reloadCmd, reloadHelp),
 		m.Cmd.AddCommand("status", 0, m.statusCmd, statusHelp),
 		m.Cmd.AddCommand("reconnect", 3, m.reconnectCmd, reconnHelp),
+		m.Cmd.AddSubCommand(bot, "raw", 3, m.rawCmd, botRawHelp),
 	)
 
 	outErr := strings.Builder{}

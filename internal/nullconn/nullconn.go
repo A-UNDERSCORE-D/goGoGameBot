@@ -83,3 +83,6 @@ func (n *NullConn) HumanReadableSource(source string) string { return source }
 
 // Status returns the status of the null config
 func (n *NullConn) Status() string { return "I am a meat popsicle" }
+
+// SendRaw does exactly nothing.
+func (n *NullConn) SendRaw(string) {}

@@ -10,6 +10,8 @@ type Bot interface {
 	Run() error
 	// SendAdminMessage sends the given message to the administrator
 	SendAdminMessage(msg string)
+	// SendRaw sends a raw message across the Bot
+	SendRaw(raw string)
 	Messager // TODO: fix this spelling
 	Hooker
 	AdminLeveller

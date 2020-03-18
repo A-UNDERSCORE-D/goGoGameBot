@@ -528,3 +528,13 @@ func (i *IRC) HumanReadableSource(source string) string {
 func (i *IRC) Status() string {
 	return fmt.Sprintf("IRC: Connected: %t Lag: %s", i.Connected.Get(), i.lag.Get())
 }
+
+// SendRaw sends a raw IRC line to the server
+func (i *IRC) SendRaw(raw string) {
+	if !i.Connected.Get() {
+		i.log.Warn("cannot send a raw line when not connected")
+		return
+	}
+
+	i.write([]byte(raw))
+}

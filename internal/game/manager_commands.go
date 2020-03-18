@@ -204,3 +204,12 @@ func (m *Manager) reconnectCmd(data *command.Data) {
 
 	m.bot.Disconnect(msg)
 }
+
+func (m *Manager) rawCmd(data *command.Data) {
+
+	if len(data.Args) <= 0 {
+		data.ReturnNotice("raw requires an argument")
+	}
+
+	m.bot.SendRaw(strings.Join(data.Args, " "))
+}
