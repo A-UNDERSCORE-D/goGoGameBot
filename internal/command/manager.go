@@ -16,7 +16,7 @@ type prefixFunc func(string) (string, bool)
 // NewManager creates a Manager with the provided logger and messager. The prefixes vararg sets the prefixes for the
 // commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
 func NewManager(logger *log.Logger, pFunc prefixFunc, prefixes ...string) *Manager {
-	m := &Manager{Logger: logger, commands: make(map[string]Command), commandPrefixes: prefixes}
+	m := &Manager{Logger: logger, commands: make(map[string]Command), commandPrefixes: prefixes, prefixFunc: pFunc}
 	if err := m.AddCommand("help", 0, m.helpImpl, "prints command help"); err != nil {
 		panic(err)
 	}
