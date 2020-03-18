@@ -104,6 +104,7 @@ func (i *IRC) setupCapManager() {
 }
 
 func (i *IRC) setupParsers() {
+	// Dispatchers
 	i.RawEvents.Attach("PRIVMSG", i.dispatchMessage, event.PriHighest)
 	i.RawEvents.Attach("NOTICE", i.dispatchMessage, event.PriHighest)
 	i.RawEvents.Attach("JOIN", i.dispatchJoin, event.PriHighest)
@@ -112,6 +113,10 @@ func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("KICK", i.dispatchKick, event.PriHighest)
 	i.RawEvents.Attach("NICK", i.dispatchNick, event.PriHighest)
 	i.RawEvents.Attach("PONG", i.pongHandler, event.PriHighest)
+
+	// internal handlers
+	i.RawEvents.Attach("443", i.handleNickInUse, event.PriHighest)
+	i.HookNick(i.onNick)
 }
 
 // LineHandler is a function that is called on every raw Line
