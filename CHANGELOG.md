@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: stuff about the updated transports and configs
 
+## [0.4.11] - 2020-03-17
+
+### Added
+
+- raw command that sends raw lines across the Bot in use
+
+### Fixed
+
+- The IRC Bot no longer chokes when told its nick is in use
+- The bot now correctly tracks its own nick for use in commands
+
 ## [0.4.10] - 2020-03-17
 
 ### Fixed
@@ -304,6 +315,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.10]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0fede936c424bf9248fb6e25be19ba5c0959f93d...a609992f8cb8c7cab99458989beb528a3bfbf425
 [0.4.10]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0f3fb07ae2e6971c70ff318971da3e7e9dbe2985...0fede936c424bf9248fb6e25be19ba5c0959f93d
 [0.4.9]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/662cc0a9d6b16cb879171e5d7fece9c2f94813e7...0f3fb07ae2e6971c70ff318971da3e7e9dbe2985
 [0.4.8]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0563e36d876550fa2e77413f2f43cbedb6389663...662cc0a9d6b16cb879171e5d7fece9c2f94813e7
