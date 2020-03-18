@@ -115,7 +115,7 @@ func (i *IRC) setupParsers() {
 	i.RawEvents.Attach("PONG", i.pongHandler, event.PriHighest)
 
 	// internal handlers
-	i.RawEvents.Attach("443", i.handleNickInUse, event.PriHighest)
+	i.RawEvents.Attach("433", i.handleNickInUse, event.PriHighest)
 	i.HookNick(i.onNick)
 }
 

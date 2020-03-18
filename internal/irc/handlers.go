@@ -4,8 +4,8 @@ import "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 
 func (i *IRC) handleNickInUse(e event.Event) {
 	rawEvent := event2RawEvent(e)
-	if rawEvent != nil {
-		i.log.Warn("Got an invalid 443 event")
+	if rawEvent == nil {
+		i.log.Warn("Got an invalid 433 event")
 		return
 	}
 
@@ -18,7 +18,8 @@ func (i *IRC) handleNickInUse(e event.Event) {
 	i.Nick = newNick
 }
 
-func (i *IRC) onNick(newNick, oldNick string) {
+func (i *IRC) onNick(source, newNick string) {
+	oldNick := i.HumanReadableSource(source)
 	if oldNick != i.Nick {
 		return
 	}
