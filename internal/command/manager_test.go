@@ -91,7 +91,7 @@ func (m *mockMessager) Clear() {
 }
 
 func TestManager_AddCommand(t *testing.T) {
-	preExisting := NewManager(baseLogger)
+	preExisting := NewManager(baseLogger, nil)
 	_ = preExisting.AddCommand("dupe", 0, nil, "dupe command is duped")
 
 	type args struct {
@@ -108,7 +108,7 @@ func TestManager_AddCommand(t *testing.T) {
 	}{
 		{
 			name: "space error",
-			m:    NewManager(baseLogger),
+			m:    NewManager(baseLogger, nil),
 			args: args{
 				name:          "basic test",
 				requiresAdmin: 0,
@@ -118,7 +118,7 @@ func TestManager_AddCommand(t *testing.T) {
 		},
 		{
 			name: "singlename test",
-			m:    NewManager(baseLogger),
+			m:    NewManager(baseLogger, nil),
 			args: args{
 				name:          "test",
 				requiresAdmin: 0,
@@ -147,7 +147,7 @@ func TestManager_AddCommand(t *testing.T) {
 }
 
 func TestManager_getCommandByName(t *testing.T) {
-	m := NewManager(baseLogger)
+	m := NewManager(baseLogger, nil)
 	existingCommand := &SingleCommand{
 		0,
 		nil,
@@ -192,9 +192,9 @@ func TestManager_getCommandByName(t *testing.T) {
 }
 
 func TestManager_AddSubCommand(t *testing.T) { //nolint:funlen // Its got the test data in it
-	sCmdManager := NewManager(baseLogger)
+	sCmdManager := NewManager(baseLogger, nil)
 	_ = sCmdManager.internalAddCommand(&SingleCommand{0, nil, "single_command", "single"})
-	mCmdManager := NewManager(baseLogger)
+	mCmdManager := NewManager(baseLogger, nil)
 	_ = mCmdManager.internalAddCommand(&SubCommandList{
 		SingleCommand: SingleCommand{0, nil, "baseCmd", "baseCmd"},
 		subCommands:   make(map[string]Command)},
@@ -216,7 +216,7 @@ func TestManager_AddSubCommand(t *testing.T) { //nolint:funlen // Its got the te
 	}{
 		{
 			name: "no existing root",
-			m:    NewManager(baseLogger),
+			m:    NewManager(baseLogger, nil),
 			args: args{
 				rootName: "IDontExist",
 				name:     "test",
@@ -306,7 +306,7 @@ func TestManager_CheckAdmin(t *testing.T) {
 }*/
 
 func TestManager_ParseLine(t *testing.T) { //nolint:funlen // it has test data in it
-	m := NewManager(baseLogger, "~")
+	m := NewManager(baseLogger, nil, "~")
 	_ = m.AddCommand(
 		"testNoAccess",
 		noAdmin,

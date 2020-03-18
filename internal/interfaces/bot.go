@@ -17,8 +17,12 @@ type Bot interface {
 	JoinChannel(name string)
 	// Reload reloads the Bot using the given (string) config
 	Reload(conf string) error
-	// CommandPrefixes returns the bots current command prefixes
-	CommandPrefixes() []string
+	// StaticCommandPrefixes returns the bots current static prefixes
+	// ie, ones that will not change over the bot lifetime
+	StaticCommandPrefixes() []string
+	// IsCommandPrefix returns whether or not the given string starts with a command prefix
+	// if it does, it also returns the given string with the prefix removed
+	IsCommandPrefix(string) (string, bool)
 	// HumanReadableSource converts the given message source to one that is human readable
 	HumanReadableSource(source string) string
 	Statuser //nolint:misspell // intentional.

@@ -24,7 +24,7 @@ func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*M
 		rootConf: conf,
 	}
 
-	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), bot.CommandPrefixes()...)
+	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), bot.IsCommandPrefix, bot.StaticCommandPrefixes()...)
 	m.setupHooks()
 	m.ReloadGames(conf.GameManager.Games)
 
@@ -378,7 +378,7 @@ func (m *Manager) reload(conf *config.Config) error {
 		return err
 	}
 
-	m.Cmd.SetPrefixes(m.bot.CommandPrefixes())
+	m.Cmd.SetPrefixes(m.bot.StaticCommandPrefixes())
 
 	return nil
 }

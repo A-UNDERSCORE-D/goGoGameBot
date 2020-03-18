@@ -176,7 +176,7 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 
 func TestSubCommandList_Fire(t *testing.T) { //nolint:funlen // it contains test data
 	messager := &mockMessager{}
-	manager := NewManager(baseLogger)
+	manager := NewManager(baseLogger, nil)
 
 	type fields struct {
 		subCommands map[string]Command

@@ -11,9 +11,11 @@ import (
 
 const noAdmin = 0
 
+type prefixFunc func(string) (string, bool)
+
 // NewManager creates a Manager with the provided logger and messager. The prefixes vararg sets the prefixes for the
 // commands. Note that the prefix is matched EXACTLY. Meaning that a trailing space is required for any "normal" prefix
-func NewManager(logger *log.Logger, prefixes ...string) *Manager {
+func NewManager(logger *log.Logger, pFunc prefixFunc, prefixes ...string) *Manager {
 	m := &Manager{Logger: logger, commands: make(map[string]Command), commandPrefixes: prefixes}
 	if err := m.AddCommand("help", 0, m.helpImpl, "prints command help"); err != nil {
 		panic(err)
@@ -28,6 +30,7 @@ type Manager struct {
 	cmdMutex        sync.RWMutex
 	commands        map[string]Command
 	commandPrefixes []string
+	prefixFunc      prefixFunc
 	Logger          *log.Logger
 }
 
@@ -160,9 +163,16 @@ func (m *Manager) RemoveSubCommand(rootName, name string) error {
 }
 
 func (m *Manager) stripPrefix(line string) (string, bool) {
-	hasPrefix := false
+	if m.prefixFunc != nil {
+		if res, ok := m.prefixFunc(line); ok {
+			return res, ok
+		}
+	}
 
-	var out string
+	var (
+		hasPrefix bool
+		out       string
+	)
 
 	for _, pfx := range m.commandPrefixes {
 		if strings.HasPrefix(strings.ToUpper(line), strings.ToUpper(pfx)) {

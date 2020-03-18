@@ -72,8 +72,11 @@ func (n *NullConn) Reload(conf string) error {
 	return nil
 }
 
-// CommandPrefixes returns the bot's current command prefixes
-func (n *NullConn) CommandPrefixes() []string { return nil }
+// StaticCommandPrefixes returns the bot's current command prefixes
+func (n *NullConn) StaticCommandPrefixes() []string { return nil }
+
+// IsCommandPrefix returns the given string and nothing else, as we dont implement it
+func (n *NullConn) IsCommandPrefix(l string) (string, bool) { return l, false }
 
 // HumanReadableSource converts the given message source to one that is human readable
 func (n *NullConn) HumanReadableSource(source string) string { return source }

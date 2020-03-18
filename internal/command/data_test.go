@@ -12,7 +12,7 @@ func TestData_CheckPerms(t *testing.T) {
 		OriginalArgs: "this doesnt matter",
 		Source:       "test!test@test",
 		Target:       "#test",
-		Manager:      NewManager(baseLogger),
+		Manager:      NewManager(baseLogger, nil),
 		util:         &mockMessager{},
 	}
 	d.util.(*mockMessager).AddAdmin("*!*@test", 1)
@@ -26,7 +26,7 @@ func TestData_SendTargetNotice(t *testing.T) {
 	d := Data{
 		Source:  "test!test@test",
 		Target:  "#test",
-		Manager: NewManager(baseLogger),
+		Manager: NewManager(baseLogger, nil),
 		util:    &mockMessager{},
 	}
 	d.SendTargetNotice("test")
@@ -42,7 +42,7 @@ func TestData_SendTargetMessage(t *testing.T) {
 	d := Data{
 		Source:  "test!test@test",
 		Target:  "#test",
-		Manager: NewManager(baseLogger),
+		Manager: NewManager(baseLogger, nil),
 		util:    &mockMessager{},
 	}
 	d.SendTargetMessage("test")
@@ -58,7 +58,7 @@ func TestData_SendSourceNotice(t *testing.T) {
 	d := Data{
 		Source:  "test!test@test",
 		Target:  "#test",
-		Manager: NewManager(baseLogger),
+		Manager: NewManager(baseLogger, nil),
 		util:    &mockMessager{},
 	}
 	d.SendSourceNotice("test message")
@@ -74,7 +74,7 @@ func TestData_SendSourceMessage(t *testing.T) {
 	d := Data{
 		Source:  "test!test@test",
 		Target:  "#test",
-		Manager: NewManager(baseLogger),
+		Manager: NewManager(baseLogger, nil),
 		util:    &mockMessager{},
 	}
 	d.SendSourceMessage("test message")

@@ -498,10 +498,21 @@ func (i *IRC) Reload(conf string) error {
 	return nil
 }
 
-// CommandPrefixes returns the valid command prefixes for the IRC instance.
-// Specifically, the configured one, and the set nick followed by a colon
-func (i *IRC) CommandPrefixes() []string {
-	return []string{i.CmdPfx, i.Nick + ": "}
+// StaticCommandPrefixes returns the valid static command prefixes. This means
+// any prefixes that will never change at runtime (for IRC, none)
+func (i *IRC) StaticCommandPrefixes() []string { return []string{} }
+
+// IsCommandPrefix returns whether or not the given string contains any dynamic command prefixes
+func (i *IRC) IsCommandPrefix(line string) (string, bool) {
+	if strings.HasPrefix(line, i.CmdPfx) {
+		return line[len(i.CmdPfx):], true
+	}
+
+	if strings.HasPrefix(line, i.Nick+": ") {
+		return line[len(i.Nick)+2:], true
+	}
+
+	return line, false
 }
 
 // HumanReadableSource takes an IRC userhost and returns just the nick
