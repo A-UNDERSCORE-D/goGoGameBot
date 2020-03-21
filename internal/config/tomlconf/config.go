@@ -11,9 +11,10 @@ type Config struct {
 	OriginalPath string
 	Connection   ConfigHolder
 
-	FormatTemplates map[string]FormatSet         `toml:"format_templates"`
-	RegexpTemplates map[string]map[string]Regexp `toml:"regexp_templates"`
-	Games           map[string]*Game
+	FormatTemplates  map[string]FormatSet          `toml:"format_templates"`
+	RegexpTemplates  map[string]map[string]Regexp  `toml:"regexp_templates"`
+	CommandTemplates map[string]map[string]Command `toml:"command_templates"`
+	Games            map[string]*Game
 }
 
 func (c *Config) resolveImports() error {
