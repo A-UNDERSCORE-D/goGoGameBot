@@ -163,6 +163,14 @@ func (g *Game) OnKick(source, channel, kickee, message string) {
 // same as the current game, the name is switched to "LOCAL"
 func (g *Game) SendLineFromOtherGame(msg string, source interfaces.Game) {
 	if !g.chatBridge.allowForwards || g.chatBridge.format.external == nil {
+		g.Logger.Tracef(
+			"early return from SendLineFromOtherGame: AF: %t externalF==Nil: %t src: %q msg: %q",
+			g.chatBridge.allowForwards,
+			g.chatBridge.format.external == nil,
+			source.GetName(),
+			msg,
+		)
+
 		return
 	}
 
