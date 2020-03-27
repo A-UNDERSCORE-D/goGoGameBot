@@ -8,68 +8,68 @@ platform:
   arch: amd64
 
 steps:
-- name: run-tests
-  image: golang
-  environment:
-    GOPROXY: https://proxy.golang.org
+  - name: run-tests
+    image: golang
+    environment:
+      GOPROXY: https://proxy.golang.org
 
-  commands:
-  - go test ./...
-  volumes:
-  - name: go
-    path: /root/.cache/go-build
-  when:
-    event:
-    - push
-    - pull-request
-    - tag
+    commands:
+      - go test ./...
+    volumes:
+      - name: go
+        path: /root/.cache/go-build
+    when:
+      event:
+        - push
+        - pull-request
+        - tag
 
-- name: build
-  image: golang
-  environment:
-    GOPROXY: https://proxy.golang.org
-  commands:
-  - go build -trimpath -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go
-  - "echo \"goGoGameBot version $DRONE_TAG\" > /tmp/build/releaseTitle"
-  volumes:
-  - name: go
-    path: /root/.cache/go-build
   - name: build
-    path: /tmp/build
-  when:
-    event:
-    - tag
+    image: golang
+    environment:
+      GOPROXY: https://proxy.golang.org
+    commands:
+      - "go build -trimpath -ldflags '-X git.ferricyanide.solutions/A_D/goGoGameBot/internal/version.Version=$DRONE_TAG' -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go"
+      - 'echo "goGoGameBot version $DRONE_TAG" > /tmp/build/releaseTitle'
+    volumes:
+      - name: go
+        path: /root/.cache/go-build
+      - name: build
+        path: /tmp/build
+    when:
+      event:
+        - tag
 
-- name: do-release
-  image: plugins/gitea-release
-  settings:
-    api_key:
-      from_secret: gitea_token
-    base_url: https://git.ferricyanide.solutions
-    checksum:
-    - md5
-    - sha256
-    draft: true
-    files:
-    - /tmp/build/goGoGameBot
-    title: /tmp/build/releaseTitle
-  volumes:
-  - name: go
-    path: /root/.cache/go-build
-  - name: build
-    path: /tmp/build
-  when:
-    event:
-    - tag
+  - name: do-release
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: gitea_token
+      base_url: https://git.ferricyanide.solutions
+      checksum:
+        - md5
+        - sha256
+      draft: true
+      files:
+        - /tmp/build/goGoGameBot
+      title: /tmp/build/releaseTitle
+    volumes:
+      - name: go
+        path: /root/.cache/go-build
+      - name: build
+        path: /tmp/build
+    when:
+      event:
+        - tag
 
 volumes:
-- name: go
-  temp: {}
-- name: build
-  temp: {}
+  - name: go
+    temp: {}
+  - name: build
+    temp: {}
 
 ---
 kind: signature
-hmac: 1b5add86757b788535f067d5dc38b74ae037bba29d3d132acfebe0e1a99b6725
+hmac: 05ec782712dd649be31c4b6af656b94dfc6c571248c9080137b09b653366e5fe
 
 ...
