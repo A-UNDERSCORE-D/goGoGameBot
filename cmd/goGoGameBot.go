@@ -33,13 +33,20 @@ const (
 var (
 	configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
 	logger     *log.Logger
+	traceLog   = pflag.Bool("trace", false, "enable trace logging (extremely verbose)")
 )
 
 func main() {
 	pflag.Parse()
 
 	rl, _ := readline.New("> ")
-	l := log.New(log.FTimestamp, rl, "MAIN", log.DEBUG)
+	lvl := log.DEBUG
+
+	if *traceLog {
+		lvl = log.TRACE
+	}
+
+	l := log.New(log.FTimestamp, rl, "MAIN", lvl)
 	logger = l
 
 	for _, line := range strings.Split(asciiArt, "\n") {
