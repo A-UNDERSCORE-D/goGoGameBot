@@ -29,7 +29,7 @@ steps:
     environment:
       GOPROXY: https://proxy.golang.org
     commands:
-      - "go build -trimpath -ldflags '-X git.ferricyanide.solutions/A_D/goGoGameBot/internal/version.Version=$DRONE_TAG' -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go"
+      - 'go build -trimpath -ldflags "-X git.ferricyanide.solutions/A_D/goGoGameBot/internal/version.Version=$DRONE_TAG" -o /tmp/build/goGoGameBot ./cmd/goGoGameBot.go'
       - 'echo "goGoGameBot version $DRONE_TAG" > /tmp/build/releaseTitle'
     volumes:
       - name: go
@@ -70,6 +70,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 05ec782712dd649be31c4b6af656b94dfc6c571248c9080137b09b653366e5fe
+hmac: 1e9e6bf004f90f213fca28aa84694d8253d1ecff838921bd6d73246d52218427
 
 ...
