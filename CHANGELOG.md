@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: stuff about the updated transports and configs
 
+## [0.4.13] - 2020-03-27
+
+### Added
+
+- --trace argument to enable trace logging at startup time (Note that trace logging is verbose and may cause slowdowns)
+
+### Fixed
+
+- Incorrect logic for inter-server communication
+
 ## [0.4.12] - 2020-03-18
 
 ### Fixed
@@ -320,7 +330,10 @@ With format being the "standard" formatter with all its available tools and sett
 
 - Many undocumented additions
 
+
+
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.4.13]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/556dbb0bf50a3ad7c6578fbe928a7e3a5949c45a...18ba52a01e20dbaefbeb9c11f225d12992327add
 [0.4.12]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/a609992f8cb8c7cab99458989beb528a3bfbf425...556dbb0bf50a3ad7c6578fbe928a7e3a5949c45a
 [0.4.11]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0fede936c424bf9248fb6e25be19ba5c0959f93d...a609992f8cb8c7cab99458989beb528a3bfbf425
 [0.4.10]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0f3fb07ae2e6971c70ff318971da3e7e9dbe2985...0fede936c424bf9248fb6e25be19ba5c0959f93d
