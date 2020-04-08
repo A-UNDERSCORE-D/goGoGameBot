@@ -457,7 +457,10 @@ func (i *IRC) SendNotice(target, message string) {
 // AdminLevel returns what admin level the given mask has, 0 means no admin access
 func (i *IRC) AdminLevel(source string) int {
 	for _, a := range i.Admins {
-		if util.GlobToRegexp(a.Mask).MatchString(source) {
+		lowerAdmin := strings.ToLower(a.Mask)
+		lowerSource := strings.ToLower(source)
+
+		if util.GlobToRegexp(lowerAdmin).MatchString(lowerSource) {
 			return a.Level
 		}
 	}
