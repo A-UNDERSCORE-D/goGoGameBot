@@ -2,4 +2,4 @@
 package version
 
 // Version is the current bot version
-var Version string = "SOURCE-BUILD"
+var Version string = "devel-source"

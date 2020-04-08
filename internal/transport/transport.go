@@ -12,6 +12,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/processTransport"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
@@ -60,6 +61,9 @@ func GetTransport(name string, transportConfig config.TransportConfig, logger *l
 	case "process":
 		return processTransport.New(transportConfig, logger)
 	case "network":
+		if !strings.HasPrefix(version.Version, "devel") {
+			panic("Network transports are WIP, and not available in non-dev builds")
+		}
 		return network.New(transportConfig, logger)
 	default:
 		return nil, fmt.Errorf("cannot create transport %q: %w", name, ErrNoTransport)
