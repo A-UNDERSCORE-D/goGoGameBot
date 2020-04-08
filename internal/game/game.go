@@ -84,7 +84,6 @@ type Game struct {
 	preRollReplace  string
 	controlChannels channelPair
 	chatBridge      *chatBridge
-	allowForwards   bool
 }
 
 // Sentinel errors
