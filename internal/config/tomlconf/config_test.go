@@ -1,7 +1,7 @@
 package tomlconf
 
 import (
-	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -48,32 +48,34 @@ var tests = []struct {
 		[connection]
 		type = "null"
 		
-		[games.test]
+		[[game]]
+		name = "test"
 		`,
 	}, {
 		name:     "valid with game",
 		IsValid:  true,
-		dumpJSON: true,
+		dumpJSON: false,
 		tomlStr: `
 		[connection]
 			type = "null"
 		
-		[games.test]
-			[games.test.transport]
+		[[game]]
+			name = "test"
+			
+			[game.transport]
 			type = "process"
-			exec.binary = "asd"
+
+			conf.binary = "asd"
 		`,
 		expectedConf: &Config{
 			Connection: ConfigHolder{Type: "null"},
-			Games: map[string]*Game{
-				"test": &Game{
+			Games: []*Game{
+				{
+					Name: "test",
 					Transport: ConfigHolder{
 						Type: "process",
 						RealConf: tomlTreeFromMapMust(map[string]interface{}{
-							"type": "process",
-							"exec": map[string]interface{}{
-								"binary": "asd",
-							},
+							"binary": "asd",
 						}),
 					},
 				},
@@ -82,9 +84,10 @@ var tests = []struct {
 	},
 
 	{
+		// TODO: add tests for this
 		name:     "import simple",
 		IsValid:  true,
-		dumpJSON: true,
+		dumpJSON: false,
 		tomlStr: `
 		[connection]
 			type = "null"
@@ -108,7 +111,7 @@ var tests = []struct {
 
 			[games.whatever.transport]
 				type = "process"
-				execute.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
+				conf.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
 		`,
 	}, {
 		name:    "big valid",
@@ -142,7 +145,7 @@ func cmpConfig(a, b *Config) (out bool) {
 	defer func() {
 		if err := recover(); err != nil && strings.Contains(err.(error).Error(), "nil pointer dereference") {
 			out = false
-		} else {
+		} else if err != nil {
 			panic(err)
 		}
 	}()
@@ -177,23 +180,48 @@ func cmpConfig(a, b *Config) (out bool) {
 		return false
 	}
 
-	for name, g := range a.Games {
-		other, exists := b.Games[name]
-		if !exists {
-			return false
+outer:
+	for _, g := range a.Games {
+		for _, g2 := range b.Games {
+			if cmpGame(g, g2) {
+				continue outer
+			}
 		}
-		if other != g {
-			return false
-		}
-	}
-	return false
-}
-
-func cmpGame(a, b *Game) bool {
-	if a == nil && a != b {
 		return false
 	}
-	return false
+
+	return true
+}
+
+var gameNumFields = func() int { return reflect.TypeOf(Game{}).NumField() }()
+
+func cmpGame(a, b *Game) bool {
+	if (a == nil || b == nil) && a != b {
+		return false
+	}
+
+	// Sanity check to make sure this wasn't updated/changed
+	if reflect.TypeOf(a).Elem().NumField() != 10 {
+		panic(errors.New("tomlconf.Game updated but tests not"))
+	}
+
+	// Manual: Transport
+	// DeepEqualled: Chat, CommandImports, Commands, RegexpImports, Regexps
+	if a.Name != b.Name ||
+		a.AutoStart != b.AutoStart ||
+		a.AutoRestart != b.AutoRestart ||
+		a.PreRoll != b.PreRoll ||
+		a.Transport.Type != b.Transport.Type ||
+		a.Transport.RealConf.String() != b.Transport.RealConf.String() ||
+		!reflect.DeepEqual(a.Chat, b.Chat) ||
+		!reflect.DeepEqual(a.CommandImports, b.CommandImports) ||
+		!reflect.DeepEqual(a.Commands, b.Commands) ||
+		!reflect.DeepEqual(a.RegexpImports, a.RegexpImports) ||
+		!reflect.DeepEqual(a.Regexps, b.Regexps) {
+
+		return false
+	}
+	return true
 }
 
 func jsonMust(res []byte, err error) []byte {
@@ -226,13 +254,13 @@ func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 			valid := validateConfig(conf)
 			isValid := valid != nil
 
-			if v.dumpJSON {
-				res, err := json.MarshalIndent(conf, "", "    ")
-				if err != nil {
-					panic(err)
-				}
-				t.Log(string(res))
-			}
+			// if v.dumpJSON {
+			// 	res, err := json.MarshalIndent(conf, "", "    ")
+			// 	if err != nil {
+			// 		panic(err)
+			// 	}
+			// 	t.Log(string(res))
+			// }
 
 			// if we are valid and expected to be, hop out, otherwise, check
 			// that we are invalid in the expected way
