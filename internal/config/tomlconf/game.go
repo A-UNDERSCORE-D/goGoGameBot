@@ -74,7 +74,7 @@ func (g *Game) resolveImports(c *Config) error {
 		return err
 	}
 
-	if err := g.resolveFormatImports(c); err != nil {
+	if err := g.resolveRegexpImports(c); err != nil {
 		return err
 	}
 
