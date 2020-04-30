@@ -201,13 +201,14 @@ func cmpGame(a, b *Game) bool {
 	}
 
 	// Sanity check to make sure this wasn't updated/changed
-	if reflect.TypeOf(a).Elem().NumField() != 10 {
+	if reflect.TypeOf(a).Elem().NumField() != 11 {
 		panic(errors.New("tomlconf.Game updated but tests not"))
 	}
 
 	// Manual: Transport
 	// DeepEqualled: Chat, CommandImports, Commands, RegexpImports, Regexps
 	if a.Name != b.Name ||
+		a.Comment != b.Comment ||
 		a.AutoStart != b.AutoStart ||
 		a.AutoRestart != b.AutoRestart ||
 		a.PreRoll != b.PreRoll ||

@@ -6,8 +6,10 @@ import (
 
 // Game holds the config for a Game instance
 type Game struct {
+	Name        string
 	AutoStart   bool
 	AutoRestart int
+	Comment     string
 
 	Transport ConfigHolder
 
