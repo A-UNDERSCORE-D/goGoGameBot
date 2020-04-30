@@ -20,11 +20,11 @@ type Game struct {
 
 	Chat Chat
 
-	CommandImports []string
+	CommandImports []string `toml:"import_commands"`
 	Commands       map[string]Command
 
-	RegexpImports []string          `toml:"import_regexps"`
-	Regexps       map[string]Regexp `toml:"regexp"`
+	RegexpImports []string `toml:"import_regexps"`
+	Regexps       []Regexp `toml:"regexp"`
 }
 
 type Chat struct {
@@ -43,20 +43,23 @@ type Command struct {
 
 // Regexp is a representation of a game regexp
 type Regexp struct {
-	Regexp   string `toml:"regexp"`
+	Name     string
+	Regexp   string
 	Format   string
 	Priority int `toml:",omitempty"`
 }
 
 // FormatSet holds a set of formatters to be converted to a format.Format
-type FormatSet struct { // TODO: use a Format from format? should be easy to do
-	Message string
-	Join    string
-	Part    string
-	Nick    string
-	Quit    string
-	Kick    string
-	Extra   map[string]string
+type FormatSet struct {
+	// string ptr to allow to check for null
+	Message  *string
+	Join     *string
+	Part     *string
+	Nick     *string
+	Quit     *string
+	Kick     *string
+	External *string
+	Extra    map[string]string
 }
 
 // TODO: Most of the dont* values here were done to avoid missing defaults.
@@ -105,7 +108,7 @@ func (g *Game) resolveFormatImports(c *Config) error {
 
 func (g *Game) resolveRegexpImports(c *Config) error {
 	for _, templateName := range g.RegexpImports {
-		regexpSet, exists := c.RegexpTemplates[templateName]
+		importedRegexps, exists := c.RegexpTemplates[templateName]
 		if !exists {
 			return fmt.Errorf(
 				"could not resolve regexp import %q as it does not exist",
@@ -113,8 +116,8 @@ func (g *Game) resolveRegexpImports(c *Config) error {
 			)
 		}
 
-		for name, regexp := range regexpSet {
-			g.Regexps[name] = regexp
+		for _, re := range importedRegexps {
+			g.Regexps = append(g.Regexps, re)
 		}
 	}
 	return nil
@@ -128,6 +131,10 @@ func (g *Game) resolveCommandImports(c *Config) error {
 				"could not resolve command import %q as it does not exist",
 				templateName,
 			)
+		}
+
+		if g.Commands == nil {
+			g.Commands = make(map[string]Command)
 		}
 
 		for name, command := range commands {

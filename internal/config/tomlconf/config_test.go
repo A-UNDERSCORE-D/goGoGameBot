@@ -1,7 +1,9 @@
 package tomlconf
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -9,21 +11,34 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-var tests = []struct {
+var (
+	// String pointers (Must be used for some tests)
+	strTest = "test"
+)
+
+const (
+	minViableToml = `
+	[connection]
+	type = "null"
+	`
+)
+
+type confTest struct {
 	name          string
 	tomlStr       string
 	IsValid       bool
 	dumpJSON      bool
 	expectedError string
 	expectedConf  *Config
-}{
+}
+
+func strPointer(in string) *string { return &in }
+
+var tests = []confTest{
 	{
 		name:    "minimum valid",
 		IsValid: true,
-		tomlStr: `
-		[connection]
-		type = "null"
-		`,
+		tomlStr: minViableToml,
 		expectedConf: &Config{
 			Connection: ConfigHolder{Type: "null"},
 		},
@@ -52,9 +67,8 @@ var tests = []struct {
 		name = "test"
 		`,
 	}, {
-		name:     "valid with game",
-		IsValid:  true,
-		dumpJSON: false,
+		name:    "valid with game",
+		IsValid: true,
 		tomlStr: `
 		[connection]
 			type = "null"
@@ -84,10 +98,8 @@ var tests = []struct {
 	},
 
 	{
-		// TODO: add tests for this
-		name:     "import simple",
-		IsValid:  true,
-		dumpJSON: false,
+		name:    "import simple",
+		IsValid: true,
 		tomlStr: `
 		[connection]
 			type = "null"
@@ -101,25 +113,203 @@ var tests = []struct {
 			kick = "kick template test"
 			extra.test_one = "test_one: asd"
 
-		[regexp_templates.testSet.test_regexp]
+		[[regexp_templates.test_regexps1]]
+			name   = "test_regexp"
 			format = "this is a regexp test"
 			regexp = "this regexp test has a regexp"
 
-		[games.whatever]
-			import_format = "test"
-			import_regexps = ["test_regexp"]
 
-			[games.whatever.transport]
-				type = "process"
-				conf.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
+		[[game]]
+		name = "whatever"
+		import_regexps = ["test_regexps1"]
+		
+			[game.chat]
+			import_format = "test"
+
+			[game.transport]
+			type = "process"
+			conf.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
+		`,
+
+		expectedConf: &Config{
+			Connection: ConfigHolder{Type: "null"},
+			FormatTemplates: map[string]FormatSet{
+				"test": {
+					Message: strPointer("message template test"),
+					Join:    strPointer("join template test"),
+					Part:    strPointer("part template test"),
+					Nick:    strPointer("nick template test"),
+					Quit:    strPointer("quit template test"),
+					Kick:    strPointer("kick template test"),
+					Extra:   map[string]string{"test_one": "test_one: asd"},
+				},
+			},
+			RegexpTemplates: map[string][]Regexp{
+				"test_regexps1": {
+					{
+						Name:   "test_regexp",
+						Format: "this is a regexp test",
+						Regexp: "this regexp test has a regexp",
+					},
+				},
+			},
+			Games: []*Game{
+				{
+					Name: "whatever",
+					Chat: Chat{
+						Formats: FormatSet{
+							Message: strPointer("message template test"),
+							Join:    strPointer("join template test"),
+							Part:    strPointer("part template test"),
+							Nick:    strPointer("nick template test"),
+							Quit:    strPointer("quit template test"),
+							Kick:    strPointer("kick template test"),
+							Extra:   map[string]string{"test_one": "test_one: asd"},
+						},
+
+						ImportFormat: &strTest,
+					},
+					Transport: ConfigHolder{
+						Type: "process",
+						RealConf: tomlTreeFromMapMust(
+							map[string]interface{}{"binary": "1337ThisDoesntExistAndWillProbablyNeverExist"},
+						),
+					},
+
+					RegexpImports: []string{"test_regexps1"},
+					Regexps: []Regexp{
+						{
+							Name:   "test_regexp",
+							Format: "this is a regexp test",
+							Regexp: "this regexp test has a regexp",
+						},
+					},
+
+					// map[string]Regexp{
+					// 	"test_regexp": {
+					// 		Format: "this is a regexp test",
+					// 		Regexp: "this regexp test has a regexp",
+					// 	},
+					// },
+				},
+			},
+		},
+	}, {
+		name: "invalid import",
+		tomlStr: minViableToml + `
+		
+		[[game]]
+		name = "test"
+		import_regexps = ["this_doesn't_exist"]
+			[game.transport]
+			type = "process"
+			conf.whatever = "asd"
+
+		`,
+		IsValid:       true,
+		expectedError: `unable to resolve imports for "test": could not resolve regexp import "this_doesn't_exist" as it does not exist`,
+		expectedConf: &Config{
+			Connection: ConfigHolder{Type: "null"},
+			Games: []*Game{{
+				Name: "test",
+				Transport: ConfigHolder{
+					Type: "process",
+					RealConf: tomlTreeFromMapMust(map[string]interface{}{
+						"whatever": "asd",
+					}),
+				},
+				RegexpImports: []string{
+					"this_doesn't_exist",
+				}},
+			},
+		},
+	}, {
+		name:          "invalid TOML",
+		tomlStr:       `this doesn't work`,
+		IsValid:       false,
+		expectedError: `(1, 6): was expecting token =, but got unclosed string instead`,
+	}, {
+		name:    "command import",
+		IsValid: true,
+		tomlStr: minViableToml + `
+		[command_templates.root.one]
+		format = "test"
+		help = "tests things"
+		requires_admin = 1337
+
+		[[game]]
+		name = "test"
+		import_commands = ["root"]
+		
+			[game.transport]
+			type = "process"
+			conf.asd = "asd"
+		`,
+		expectedConf: &Config{
+			Connection: ConfigHolder{Type: "null"},
+			CommandTemplates: map[string]map[string]Command{
+				"root": {
+					"one": {
+						Format:        "test",
+						Help:          "tests things",
+						RequiresAdmin: 1337,
+					},
+				},
+			},
+			Games: []*Game{{
+				Name: "test",
+				Transport: ConfigHolder{Type: "process", RealConf: tomlTreeFromMapMust(
+					map[string]interface{}{"asd": "asd"},
+				)},
+				CommandImports: []string{"root"},
+				Commands: map[string]Command{
+					"one": {Format: "test", Help: "tests things", RequiresAdmin: 1337},
+				},
+			}},
+		},
+	}, {
+		name:          "bad command import",
+		IsValid:       true,
+		expectedError: `unable to resolve imports for "": could not resolve command import "this doesn't exist" as it does not exist`,
+		tomlStr: minViableToml + `
+		[[game]]
+		import_commands = ["this doesn't exist"]
+			[game.transport]
+			type = "process"
+			conf.asd = "asd"
 		`,
 	}, {
-		name:    "big valid",
+		name:          "bad format import",
+		IsValid:       true,
+		expectedError: `unable to resolve imports for "": could not resolve format import "this doesn't exist either" as it does not exist`,
+		tomlStr: minViableToml + `
+		[[game]]
+			[game.chat]
+			import_format = "this doesn't exist either"
+
+			[game.transport]
+			type = "process"
+			conf.asd = "asd"
+		`,
+	}, {
+		name:    "large complex",
 		IsValid: true,
-		// TODO: more of this, needs two games, and a complex conn
 		tomlStr: `
 		[connection]
-		type = "null"
+		type = "IRC"
+			[connection.conf]
+			nick = "goGoGameBot"
+			ident = "gggb"
+			gecos = "golang rocks"
+
+			host = "irc.goGoGameBot.golangrocks"
+			port = 1337
+
+		[[connection.admin]]
+		mask = "*!*@golang_rocks"
+		# TODO: the rest of this, 2 games, multiple imports of different types
+
+			
 		`,
 	},
 }
@@ -232,6 +422,10 @@ func jsonMust(res []byte, err error) []byte {
 	return res
 }
 
+func jsonMustMarshalIndent(in interface{}) string {
+	return string(jsonMust(json.MarshalIndent(in, "", "    ")))
+}
+
 func tomlTreeFromMapMust(in map[string]interface{}) *toml.Tree {
 	tree, err := toml.TreeFromMap(in)
 	if err != nil {
@@ -240,48 +434,92 @@ func tomlTreeFromMapMust(in map[string]interface{}) *toml.Tree {
 	return tree
 }
 
+func diff(a, b string) {
+	aSplit := strings.Split(a, "\n")
+	bSplit := strings.Split(b, "\n")
+
+	for i, v := range aSplit {
+		if len(bSplit) <= i {
+			fmt.Println("+", v)
+			fmt.Println("--------------------------")
+			continue
+		}
+
+		lineDiff(v, bSplit[i])
+
+	}
+}
+
+func lineDiff(a, b string) {
+	if a == b {
+		fmt.Println(a)
+		return
+	}
+
+	fmt.Println("+", a)
+	fmt.Println("-", b)
+}
 func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 	for _, v := range tests {
 		//nolint:scopelint // tests run like this are safe iteration wise.
 		t.Run(v.name, func(t *testing.T) {
 			x, err := toml.Load(v.tomlStr)
 			if err != nil {
+				if v.expectedError == errStrOr(err, "") {
+					return
+				}
 				t.Fatal(err)
 			}
-			conf, err := makeConfig(x)
+			conf, err := configFromTree(x)
 			if err != nil {
 				t.Fatal(err)
 			}
-			valid := validateConfig(conf)
-			isValid := valid != nil
 
-			// if v.dumpJSON {
-			// 	res, err := json.MarshalIndent(conf, "", "    ")
-			// 	if err != nil {
-			// 		panic(err)
-			// 	}
-			// 	t.Log(string(res))
-			// }
+			validationError := validateConfig(conf)
 
-			// if we are valid and expected to be, hop out, otherwise, check
-			// that we are invalid in the expected way
-			if isValid == v.IsValid || v.expectedError != errStrOr(valid, "") {
-				t.Fatalf(
-					"Config validity not as expected: valid: %t, expected %t, error: %q, expected %q",
-					valid == nil, v.IsValid,
-					errStrOr(valid, ""), v.expectedError,
-				)
-			} else if v.expectedConf != nil && !cmpConfig(v.expectedConf, conf) {
-				t.Fatalf(
-					"Expected config and resulting config did not match:\n%#v\n------\ndoes not equal\n------\n%#v",
-					v.expectedConf,
-					conf,
-				)
+			if validationError == nil && v.IsValid {
+				// We are valid, and expected to be such
+				return
+			} else if validationError != nil && v.expectedError == errStrOr(validationError, "") {
+				// we are invalid, and the error we expected matches what we got
+				return
 			}
+
+			t.Fatalf(
+				"Config validity not as expected. Expected validity %t, got %t. Expected error %q, got %q",
+				v.IsValid, validationError == nil,
+				v.expectedError, validationError,
+			)
 		})
 	}
 }
 
 func TestInclusion(t *testing.T) {
-	panic("so I heard you like panics")
+	for _, tt := range tests {
+		if !tt.IsValid {
+			continue // Cant test inclusion on invalid configs.
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			tree, err := toml.Load(tt.tomlStr)
+			if err != nil {
+				t.Fatalf("Could not parse toml string: %s", err)
+			}
+
+			conf, err := configFromTree(tree)
+			if err != nil {
+				t.Fatalf("could not unmarshal tree into config: %s", err)
+			}
+			err = conf.resolveImports()
+			if err != nil {
+				if tt.expectedError != "" && err.Error() == tt.expectedError {
+					return // It behaved as expected
+				}
+				t.Fatalf("Could not resolve imports: %s", err)
+			}
+			if !cmpConfig(conf, tt.expectedConf) {
+				diff(jsonMustMarshalIndent(conf), jsonMustMarshalIndent(tt.expectedConf))
+				t.Fatalf("Config did not match expected config")
+			}
+		})
+	}
 }
