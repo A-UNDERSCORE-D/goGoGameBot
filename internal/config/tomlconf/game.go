@@ -16,19 +16,21 @@ type Game struct {
 		Replace string
 	}
 
-	Chat struct {
-		BridgedChannel string `toml:"bridged_channel"`
-		AdminChannel   string `toml:"admin_channel"`
-		// string ptr to check for null
-		ImportFormat *string `toml:"import_format"`
-		Formats      FormatSet
-	}
+	Chat Chat
 
 	CommandImports []string
 	Commands       map[string]Command
 
 	RegexpImports []string          `toml:"import_regexps"`
 	Regexps       map[string]Regexp `toml:"regexp"`
+}
+
+type Chat struct {
+	BridgedChannel string `toml:"bridged_channel"`
+	AdminChannel   string `toml:"admin_channel"`
+	// string ptr to check for null
+	ImportFormat *string `toml:"import_format"`
+	Formats      FormatSet
 }
 
 type Command struct {
