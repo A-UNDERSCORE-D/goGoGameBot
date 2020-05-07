@@ -104,13 +104,13 @@ func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, coun
 	callCount := 0
 	id := m.nextID()
 	wrapped := func(e Event) {
+		if callCount >= count {
+			m.Detach(id)
+			return
+		}
+
 		callCount++
 
-		defer func() {
-			if callCount >= count {
-				m.Detach(id)
-			}
-		}()
 		f(e)
 	}
 
