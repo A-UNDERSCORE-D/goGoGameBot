@@ -129,14 +129,16 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
+	out := make([]byte, 0, len(toSend)+1)
+	copy(out, toSend)
 
-	if !bytes.HasSuffix(toSend, []byte{'\r', '\n'}) {
-		toSend = append(toSend, '\r', '\n')
+	if !bytes.HasSuffix(out, []byte{'\r', '\n'}) {
+		out = append(out, '\r', '\n')
 	}
 
-	i.log.Debug("<< ", string(toSend))
+	i.log.Debug("<< ", string(out[len(out)-3]))
 
-	return i.socket.Write(toSend)
+	return i.socket.Write(out)
 }
 
 func (i *IRC) writeLine(command string, args ...string) (int, error) {
