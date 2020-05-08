@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -34,6 +36,8 @@ var (
 	configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
 	logger     *log.Logger
 	traceLog   = pflag.Bool("trace", false, "enable trace logging (extremely verbose)")
+	logFile    = pflag.StringP("log-file", "l", "./%s.gggb.log", "sets the log file to be used. Must contain a %s for the date")
+	noLog      = pflag.Bool("dont-log", false, "disables logging to disk")
 )
 
 func main() {
@@ -41,12 +45,21 @@ func main() {
 
 	rl, _ := readline.New("> ")
 	lvl := log.DEBUG
+	file, err := getLogFile(*logFile)
+
+	if err != nil {
+		panic(fmt.Sprintf("could not open log file: %s", err))
+	}
+
+	defer file.Close()
+
+	writer := io.MultiWriter(rl, file)
 
 	if *traceLog {
 		lvl = log.TRACE
 	}
 
-	l := log.New(log.FTimestamp, rl, "MAIN", lvl)
+	l := log.New(log.FTimestamp, writer, "MAIN", lvl)
 	logger = l
 
 	for _, line := range strings.Split(asciiArt, "\n") {
@@ -146,4 +159,24 @@ func getConn(conf *config.Config, logger *log.Logger) (interfaces.Bot, error) {
 	default:
 		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.ConnType)
 	}
+}
+
+type nopWriteCloser struct{ io.Writer }
+
+func (nopWriteCloser) Close() error { return nil }
+
+func getLogFile(name string) (io.WriteCloser, error) {
+	if *noLog {
+		return nopWriteCloser{ioutil.Discard}, nil
+	}
+
+	curTime := time.Now().Format("02-01-2006")
+
+	file, err := os.OpenFile(fmt.Sprintf(name, curTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY)
+	if err != nil {
+		return nil, err
+	}
+
+	file.WriteString(fmt.Sprintf("****Begin logging at %s", string(time.Now())))
+	return file, nil
 }
