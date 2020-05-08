@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - IRC Permissions are no longer evaluated in a case sensitive manner
 
+### Added
+
+- logs are now written to a file in the working directory the bot is started in. Log file name can be controlled with
+the `-l` flag, and logging can be disabled with `--dont-log`
+
 ## [0.4.13] - 2020-03-27
 
 ### Added
