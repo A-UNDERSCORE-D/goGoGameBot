@@ -152,9 +152,12 @@ func (i *IRC) writeLine(command string, args ...string) (int, error) {
 	return i.write(lBytes)
 }
 
+const maxDialTimeout = time.Second * 10
+
 // Connect connects to IRC and does the required negotiation for registering on the network and any capabilities
 // that have been requested
 func (i *IRC) Connect() error {
+	i.log.Infof("Starting IRC connection to %s:%s SSL: %t", i.Host, i.Port, i.SSL)
 	i.setupCapManager()
 
 	target := net.JoinHostPort(i.Host, i.Port)
@@ -164,15 +167,18 @@ func (i *IRC) Connect() error {
 		err error
 	)
 
+	// TODO: Possibly use a dialer with a context here, to allow cancellation
+	dialer := &net.Dialer{Timeout: maxDialTimeout}
+
 	if i.SSL {
 		// nolint:gosec // The user explicitly asked for it and we warn about it
-		s, err = tls.Dial("tcp", target, &tls.Config{InsecureSkipVerify: i.DontVerifyCerts})
+		s, err = tls.DialWithDialer(dialer, "tcp", target, &tls.Config{InsecureSkipVerify: i.DontVerifyCerts})
 
 		if i.DontVerifyCerts {
 			i.log.Warnf("**** Not verifying certs. THIS IS INSECURE ****")
 		}
 	} else {
-		s, err = net.Dial("tcp", target)
+		s, err = dialer.Dial("tcp", target)
 	}
 
 	if err != nil {
