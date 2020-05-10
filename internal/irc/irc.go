@@ -239,9 +239,10 @@ func (i *IRC) Disconnect(msg string) {
 	i.StopRequested.Set(true)
 
 	go func() {
-		time.Sleep(time.Millisecond * 30)
+		time.Sleep(time.Second * 5)
 
 		if i.Connected.Get() {
+			i.log.Warn("disconnect did not happen as expected. forcing a socket close")
 			i.socket.Close()
 		}
 	}()
