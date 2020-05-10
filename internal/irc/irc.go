@@ -206,24 +206,25 @@ func (i *IRC) Connect() error {
 		return err
 	}
 
-	if !i.SASL && i.Authenticate {
-		i.RawEvents.AttachOneShot("001", func(e event.Event) {
-			raw := event2RawEvent(e)
-			if raw == nil {
-				i.log.Warn("unexpected event type in event handler: ", e)
-				return
-			}
+	select {
+	case <-i.RawEvents.WaitForChan("001"):
+		if !i.SASL && i.Authenticate {
 			i.SendMessage("NickServ", fmt.Sprintf("IDENTIFY %s %s", i.AuthUser, i.AuthPasswd))
-		}, event.PriHighest)
+		}
+	case <-i.socketDoneChan:
+		// The socket was closed during
+		return errors.New("socket closed while connecting")
 	}
-
-	i.RawEvents.WaitFor("001")
+	var oErr error
 
 	for _, name := range i.channels.Get() {
-		_, _ = i.writeLine("JOIN", name)
+		if _, err := i.writeLine("JOIN", name); err != nil {
+			oErr = err
+			i.log.Warnf("could not write JOIN message: %s", err)
+		}
 	}
 
-	return nil
+	return oErr
 }
 
 // Disconnect disconnects the bot from IRC either with the given message.
