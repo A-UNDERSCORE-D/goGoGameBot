@@ -232,6 +232,12 @@ func (l *Logger) Panicf(format string, args ...interface{}) {
 }
 
 // Clone duplicates the logger it is run on, returning a clean version that can be modified
-func (l Logger) Clone() *Logger {
-	return &l
+func (l *Logger) Clone() *Logger {
+	// TODO: rather than this, have these store a parent that allows the logger to look upwards for its parent mutex
+	return &Logger{
+		flags:    l.flags,
+		output:   l.output,
+		prefix:   l.prefix,
+		minLevel: l.minLevel,
+	}
 }
