@@ -36,8 +36,11 @@ var (
 	configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
 	logger     *log.Logger
 	traceLog   = pflag.Bool("trace", false, "enable trace logging (extremely verbose)")
-	logFile    = pflag.StringP("log-file", "l", "./%s.gggb.log", "sets the log file to be used. Must contain a %s for the date")
-	noLog      = pflag.Bool("dont-log", false, "disables logging to disk")
+	logFile    = pflag.StringP(
+		"log-file", "l", "./%s.gggb.log",
+		"sets the log file to be used. Must contain a %s for the date",
+	)
+	noLog = pflag.Bool("dont-log", false, "disables logging to disk")
 )
 
 func main() {
@@ -172,11 +175,16 @@ func getLogFile(name string) (io.WriteCloser, error) {
 
 	curTime := time.Now().Format("02-01-2006")
 
-	file, err := os.OpenFile(fmt.Sprintf(name, curTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY)
+	file, err := os.OpenFile(fmt.Sprintf(name, curTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
 
-	file.WriteString(fmt.Sprintf("****Begin logging at %s", string(time.Now())))
+	t := fmt.Sprintf("****Begin logging at %s", time.Now().String())
+
+	if _, err := file.WriteString(t); err != nil {
+		return nil, err
+	}
+
 	return file, nil
 }
