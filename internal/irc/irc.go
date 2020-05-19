@@ -54,6 +54,7 @@ type Conf struct {
 // IRC Represents a connection to an IRC server
 type IRC struct {
 	*Conf
+	runtimeNick       string
 	channels          mutexTypes.StringSlice
 	Connected         mutexTypes.Bool
 	StopRequested     mutexTypes.Bool
@@ -202,6 +203,7 @@ func (i *IRC) Connect() error {
 		return err
 	}
 
+	i.runtimeNick = i.Nick
 	if _, err := i.writeLine("NICK", i.Nick); err != nil {
 		return err
 	}
@@ -263,10 +265,13 @@ func (i *IRC) Run() error {
 	pingCtx, cancel := context.WithCancel(context.Background())
 	go i.pingLoop(pingCtx)
 
-	defer i.Connected.Set(false)
-	defer i.lag.Set(time.Duration(0))
-	defer i.lastPong.Set(time.Time{})
-	defer cancel()
+	defer func() {
+		// clean up
+		cancel()
+		i.lastPong.Set(time.Time{})
+		i.lag.Set(time.Duration(0))
+		i.Connected.Set(false)
+	}()
 
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
@@ -353,6 +358,10 @@ func (i *IRC) readLoop() {
 
 		i.checkLag()
 		i.handleLine(line)
+	}
+
+	if err := s.Err(); err != nil {
+		i.log.Warnf("Error returned from readLoop scanner: %s", err)
 	}
 
 	i.log.Info("IRC socket closed")
@@ -496,7 +505,7 @@ func (i *IRC) JoinChannel(name string) {
 
 func (i *IRC) String() string {
 	return fmt.Sprintf(
-		"IRC conn; Host: %s, Port: %s, Conencted: %t, Lag: %dms",
+		"IRC[Host[%s], Port:[%s], Connected[%t], Lag[%dms]]",
 		i.Host,
 		i.Port,
 		i.Connected.Get(),
@@ -526,8 +535,8 @@ func (i *IRC) IsCommandPrefix(line string) (string, bool) {
 		return line[len(i.CmdPfx):], true
 	}
 
-	if strings.HasPrefix(line, i.Nick+": ") {
-		return line[len(i.Nick)+2:], true
+	if strings.HasPrefix(line, i.runtimeNick+": ") {
+		return line[len(i.runtimeNick)+2:], true
 	}
 
 	return line, false

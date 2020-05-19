@@ -15,14 +15,15 @@ func (i *IRC) handleNickInUse(e event.Event) {
 		i.log.Warnf("Error while updating nick")
 	}
 
-	i.Nick = newNick
+	// TODO: add a goroutine here that tries to regain our original nick if its in use
+	i.runtimeNick = newNick
 }
 
 func (i *IRC) onNick(source, newNick string) {
 	oldNick := i.HumanReadableSource(source)
-	if oldNick != i.Nick {
+	if oldNick != i.runtimeNick {
 		return
 	}
 
-	i.Nick = newNick
+	i.runtimeNick = newNick
 }
