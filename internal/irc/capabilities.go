@@ -114,7 +114,7 @@ func (c *capabilityManager) negotiateCaps() {
 	}
 
 	if _, err := c.irc.writeLine("CAP", "END"); err != nil {
-		c.irc.log.Warn("unable to write CAP END")
+		c.irc.log.Warnf("unable to write CAP END: %s", err)
 	}
 }
 
