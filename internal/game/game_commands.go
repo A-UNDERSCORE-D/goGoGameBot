@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
@@ -22,8 +22,8 @@ func (g *Game) createCommandCallback(fmt format.Format) command.Callback {
 	}
 }
 
-func (g *Game) registerCommand(conf config.Command) error {
-	if conf.Name == "" {
+func (g *Game) registerCommand(name string, conf tomlconf.Command) error {
+	if name == "" {
 		return errors.New("cannot have a game command with an empty name")
 	}
 
@@ -31,15 +31,17 @@ func (g *Game) registerCommand(conf config.Command) error {
 		return errors.New("cannot have a game command with an empty help string")
 	}
 
-	if err := conf.Format.Compile(conf.Name, nil, nil); err != nil {
+	fmt := format.Format{FormatString: conf.Format}
+
+	if err := fmt.Compile(name, nil, nil); err != nil {
 		return err
 	}
 
 	return g.manager.Cmd.AddSubCommand(
 		g.name,
-		conf.Name,
+		name,
 		conf.RequiresAdmin,
-		g.createCommandCallback(conf.Format),
+		g.createCommandCallback(fmt),
 		conf.Help,
 	)
 }

@@ -99,6 +99,6 @@ func getProcess(conf *network.Config) (*process.Process, error) {
 		workingDir,
 		logger.Clone().SetPrefix(*name),
 		conf.Environment,
-		!conf.DontCopyEnv,
+		conf.CopyEnv,
 	)
 }

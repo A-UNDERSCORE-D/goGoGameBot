@@ -3,7 +3,6 @@ package processTransport
 
 import (
 	"bufio"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -13,14 +12,14 @@ import (
 
 	"github.com/anmitsu/go-shlex"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
-func New(transportConfig config.TransportConfig, logger *log.Logger) (*ProcessTransport, error) {
+func New(transportConfig tomlconf.ConfigHolder, logger *log.Logger) (*ProcessTransport, error) {
 	p := ProcessTransport{log: logger.SetPrefix(logger.Prefix() + "|" + "PT")}
 	if err := p.Update(transportConfig); err != nil {
 		return nil, err
@@ -104,16 +103,17 @@ func (p *ProcessTransport) Stderr() <-chan []byte {
 }
 
 // Update updates the Transport with a TransportConfig
-func (p *ProcessTransport) Update(rawConf config.TransportConfig) error {
+func (p *ProcessTransport) Update(rawConf tomlconf.ConfigHolder) error {
 	conf := new(Config)
-	if err := xml.Unmarshal([]byte(rawConf.Config), conf); err != nil {
-		return err
+
+	if err := rawConf.RealConf.Unmarshal(conf); err != nil {
+		return fmt.Errorf("could not unmarshal config: %w", err)
 	}
 
-	wdir := conf.WorkingDirectory
-	if wdir == "" {
-		wdir = path.Dir(conf.Path)
-		p.log.Infof("working directory inferred to %q from binary path %q", wdir, conf.Path)
+	workingDir := conf.WorkingDirectory
+	if workingDir == "" {
+		workingDir = path.Dir(conf.Path)
+		p.log.Infof("working directory inferred to %q from binary path %q", workingDir, conf.Path)
 	}
 
 	procArgs, err := shlex.Split(conf.Args, true)
@@ -122,13 +122,13 @@ func (p *ProcessTransport) Update(rawConf config.TransportConfig) error {
 	}
 	if p.process == nil {
 		l := p.log.Clone().SetPrefix(p.log.Prefix() + "|" + "P")
-		proc, err := process.NewProcess(conf.Path, procArgs, wdir, l, conf.Environment, !conf.DontCopyEnv)
+		proc, err := process.NewProcess(conf.Path, procArgs, workingDir, l, conf.Environment, conf.CopyEnv)
 		if err != nil {
 			return err
 		}
 		p.process = proc
 	} else {
-		p.process.UpdateCmd(conf.Path, procArgs, wdir, conf.Environment, !conf.DontCopyEnv)
+		p.process.UpdateCmd(conf.Path, procArgs, workingDir, conf.Environment, conf.CopyEnv)
 	}
 	return nil
 }

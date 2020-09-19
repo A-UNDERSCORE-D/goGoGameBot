@@ -2,9 +2,8 @@ package game
 
 import (
 	"strings"
-	"text/template"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
@@ -18,31 +17,25 @@ type chatBridge struct {
 	dumpStderr    bool
 	allowForwards bool
 	stripMasks    []string
-	channels      []string
+	channel       string
 	format        formatSet
 	transformer   transformer.Transformer
 }
 
-func (c *chatBridge) update(gc config.Game, rootFmt *template.Template) {
+func (c *chatBridge) update(gc *tomlconf.Game, fmtSet *formatSet) {
 	conf := gc.Chat
-	c.shouldBridge = !conf.DontBridge
+	c.shouldBridge = conf.BridgeChat
 	c.dumpStdout = conf.DumpStdout
 	c.dumpStderr = conf.DumpStderr
-	c.allowForwards = !conf.DontAllowForwards
-	c.channels = conf.BridgedChannels
-	gf := &c.format
-	f := &conf.Formats
-	gf.root = rootFmt
-	gf.message = f.Message
-	gf.join = f.Join
-	gf.part = f.Part
-	gf.nick = f.Nick
-	gf.quit = f.Quit
-	gf.kick = f.Kick
-	gf.external = f.External
-	if gf.storage == nil {
-		gf.storage = new(format.Storage)
+	c.allowForwards = conf.AllowForwards
+	c.channel = conf.BridgedChannel
+
+	c.format = *fmtSet
+
+	if c.format.storage == nil {
+		c.format.storage = new(format.Storage)
 	}
+
 }
 
 type dataForFmt struct {
@@ -101,13 +94,7 @@ func (g *Game) shouldBridge(target string) bool {
 		return false
 	}
 
-	for _, c := range g.chatBridge.channels {
-		if c == "*" || c == target {
-			return true
-		}
-	}
-
-	return false
+	return g.chatBridge.channel == "*" || g.chatBridge.channel == target
 }
 
 type dataForPrivmsg struct {

@@ -8,7 +8,7 @@ import (
 
 // Config is the main config struct
 type Config struct {
-	OriginalPath string
+	OriginalPath string `toml:"-"`
 	Connection   ConfigHolder
 
 	FormatTemplates  map[string]FormatSet          `toml:"format_templates"`
@@ -46,6 +46,8 @@ func GetConfig(path string) (*Config, error) {
 	if err := validateConfig(out); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
+
+	out.OriginalPath = path
 
 	return out, nil
 }

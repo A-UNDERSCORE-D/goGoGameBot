@@ -29,6 +29,8 @@ var (
 	ErrEmptyFormat = errors.New("format: cannot compile an empty format")
 )
 
+// TODO: update this doc
+
 // Compile compiles the given format string into a text.template, evaluating IRC colours if requested, and adding the
 // default functions plus any passed to the template.
 // If the template is invalid or the format has already been compiled, Compile errors.

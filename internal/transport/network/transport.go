@@ -2,7 +2,6 @@ package network
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/rpc"
@@ -11,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network/protocol"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -23,7 +22,7 @@ var (
 )
 
 // New creates a new network Transport
-func New(conf config.TransportConfig, logger *log.Logger) (*Transport, error) {
+func New(conf tomlconf.ConfigHolder, logger *log.Logger) (*Transport, error) {
 	t := &Transport{
 		logger:  logger.Clone().SetPrefix("net"),
 		stdout:  make(chan []byte),
@@ -178,11 +177,13 @@ func (t *Transport) Stderr() <-chan []byte {
 }
 
 // Update updates the Transport with a TransportConfig
-func (t *Transport) Update(confHolder config.TransportConfig) error {
+func (t *Transport) Update(confHolder tomlconf.ConfigHolder) error {
 	conf := new(Config)
-	if err := xml.Unmarshal([]byte(confHolder.Config), conf); err != nil {
-		return err
+
+	if err := confHolder.RealConf.Unmarshal(conf); err != nil {
+		return fmt.Errorf("could not unmarshal config: %w", err)
 	}
+
 	t.Config = conf
 	return nil
 }

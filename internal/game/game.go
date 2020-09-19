@@ -9,7 +9,7 @@ import (
 	"text/template"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
@@ -24,7 +24,7 @@ const (
 )
 
 // NewGame creates a new game from the given config
-func NewGame(conf config.Game, manager *Manager) (*Game, error) {
+func NewGame(conf *tomlconf.Game, manager *Manager) (*Game, error) {
 	if conf.Name == "" {
 		return nil, errors.New("cannot have an empty game name")
 	}
@@ -45,9 +45,7 @@ func NewGame(conf config.Game, manager *Manager) (*Game, error) {
 		return nil, err
 	}
 
-	for _, c := range g.chatBridge.channels {
-		manager.bot.JoinChannel(c)
-	}
+	manager.bot.JoinChannel(conf.Chat.BridgedChannel)
 
 	return g, nil
 }
@@ -73,6 +71,7 @@ type channelPair struct {
 type Game struct {
 	*log.Logger
 	name            string
+	comment         string
 	transport       transport.Transport
 	manager         *Manager
 	status          mutexTypes.Int
@@ -127,13 +126,13 @@ func (g *Game) Run() error {
 	return nil
 }
 
-func (g *Game) validateConfig(conf *config.Game) error {
+func (g *Game) validateConfig(conf *tomlconf.Game) error {
 	if conf.Name != g.GetName() {
 		g.Warn("attempt to reload game with a config who's name does not match ours! bailing out of reload")
 		return fmt.Errorf("invalid config name")
 	}
 
-	if conf.ControlChannels.Admin == "" || conf.ControlChannels.Msg == "" {
+	if conf.Chat.AdminChannel == "" || conf.Chat.BridgedChannel == "" {
 		g.Warn("cannot have an empty admin or msg channel. bailing out of reload")
 		return fmt.Errorf("cannot have an empty admin or msg channel")
 	}
@@ -142,15 +141,18 @@ func (g *Game) validateConfig(conf *config.Game) error {
 }
 
 // UpdateFromConfig updates the game object with the data from the config object.
-func (g *Game) UpdateFromConfig(conf config.Game) error {
+func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 	// Do as many of our checks as we can first before actually changing data, meaning that we can (hopefully)
 	// prevent weird state in the case of an error
-	if err := g.validateConfig(&conf); err != nil {
+	if err := g.validateConfig(conf); err != nil {
 		return err
 	}
 
+	g.comment = conf.Comment
+
 	root := template.New(fmt.Sprintf("%s root", conf.Name))
-	if err := g.compileFormats(&conf, root); err != nil {
+	outFmts, err := g.compileFormats(conf, root)
+	if err != nil {
 		return fmt.Errorf("could not compile formats: %s", err)
 	}
 
@@ -173,15 +175,15 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 		g.chatBridge = new(chatBridge)
 	}
 
-	g.chatBridge.update(conf, root)
+	g.chatBridge.update(conf, outFmts)
 
 	if err := g.setupTransformer(conf); err != nil {
 		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
 	}
 	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
 
-	for _, cmd := range conf.Commands {
-		if err := g.registerCommand(cmd); err != nil {
+	for name, cmd := range conf.Commands {
+		if err := g.registerCommand(name, cmd); err != nil {
 			return err
 		}
 	}
@@ -205,8 +207,8 @@ func (g *Game) UpdateFromConfig(conf config.Game) error {
 	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
 
 	// TODO: what are these used for?
-	g.controlChannels.admin = conf.ControlChannels.Admin
-	g.controlChannels.msg = conf.ControlChannels.Msg
+	g.controlChannels.admin = conf.Chat.AdminChannel
+	g.controlChannels.msg = conf.Chat.BridgedChannel
 
 	g.preRollRe = preRollRe
 	g.preRollReplace = conf.PreRoll.Replace
@@ -225,52 +227,69 @@ func compileOrNil(targetFmt *format.Format, name string, root *template.Template
 	return targetFmt.Compile(name, root)
 }
 
-func (g *Game) compileFormats(gameConf *config.Game, root *template.Template) error {
-	fmts := &gameConf.Chat.Formats
+// compileFormats compiles all the formats for the game. If one is nil....
+func (g *Game) compileFormats(gameConf *tomlconf.Game, root *template.Template) (*formatSet, error) {
+	fmts := gameConf.Chat.Formats
 
 	const cantCompile = "could not compile format %s: %w"
 
-	if err := compileOrNil(fmts.Message, "message", root); err != nil {
-		return fmt.Errorf(cantCompile, "message", err)
+	var (
+		outFmts = new(formatSet)
+	)
+
+	compile := func(name string, fmtString *string, target **format.Format) error {
+		if fmtString == nil {
+			*target = nil // Just to be sure.
+			return nil
+		}
+		*target = &format.Format{FormatString: *fmtString}
+		return (*target).Compile(name, root)
 	}
 
-	if err := compileOrNil(fmts.Join, "join", root); err != nil {
-		return fmt.Errorf(cantCompile, "join", err)
+	if err := compile("message", fmts.Message, &outFmts.message); err != nil {
+		return nil, fmt.Errorf(cantCompile, "message", err)
 	}
 
-	if err := compileOrNil(fmts.Part, "part", root); err != nil {
-		return fmt.Errorf(cantCompile, "part", err)
+	if err := compile("join", fmts.Join, &outFmts.join); err != nil {
+		return nil, fmt.Errorf(cantCompile, "join", err)
 	}
 
-	if err := compileOrNil(fmts.Nick, "nick", root); err != nil {
-		return fmt.Errorf(cantCompile, "nick", err)
+	if err := compile("part", fmts.Part, &outFmts.part); err != nil {
+		return nil, fmt.Errorf(cantCompile, "part", err)
 	}
 
-	if err := compileOrNil(fmts.Quit, "quit", root); err != nil {
-		return fmt.Errorf(cantCompile, "quit", err)
+	if err := compile("nick", fmts.Nick, &outFmts.nick); err != nil {
+		return nil, fmt.Errorf(cantCompile, "nick", err)
 	}
 
-	if err := compileOrNil(fmts.Kick, "kick", root); err != nil {
-		return fmt.Errorf(cantCompile, "kick", err)
+	if err := compile("quit", fmts.Quit, &outFmts.quit); err != nil {
+		return nil, fmt.Errorf(cantCompile, "quit", err)
 	}
 
-	if err := compileOrNil(fmts.External, "external", root); err != nil {
-		return fmt.Errorf(cantCompile, "external", err)
+	if err := compile("kick", fmts.Kick, &outFmts.kick); err != nil {
+		return nil, fmt.Errorf(cantCompile, "kick", err)
 	}
 
-	for _, v := range fmts.Extra {
-		if err := v.Compile(v.Name, root); err != nil {
-			return err
+	if err := compile("external", fmts.External, &outFmts.external); err != nil {
+		return nil, fmt.Errorf(cantCompile, "external", err)
+	}
+
+	for name, fmtStr := range fmts.Extra {
+		// we dont need to actually return this, because its attached to root already
+		extra := &format.Format{FormatString: fmtStr}
+		if err := extra.Compile(name, root); err != nil {
+			return nil, fmt.Errorf("could not compile extra format %q: %w", name, err)
 		}
 	}
 
-	return nil
+	return outFmts, nil
 }
 
 // GetName is a getter required by the interfaces.Game interface
-func (g *Game) GetName() string {
-	return g.name
-}
+func (g *Game) GetName() string { return g.name }
+
+// GetComment is a getter required by the interfaces.Game interface
+func (g *Game) GetComment() string { return g.comment }
 
 // AutoStart checks if the game is marked as auto-starting, and if so, starts the game by starting Game.Run in a
 // goroutine

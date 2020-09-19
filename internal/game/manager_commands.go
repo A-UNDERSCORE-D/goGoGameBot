@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
@@ -148,7 +148,7 @@ func (m *Manager) restartCmd(data *command.Data) {
 func (m *Manager) reloadCmd(data *command.Data) {
 	data.ReturnMessage("reloading config")
 
-	newConf, err := config.GetConfig(m.rootConf.ConfigPath)
+	newConf, err := tomlconf.GetConfig(m.rootConf.OriginalPath)
 	if err != nil {
 		m.Error(err)
 		data.ReturnMessage("reload failed")
@@ -179,7 +179,9 @@ func (m *Manager) statusCmd(data *command.Data) {
 		case v == "all":
 			data.ReturnMessage(ourStats)
 			m.ForEachGame(
-				func(g interfaces.Game) { data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status())) }, nil,
+				func(g interfaces.Game) {
+					data.ReturnMessage(fmt.Sprintf("[%s] %s. (%s)", g.GetName(), g.Status(), g.GetComment()))
+				}, nil,
 			)
 
 			return

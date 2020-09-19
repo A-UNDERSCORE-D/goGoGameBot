@@ -391,7 +391,7 @@ func cmpGame(a, b *Game) bool {
 	}
 
 	// Sanity check to make sure this wasn't updated/changed
-	if reflect.TypeOf(a).Elem().NumField() != 11 {
+	if gameNumFields != 11 {
 		panic(errors.New("tomlconf.Game updated but tests not"))
 	}
 
@@ -494,7 +494,7 @@ func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 	}
 }
 
-func TestInclusion(t *testing.T) {
+func TestInclusion(t *testing.T) { //nolint:gocognit // Its a test
 	for _, tt := range tests {
 		if !tt.IsValid {
 			continue // Cant test inclusion on invalid configs.
@@ -522,4 +522,122 @@ func TestInclusion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func makeStrPtr(x string) *string { return &x }
+
+func dumpExampleConf(t *testing.T) {
+	realConf, err := toml.TreeFromMap(
+		map[string]interface{}{
+			"path":              "/opt/games/somegame",
+			"args":              "-run_without_crashing",
+			"working_directory": "/opt/games/",
+			"environment":       []string{"NO_REALLY_DONT_CRASH=1"},
+			"copy_env":          true,
+		},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	exampleGame := &Game{
+		Name:        "example_game",
+		AutoStart:   true,
+		AutoRestart: 1337,
+		Comment:     "Example game",
+		Transport: ConfigHolder{
+			Type:     "process",
+			RealConf: realConf,
+		},
+		PreRoll: struct {
+			Regexp  string
+			Replace string
+		}{
+			Regexp:  ".*",
+			Replace: "no data for you",
+		},
+		Chat: Chat{
+			BridgedChannel: "#some_channel",
+			AdminChannel:   "#some_channel",
+			ImportFormat:   makeStrPtr("some_format"),
+			Formats:        FormatSet{},
+			BridgeChat:     true,
+			DumpStdout:     false,
+			DumpStderr:     false,
+			AllowForwards:  true,
+			Transformer:    &ConfigHolder{Type: "minecraft"},
+		},
+		CommandImports: []string{"some_template"},
+		Commands: map[string]Command{
+			"test": {
+				Format:        "/foo",
+				Help:          "Runs the foo command (admin only)",
+				RequiresAdmin: 3,
+			},
+		},
+		RegexpImports: []string{"some_template"},
+		Regexps: []Regexp{{
+			Name:     "whatever",
+			Regexp:   ".{1337}",
+			Format:   "1337",
+			Priority: 1,
+		}},
+	}
+
+	c := Config{
+		Connection: ConfigHolder{
+			Type:     "irc",
+			RealConf: &toml.Tree{},
+		},
+		FormatTemplates: map[string]FormatSet{
+			"some_format": {
+				Message:  makeStrPtr("message"),
+				Join:     makeStrPtr("join"),
+				Part:     makeStrPtr("part"),
+				Nick:     makeStrPtr("nick"),
+				Quit:     makeStrPtr("quit"),
+				Kick:     makeStrPtr("kick"),
+				External: makeStrPtr("external"),
+				Extra: map[string]string{
+					"one": "two",
+				},
+			},
+		},
+		RegexpTemplates: map[string][]Regexp{
+			"some_template": {
+				{
+					Name:         "example",
+					Regexp:       ".*",
+					Format:       "No format",
+					Priority:     0,
+					Eat:          false,
+					SendToChan:   false,
+					SendToOthers: false,
+					SendToLocal:  false,
+				},
+			},
+		},
+		CommandTemplates: map[string]map[string]Command{
+			"some_template": {
+				"cmd_template": {
+					Format:        "/frob",
+					Help:          "runs the frob command",
+					RequiresAdmin: 0,
+				},
+			},
+		},
+		Games: []*Game{exampleGame},
+	}
+
+	b, err := toml.Marshal(c)
+	if err != nil {
+		panic(err)
+	}
+
+	t.Error(string(b))
+}
+
+func Test_Something(t *testing.T) {
+	dumpExampleConf(t)
 }

@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/processTransport"
@@ -33,7 +33,7 @@ type Transport interface {
 	Stderr() <-chan []byte
 
 	// Update updates the Transport with a TransportConfig
-	Update(config.TransportConfig) error
+	Update(tomlconf.ConfigHolder) error
 
 	// StopOrKiller is for the Ability to stop the process on the other side of the Transport, as is Runner
 	interfaces.StopOrKiller
@@ -56,11 +56,12 @@ type Transport interface {
 var ErrNoTransport = errors.New("transport with that name does not exist")
 
 // GetTransport returns a transport based on the given name.
-func GetTransport(name string, transportConfig config.TransportConfig, logger *log.Logger) (Transport, error) {
+func GetTransport(name string, transportConfig tomlconf.ConfigHolder, logger *log.Logger) (Transport, error) {
 	switch strings.ToLower(name) {
 	case "process":
 		return processTransport.New(transportConfig, logger)
 	case "network":
+
 		if !strings.HasPrefix(version.Version, "devel") {
 			panic("Network transports are WIP, and not available in non-dev builds")
 		}

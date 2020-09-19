@@ -7,34 +7,42 @@ import (
 // Game holds the config for a Game instance
 type Game struct {
 	Name        string
-	AutoStart   bool
-	AutoRestart int
-	Comment     string
+	AutoStart   bool   `toml:"auto_start"`
+	AutoRestart int    `toml:"auto_restart"`
+	Comment     string `comment:"A message to be added to the status line of this Game"`
 
 	Transport ConfigHolder
 
 	PreRoll struct {
 		Regexp  string
 		Replace string
-	}
+	} `comment:"regex to be applied to all outgoing lines before\n they are parsed by the below regexps"`
 
-	Chat Chat
+	Chat Chat `comment:"Configuration for how this game will interact with chat"`
 
-	CommandImports []string `toml:"import_commands"`
-	Commands       map[string]Command
+	CommandImports []string           `toml:"import_commands"`
+	Commands       map[string]Command `comment:"Commands that can be executed on the chat side"`
 
 	RegexpImports []string `toml:"import_regexps"`
 	Regexps       []Regexp `toml:"regexp"`
 }
 
 type Chat struct {
-	BridgedChannel string `toml:"bridged_channel"`
-	AdminChannel   string `toml:"admin_channel"`
+	BridgedChannel string `toml:"bridged_channel" comment:"The channel to bridge chat between"`
+	AdminChannel   string `toml:"admin_channel" comment:"a channel to provide admin logs in (UNUSED)"`
 	// string ptr to check for null
 	ImportFormat *string `toml:"import_format"`
 	Formats      FormatSet
+
+	BridgeChat    bool `toml:"bridge_chat" default:"true" comment:"Should this game bridge its chat (default true)"`
+	DumpStdout    bool `toml:"dump_stdout" comment:"Dump stdout to the bridged channel (This is a spammy debug option)"`
+	DumpStderr    bool `toml:"dump_stderr" comment:"Dump stdout to the bridged channel (This is a spammy debug option)"`
+	AllowForwards bool `toml:"allow_forwards" default:"true" comment:"Allow messages from other games (default true)"`
+
+	Transformer *ConfigHolder `comment:"How to transform messages to and from this game. (leave out for StripTransformer)"`
 }
 
+// Command holds commands that can be executed by users
 type Command struct {
 	Format        string `comment:"go template based formatter"`
 	Help          string `comment:"help for the command"`
@@ -43,10 +51,17 @@ type Command struct {
 
 // Regexp is a representation of a game regexp
 type Regexp struct {
-	Name     string
-	Regexp   string
+	Name   string
+	Regexp string
+	// TODO: maybe do a string pointer here, then checking in game will be easier when it comes to regexps
+	// TODO: designed to eat things
 	Format   string
 	Priority int `toml:",omitempty"`
+
+	Eat          bool `default:"true" comment:"Stop processing regexps after this is matched. (default true)"`
+	SendToChan   bool `toml:"send_to_chan" default:"true" comment:"Send the formatted message to the bridged channel (default true)"`
+	SendToOthers bool `toml:"send_to_others" default:"true" comment:"Send the formatted message to other running games (default true)"`
+	SendToLocal  bool `toml:"send_to_local" comment:"Send the formatted message to the game it came from (default false)"`
 }
 
 // FormatSet holds a set of formatters to be converted to a format.Format
@@ -60,18 +75,6 @@ type FormatSet struct {
 	Kick     *string
 	External *string
 	Extra    map[string]string
-}
-
-// TODO: Most of the dont* values here were done to avoid missing defaults.
-// TODO: they could probably be changed to use a default as provided by the toml lib
-type gameChat struct {
-	DontBridge        bool   `toml:"dont_bridge" comment:"should chat be bridged from the chat platform?"`
-	DontAllowForwards bool   `toml:"dont_allow_forwards" comment:"should chat be forwarded from other games"`
-	DumpStdout        bool   `toml:"dump_stdout" comment:"should stdout be dumped to the chat platform?"`
-	DumpStderr        bool   `toml:"dump_stderr" comment:"should stderr be dumped to the chat platform?"`
-	BridgedChannel    string `toml:"bridged_channel" comment:"The chat channel to bridge game chat to"`
-	Formats           FormatSet
-	ImportFormat      *string `toml:"import_format" comment:"Template to import formats from"`
 }
 
 func (g *Game) resolveImports(c *Config) error {
@@ -91,6 +94,7 @@ func (g *Game) resolveImports(c *Config) error {
 }
 
 func (g *Game) resolveFormatImports(c *Config) error {
+	// TODO: store the current Chat.Formats to allow for overrides
 	if g.Chat.ImportFormat == nil {
 		return nil
 	}

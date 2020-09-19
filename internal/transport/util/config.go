@@ -9,9 +9,9 @@ var (
 )
 
 type BaseConfig struct {
-	Path             string   `xml:"binary"`
-	Args             string   `xml:"args"`
-	WorkingDirectory string   `xml:"working_directory"`
-	Environment      []string `xml:"environment"`
-	DontCopyEnv      bool     `xml:"should_copy_environment"`
+	Path             string   `toml:"path" comment:"path to binary"`
+	Args             string   `toml:"args" comment:"args to binary"`
+	WorkingDirectory string   `toml:"working_directory" comment:"working directory for binary"`
+	Environment      []string `toml:"environment" comment:"environment variables to add to the execution"`
+	CopyEnv          bool     `toml:"copy_env" comment:"copy the environment of the bot when creating "`
 }

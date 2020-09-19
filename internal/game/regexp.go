@@ -8,7 +8,7 @@ import (
 	"sync"
 	"text/template"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
 )
 
@@ -29,7 +29,7 @@ func (gl RegexpList) Swap(i, j int) {
 
 // NewRegexp instantiates a regexp object from a config.Regexp. the root may be nil, otherwise everything passed must
 // exist
-func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Template) (*Regexp, error) {
+func NewRegexp(conf tomlconf.Regexp, manager *RegexpManager, root *template.Template) (*Regexp, error) {
 	compiledRe, err := regexp.Compile(conf.Regexp)
 	if err != nil {
 		return nil, fmt.Errorf("could not compile regexp %s for mannager %s: %s", conf.Name, manager, err)
@@ -42,14 +42,13 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		"sendPrivmsg":     manager.game.templSendMessage, // TODO: rename this
 	}
 
-	var templ *format.Format
+	templ := &format.Format{FormatString: conf.Format}
 
-	if err := conf.Format.Compile("regexp_"+conf.Name, root, funcs); err != nil {
+	if err := templ.Compile("regexp_"+conf.Name, root, funcs); err != nil {
 		if err != format.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}
-	} else {
-		templ = &conf.Format
+		templ = nil // it was empty. Means this regexp is probably used to eat a line
 	}
 
 	return &Regexp{
@@ -57,9 +56,9 @@ func NewRegexp(conf config.Regexp, manager *RegexpManager, root *template.Templa
 		regexp:           compiledRe,
 		template:         templ,
 		manager:          manager,
-		eat:              !conf.DontEat,
-		sendToChan:       !conf.DontSend,
-		sendToOtherGames: !conf.DontForward,
+		eat:              conf.Eat,
+		sendToChan:       conf.SendToChan,
+		sendToOtherGames: conf.SendToOthers,
 		sendToLocalGame:  conf.SendToLocal,
 	}, nil
 }
@@ -178,7 +177,7 @@ func (r *RegexpManager) String() string {
 
 // UpdateFromConf updates the regexps on the RegexpManager. During the update, the Regexp list is sorted. UpdateFromConf
 // only applies changes if none of the regexps failed to be created with NewRegexp. It is safe for concurrent use
-func (r *RegexpManager) UpdateFromConf(res []config.Regexp, root *template.Template) error {
+func (r *RegexpManager) UpdateFromConf(res []tomlconf.Regexp, root *template.Template) error {
 	var reList RegexpList
 
 	r.game.Debug("regex manager reloading")

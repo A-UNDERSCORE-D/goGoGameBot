@@ -13,7 +13,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/spf13/pflag"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
@@ -71,7 +71,7 @@ func main() {
 
 	l.Infof("goGoGameBot version %s loading....", version.Version)
 
-	conf, err := config.GetConfig(*configFile)
+	conf, err := tomlconf.GetConfig(*configFile)
 	if err != nil {
 		l.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
 	}
@@ -153,14 +153,14 @@ func runCLI(gm *game.Manager, rl *readline.Instance) {
 	}
 }
 
-func getConn(conf *config.Config, logger *log.Logger) (interfaces.Bot, error) {
-	switch strings.ToLower(conf.ConnConfig.Type) {
+func getConn(conf *tomlconf.Config, logger *log.Logger) (interfaces.Bot, error) {
+	switch strings.ToLower(conf.Connection.Type) {
 	case "irc":
-		return irc.New(conf.ConnConfig.Config, logger.Clone().SetPrefix("IRC"))
+		return irc.New(conf.Connection, logger.Clone().SetPrefix("IRC"))
 	case "null":
 		return nullconn.New(logger.Clone().SetPrefix("null")), nil
 	default:
-		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.ConnConfig.Type)
+		return nil, fmt.Errorf("cannot resolve connType %q to a supported connection type", conf.Connection.Type)
 	}
 }
 
