@@ -72,7 +72,9 @@ func (t *Transport) connectToRPC() error {
 	if err != nil {
 		return err
 	}
+
 	t.client = client
+
 	return nil
 }
 
@@ -82,6 +84,7 @@ func (t *Transport) callOrConnect(methodName string, arg, res interface{}) (<-ch
 	if debugRPC {
 		t.logger.Debugf("making RPC call: %s", formatRPCCall(protocol.RPCName, methodName, arg, res))
 	}
+
 	if t.client == nil {
 		var err error
 		// We dont have a client, therefore it needs to be connected, try said connections a few times
@@ -123,7 +126,9 @@ func (t *Transport) call(methodName string, arg, res interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	<-outChan
+
 	return nil
 }
 
@@ -136,9 +141,11 @@ func (t *Transport) callGo(methodName string, arg, res interface{}) (<-chan *rpc
 // GetStatus returns the current state of the transport
 func (t *Transport) GetStatus() util.TransportStatus {
 	res := new(util.TransportStatus)
+
 	if err := t.call("GetStatus", nothing, res); err != nil {
 		return util.Unknown
 	}
+
 	return *res
 }
 
@@ -148,6 +155,7 @@ func (t *Transport) GetHumanStatus() string {
 	if err := t.call("GetHumanStatus", nothing, &res); err != nil {
 		return fmt.Sprintf("Error: %s", err)
 	}
+
 	return res
 }
 
@@ -156,11 +164,14 @@ func (t *Transport) getStdioChan(stdout bool) chan []byte {
 		if t.stdout == nil {
 			t.stdout = make(chan []byte)
 		}
+
 		return t.stdout
 	}
+
 	if t.stderr == nil {
 		t.stderr = make(chan []byte)
 	}
+
 	return t.stderr
 }
 
@@ -185,6 +196,7 @@ func (t *Transport) Update(confHolder tomlconf.ConfigHolder) error {
 	}
 
 	t.Config = conf
+
 	return nil
 }
 
@@ -199,9 +211,11 @@ func (t *Transport) StopOrKillTimeout(duration time.Duration) error {
 	if err := t.call("StopOrKillTimeout", duration, res); err != nil {
 		return err
 	}
+
 	if res.IsError {
 		return res.ToError()
 	}
+
 	return nil
 }
 
@@ -228,6 +242,7 @@ func (t *Transport) startLocal() error {
 	}
 
 	time.Sleep(time.Microsecond * 50)
+
 	return nil
 }
 
@@ -250,6 +265,7 @@ func (t *Transport) dialOrStart() error {
 	}
 
 	outErr = new(protocol.SerialiseError)
+
 	callErr = t.call("Start", nothing, outErr)
 	if callErr != nil {
 		return fmt.Errorf("could not call start: %w", callErr)
@@ -268,6 +284,7 @@ func (t *Transport) start() error {
 	if !t.IsRunning() {
 		return errors.New("we're still not running after trying to do so. No idea why")
 	}
+
 	return nil
 }
 
@@ -290,8 +307,10 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 	}
 
 	go t.monitorLatency() // TODO: do this elsewhere, as currently a restart could happen and not stop this
+
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
+
 	stdioCtx, stdioCancel := context.WithCancel(context.Background())
 
 	defer func() {
@@ -304,6 +323,7 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 	}
 
 	closed = true
+
 	close(start)
 
 	res := protocol.ProcessExit{}
@@ -317,11 +337,11 @@ func (t *Transport) Run(start chan struct{}) (retcode int, ret string, _ error) 
 	select {
 	case call := <-doneChan:
 		returned = true
+
 		if err := call.Error; err != nil {
 			t.logger.Warnf("error occurred while waiting: %s", err)
 		}
-	case <-t.done:
-		// we were asked to stop externally
+	case <-t.done: // we were asked to stop externally
 	}
 
 	if returned {
@@ -342,8 +362,10 @@ func (t *Transport) monitorStdio(ctx context.Context, wg *sync.WaitGroup) error 
 			close(t.stderr)
 			t.stdout = nil
 			t.stderr = nil
+
 			wg.Done()
 		}()
+
 		for {
 			err := t.getAndHandleStdLines(ctx, t.lastSeq)
 			if err != nil && errors.Is(err, context.Canceled) {
@@ -355,6 +377,7 @@ func (t *Transport) monitorStdio(ctx context.Context, wg *sync.WaitGroup) error 
 
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
+
 		err := t.getAndHandleStdLines(timeoutCtx, t.lastSeq)
 
 		if errors.Is(context.DeadlineExceeded, err) {
@@ -362,19 +385,21 @@ func (t *Transport) monitorStdio(ctx context.Context, wg *sync.WaitGroup) error 
 		} else if err != nil && err.Error() != "not running" {
 			t.logger.Warnf("got an error from t.GetStdLines: %s", err)
 		}
-
 	}()
+
 	return nil
 }
 
 func (t *Transport) getAndHandleStdLines(ctx context.Context, lastSeq int64) error {
 	lines, err := t.getStdLines(ctx, lastSeq)
 	t.handleStdioLines(lines)
+
 	return err
 }
 
 func (t *Transport) getStdLines(ctx context.Context, lastSeq int64) (*protocol.StdIOLines, error) {
 	lines := new(protocol.StdIOLines)
+
 	callDone, err := t.callGo("GetStdioLines", lastSeq, lines)
 	if err != nil {
 		return lines, err
@@ -389,14 +414,15 @@ func (t *Transport) getStdLines(ctx context.Context, lastSeq int64) (*protocol.S
 
 func (t *Transport) handleStdioLines(lines *protocol.StdIOLines) {
 	var c chan []byte
+
 	defer func() {
 		if err := recover(); err != nil && err == "send on closed channel" {
 			// TODO: there a better way to do this? maybe with a context? (cc processTransport)
 			// TODO: Actually I think just doing a nonblocking send would be better for this. If you dont want more
 			// TODO: Lines, then just dont listen. I dont think I ever do that in game but I'd rather support it than
 			// TODO: not. And managing a possibly closed channel from the sender's side is a mess.
-
 			t.logger.Tracef("caught send on closed channel panic in networkTransport.handleStdioLines")
+
 			if c == t.stdout {
 				t.stdout = nil
 			} else {
@@ -410,6 +436,7 @@ func (t *Transport) handleStdioLines(lines *protocol.StdIOLines) {
 	for _, v := range lines.Lines {
 		c = t.getStdioChan(v.Stdout)
 		c <- []byte(v.Line)
+
 		t.lastSeq = v.ID
 	}
 }
@@ -424,9 +451,11 @@ func (t *Transport) Write(p []byte) (n int, err error) {
 	if err := t.call("Write", p, outErr); err != nil {
 		return -1, err
 	}
+
 	if outErr.IsError {
 		return -1, outErr.ToError()
 	}
+
 	return len(p), nil
 }
 
@@ -441,8 +470,10 @@ func (t *Transport) monitorLatency() {
 		if err := t.call("Ping", time.Now(), resTime); err != nil {
 			t.logger.Warnf("error while attempting to get ping time: %s", err)
 		}
+
 		dur := time.Since(*resTime)
 		t.pings = append(t.pings, dur)
+
 		time.Sleep(time.Second * 5)
 	}
 }

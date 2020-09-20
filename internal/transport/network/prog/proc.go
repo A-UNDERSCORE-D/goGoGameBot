@@ -62,8 +62,10 @@ func getListener(conf *network.Config) (net.Listener, error) {
 			os.Remove(conf.Address)
 			return getListener(conf)
 		}
+
 		return nil, err
 	}
+
 	return listener, nil
 }
 
@@ -76,6 +78,7 @@ func (p *Proc) Start(_ Nothing, outErr *protocol.SerialiseError) error { //nolin
 
 	go p.monitorStdio(true)
 	go p.monitorStdio(false)
+
 	err := p.process.Start()
 	if err != nil {
 		*outErr = protocol.SErrorFromError(err)
@@ -90,6 +93,7 @@ func (p *Proc) Start(_ Nothing, outErr *protocol.SerialiseError) error { //nolin
 		p.log.Infof("process exited with %s", p.process.GetReturnStatus())
 		close(p.doneChan)
 	}()
+
 	return nil
 }
 
@@ -100,6 +104,7 @@ func (p *Proc) reset() error {
 
 	p.stdIOLines = p.stdIOLines[:0]
 	p.doneChan = make(chan struct{})
+
 	return nil
 }
 
@@ -108,12 +113,14 @@ func (p *Proc) StopOrKillTimeout(timeout time.Duration, out *protocol.SerialiseE
 	if err := p.process.StopOrKillTimeout(timeout); err != nil {
 		*out = protocol.SErrorFromError(err)
 	}
+
 	return nil
 }
 
 func makeCopy(src []protocol.StdIOLine) (out []protocol.StdIOLine) {
 	out = make([]protocol.StdIOLine, len(src))
 	copy(out, src)
+
 	return out
 }
 
@@ -123,6 +130,7 @@ func findSeq(target int64, slice []protocol.StdIOLine) int {
 			return i
 		}
 	}
+
 	return -1
 }
 
@@ -131,9 +139,11 @@ func getAllAfter(seq int64, slice []protocol.StdIOLine) []protocol.StdIOLine {
 	if seq == -1 || idx == -1 {
 		return makeCopy(slice)
 	}
+
 	if len(slice) > idx {
 		return makeCopy(slice[idx+1:])
 	}
+
 	return []protocol.StdIOLine{}
 }
 
@@ -158,6 +168,7 @@ func (p *Proc) GetStdioLines(lastSeq int64, out *protocol.StdIOLines) error { //
 			Lines: makeCopy(p.stdIOLines),
 			Error: protocol.SErrorFromError(err),
 		}
+
 		return nil
 	} else if !p.process.IsRunning() {
 		// We have a last seen, BUT, we're also not expecting any more lines. Therefore, return what we have
@@ -165,12 +176,14 @@ func (p *Proc) GetStdioLines(lastSeq int64, out *protocol.StdIOLines) error { //
 			Lines: getAllAfter(lastSeq, p.stdIOLines),
 			Error: protocol.SErrorFromError(err),
 		}
+
 		return nil
 	}
 
 	// Loop as suggested by docs: https://golang.org/pkg/sync/#Cond.Wait
 	for {
 		p.stdioCond.Wait()
+
 		if !p.process.IsRunning() {
 			err = errors.New("not running")
 			break
@@ -194,6 +207,7 @@ func (p *Proc) GetStatus(_ Nothing, out *util.TransportStatus) error { //nolint:
 	} else {
 		*out = util.Stopped
 	}
+
 	return nil
 }
 
@@ -206,6 +220,7 @@ func (p *Proc) GetHumanStatus(_ Nothing, out *string) error { //nolint:unparam /
 func (p *Proc) Write(toWrite []byte, out *protocol.SerialiseError) error { //nolint:unparam // signature required by rpc
 	_, err := p.process.Write(toWrite)
 	*out = protocol.SErrorFromError(err)
+
 	return nil
 }
 
@@ -217,11 +232,13 @@ func (p *Proc) Wait(_ Nothing, res *protocol.ProcessExit) error { //nolint:unpar
 	}
 
 	<-p.doneChan
+
 	*res = protocol.ProcessExit{
 		Return:    p.process.GetReturnCode(),
 		StrReturn: p.process.GetReturnStatus(),
 		Error:     protocol.SerialiseError{},
 	}
+
 	return nil
 }
 
@@ -238,7 +255,9 @@ const (
 
 func (p *Proc) monitorStdio(stdout bool) {
 	f := p.process.Stdout
+
 	prefix := stdoutStr
+
 	if !stdout {
 		f = p.process.Stderr
 		prefix = stderrStr
@@ -253,10 +272,13 @@ func (p *Proc) monitorStdio(stdout bool) {
 		// Tell our waiters, if any, that there are new lines
 		p.stdioCond.Broadcast()
 	}
+
 	if err := s.Err(); err != nil {
 		p.log.Warn(err)
 	}
+
 	<-p.doneChan
+
 	p.stdioCond.Broadcast()
 }
 
@@ -264,6 +286,7 @@ func (p *Proc) cacheLine(line string, stdout bool) {
 	p.stdioCond.L.Lock()
 	defer p.stdioCond.L.Unlock()
 	p.stdioSeq++
+
 	if len(p.stdIOLines) > maxCache {
 		p.stdIOLines = p.stdIOLines[len(p.stdIOLines)-maxCache:]
 	}

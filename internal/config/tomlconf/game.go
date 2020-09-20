@@ -27,6 +27,7 @@ type Game struct {
 	Regexps       []Regexp `toml:"regexp"`
 }
 
+// Chat is a config for game.Chat
 type Chat struct {
 	BridgedChannel string `toml:"bridged_channel" comment:"The channel to bridge chat between"`
 	AdminChannel   string `toml:"admin_channel" comment:"a channel to provide admin logs in (UNUSED)"`
@@ -59,8 +60,8 @@ type Regexp struct {
 	Priority int `toml:",omitempty"`
 
 	Eat          bool `default:"true" comment:"Stop processing regexps after this is matched. (default true)"`
-	SendToChan   bool `toml:"send_to_chan" default:"true" comment:"Send the formatted message to the bridged channel (default true)"`
-	SendToOthers bool `toml:"send_to_others" default:"true" comment:"Send the formatted message to other running games (default true)"`
+	SendToChan   bool `toml:"send_to_chan" default:"true" comment:"Send the formatted message to the bridged channel (default true)"`   //nolint:lll // Cant shorten them
+	SendToOthers bool `toml:"send_to_others" default:"true" comment:"Send the formatted message to other running games (default true)"` //nolint:lll // Cant shorten them
 	SendToLocal  bool `toml:"send_to_local" comment:"Send the formatted message to the game it came from (default false)"`
 }
 
@@ -106,7 +107,9 @@ func (g *Game) resolveFormatImports(c *Config) error {
 			*g.Chat.ImportFormat,
 		)
 	}
+
 	g.Chat.Formats = fmtTemplate
+
 	return nil
 }
 
@@ -120,10 +123,9 @@ func (g *Game) resolveRegexpImports(c *Config) error {
 			)
 		}
 
-		for _, re := range importedRegexps {
-			g.Regexps = append(g.Regexps, re)
-		}
+		g.Regexps = append(g.Regexps, importedRegexps...)
 	}
+
 	return nil
 }
 
@@ -145,5 +147,6 @@ func (g *Game) resolveCommandImports(c *Config) error {
 			g.Commands[name] = command
 		}
 	}
+
 	return nil
 }

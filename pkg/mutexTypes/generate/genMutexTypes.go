@@ -65,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := ioutil.WriteFile("mutexTypes.go", formatted, 0666); err != nil {
+	if err := ioutil.WriteFile("mutexTypes.go", formatted, 0600); err != nil {
 		panic(err)
 	}
 }

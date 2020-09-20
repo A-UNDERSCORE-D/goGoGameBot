@@ -27,11 +27,13 @@ var tests = []struct {
 		want: `[{"text":"this"},{"text":" has","bold":true},{"text":" some random ","bold":true,"italic":true},` +
 			`{"text":" chars put ","bold":true,"italic":true,"strikethrough":true},` +
 			`{"text":" throughout ","italic":true,"strikethrough":true},{"text":" it ","strikethrough":true},` +
+			//nolint:misspell // minecraft devs cant spell colour either
 			`{"text":" have fun ","underlined":true,"strikethrough":true},{"text":" with this","color":"reset"}]`,
 	},
 	{
 		name:  "colour spam",
 		input: "this $cFFFFFFhas a bunch of $c000000colours in it so$c012345 it can test $r colour barf",
+		//nolint:misspell // minecraft devs cant spell colour either
 		want: `[{"text":"this "},{"text":"has a bunch of ","color":"white"},` +
 			`{"text":"colours in it so","color":"black"},{"text":" it can test ","color":"black"},` +
 			`{"text":" colour barf","color":"reset"}]`,
@@ -48,7 +50,7 @@ var tests = []struct {
 		input: "hey check out this thing! https://git.ferricyanide.solutions/A_D/goGoGameBot it has cool stuff!",
 		want: `[{"text":"hey check out this thing! "},` +
 			`{"text":"https://git.ferricyanide.solutions/A_D/goGoGameBot",` +
-			`"underlined":true,"color":"blue","clickEvent":{"action":"open_url",` +
+			`"underlined":true,"color":"blue","clickEvent":{"action":"open_url",` + //nolint:misspell // no choice
 			`"value":"https://git.ferricyanide.solutions/A_D/goGoGameBot"}},{"text":" it has cool stuff!"}]`,
 	},
 	{
@@ -72,8 +74,8 @@ var tests = []struct {
 	{
 		name:  "test using actual line",
 		input: "$c666666$i[#totallynotgames]$rtest message",
-		want: `[{"text":""},{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},` +
-			`{"text":"test message","color":"reset"}]`,
+		want: `[{"text":""},{"text":"[#totallynotgames]","italic":true,"color":"dark_gray"},` + //nolint:misspell // no choice
+			`{"text":"test message","color":"reset"}]`, //nolint:misspell // no choice
 	},
 }
 
@@ -104,6 +106,7 @@ func findFirstDiff(s1, s2 string) {
 
 func TestTransformer_Transform(t *testing.T) {
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := (Transformer{}).Transform(tt.input); got != tt.want {
 				t.Errorf("Transform(): got %s, want %s", got, tt.want)

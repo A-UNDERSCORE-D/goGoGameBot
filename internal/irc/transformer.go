@@ -110,7 +110,7 @@ func (Transformer) MakeIntermediate(in string) string {
 
 // extractColour returns the colour found at the beginning of the given string, and returns either the colour and
 // the number of runes to skip, or -1 and nil
-func extractColour(in string) (int, color.Color) {
+func extractColour(in string) (int, color.Color) { //nolint:gocognit // Cant be made smaller easily
 	if len(in) < 1 || in[0] != colour {
 		return -1, nil
 	}

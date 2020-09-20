@@ -47,6 +47,7 @@ var simpleIRCLineTests = []struct {
 
 func TestMakeSimpleIRCLine(t *testing.T) {
 	for _, tt := range simpleIRCLineTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := MakeSimpleIRCLine(tt.args.command, tt.args.params...); !ircMsgEq(got, tt.want) {
 				t.Errorf("MakeSimpleIRCLine() = %v, want %v", got, tt.want)
@@ -57,6 +58,7 @@ func TestMakeSimpleIRCLine(t *testing.T) {
 
 func BenchmarkMakeSimpleIRCLine(b *testing.B) {
 	for _, tt := range simpleIRCLineTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				MakeSimpleIRCLine(tt.args.command, tt.args.params...)
@@ -114,6 +116,7 @@ func TestGenerateSASLString(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GenerateSASLString(tt.args.nick, tt.args.saslUsername, tt.args.saslPasswd); got != tt.want {
 				res1, _ := base64.StdEncoding.DecodeString(got)
@@ -164,6 +167,7 @@ var globToRegexpTests = []struct {
 
 func TestGlobToRegexp(t *testing.T) {
 	for _, tt := range globToRegexpTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GlobToRegexp(tt.mask); got.String() != tt.want {
 				t.Errorf("GlobToRegexp() = %q, want %q", got, tt.want)
@@ -174,6 +178,7 @@ func TestGlobToRegexp(t *testing.T) {
 
 func BenchmarkGlobToRegexp(b *testing.B) {
 	for _, tt := range globToRegexpTests {
+		tt := tt
 		regexpCache = make(map[string]*regexp.Regexp)
 
 		b.Run(tt.name, func(b *testing.B) {
@@ -230,6 +235,7 @@ var maskMatchTests = []struct {
 
 func TestAnyMaskMatch(t *testing.T) {
 	for _, tt := range maskMatchTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := AnyMaskMatch(tt.args.toCheck, tt.args.masks); got != tt.want {
 				t.Errorf("AnyMaskMatch() = %v, want %v", got, tt.want)
@@ -240,6 +246,7 @@ func TestAnyMaskMatch(t *testing.T) {
 
 func BenchmarkAnyMaskMatch(b *testing.B) {
 	for _, tt := range maskMatchTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				AnyMaskMatch(tt.args.toCheck, tt.args.masks)

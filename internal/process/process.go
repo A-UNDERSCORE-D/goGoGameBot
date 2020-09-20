@@ -106,6 +106,7 @@ func (p *Process) setupCmd() error {
 	p.Stdin = stdin
 	p.Stdout = waitGroupIoCopy(p.stdioWg, stdOut)
 	p.Stderr = waitGroupIoCopy(p.stdioWg, stdErr)
+
 	return nil
 }
 

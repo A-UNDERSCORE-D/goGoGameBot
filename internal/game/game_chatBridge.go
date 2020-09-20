@@ -35,7 +35,6 @@ func (c *chatBridge) update(gc *tomlconf.Game, fmtSet *formatSet) {
 	if c.format.storage == nil {
 		c.format.storage = new(format.Storage)
 	}
-
 }
 
 type dataForFmt struct {

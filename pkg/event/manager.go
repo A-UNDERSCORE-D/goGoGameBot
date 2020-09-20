@@ -53,16 +53,16 @@ type Handler struct {
 type Manager struct {
 	events        Map
 	m             sync.RWMutex
-	curId         int
+	curID         int
 	multiAttaches map[int][]int
 }
 
 func (m *Manager) nextID() int {
 	m.m.Lock()
 	defer m.m.Unlock()
-	m.curId++
+	m.curID++
 
-	return m.curId
+	return m.curID
 }
 
 // HasEvent returns whether or not the given string exists as an event on this Manager
@@ -100,7 +100,7 @@ func (m *Manager) AttachOneShot(name string, f HandlerFunc, priority int) int {
 
 // AttachMultiShot attaches the given callback for count number of hook dispatches, once the count is reached, the
 // callback will be detached
-func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority int, count int) int {
+func (m *Manager) AttachMultiShot(name string, f HandlerFunc, priority, count int) int {
 	callCount := 0
 	id := m.nextID()
 	wrapped := func(e Event) {
@@ -196,7 +196,7 @@ func (m *Manager) WaitFor(name string) Event {
 
 // AttachMany attaches the given function to all events specified by names
 func (m *Manager) AttachMany(f HandlerFunc, priority int, names ...string) int {
-	rootId := m.nextID()
+	rootID := m.nextID()
 	m.m.Lock()
 	if m.multiAttaches == nil {
 		m.multiAttaches = make(map[int][]int)
@@ -204,8 +204,8 @@ func (m *Manager) AttachMany(f HandlerFunc, priority int, names ...string) int {
 	m.m.Unlock()
 
 	for _, name := range names {
-		m.multiAttaches[rootId] = append(m.multiAttaches[rootId], m.Attach(name, f, priority))
+		m.multiAttaches[rootID] = append(m.multiAttaches[rootID], m.Attach(name, f, priority))
 	}
 
-	return rootId
+	return rootID
 }

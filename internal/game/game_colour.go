@@ -8,7 +8,6 @@ import (
 )
 
 func (g *Game) setupTransformer(conf *tomlconf.Game) error {
-
 	if conf.Chat.Transformer == nil {
 		conf.Chat.Transformer = &tomlconf.ConfigHolder{Type: "strip"}
 	}

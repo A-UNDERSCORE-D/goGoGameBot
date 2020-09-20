@@ -102,6 +102,7 @@ func (g *Game) runStep() bool {
 	go g.monitorStdIO(start, wg)
 
 	code, humanStatus, err := g.transport.Run(start)
+
 	wg.Wait()
 
 	if err != nil && !(errors.Is(err, util.ErrorAlreadyRunning) || strings.HasPrefix(err.Error(), "exit status")) {
@@ -109,6 +110,7 @@ func (g *Game) runStep() bool {
 	}
 
 	g.sendToMsgChan(humanStatus)
+
 	if g.status.Get() == killed || code != 0 || g.autoRestart <= 0 {
 		return false
 	}
@@ -123,6 +125,7 @@ func (g *Game) Run() error {
 		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
 		time.Sleep(time.Second * time.Duration(g.autoRestart))
 	}
+
 	return nil
 }
 
@@ -151,6 +154,7 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 	g.comment = conf.Comment
 
 	root := template.New(fmt.Sprintf("%s root", conf.Name))
+
 	outFmts, err := g.compileFormats(conf, root)
 	if err != nil {
 		return fmt.Errorf("could not compile formats: %s", err)
@@ -180,6 +184,7 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 	if err := g.setupTransformer(conf); err != nil {
 		return fmt.Errorf("could not update game %q's config: %w", conf.Name, err)
 	}
+
 	_ = g.clearCommands() // This is going to error on first run or whenever we're first created, its fine
 
 	for name, cmd := range conf.Commands {
@@ -193,6 +198,7 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 		if err != nil {
 			return err
 		}
+
 		g.transport = t
 	}
 
@@ -204,7 +210,7 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 
 	g.Info("transport reloaded successfully")
 	g.autoStart.Set(conf.AutoStart)
-	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here
+	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here; and/or check for restart loop
 
 	// TODO: what are these used for?
 	g.controlChannels.admin = conf.Chat.AdminChannel
@@ -216,15 +222,6 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 	g.Info("reload completed successfully")
 
 	return nil
-}
-
-func compileOrNil(targetFmt *format.Format, name string, root *template.Template) error {
-	if targetFmt == nil || targetFmt.FormatString == "" {
-		targetFmt = nil
-		return nil
-	}
-
-	return targetFmt.Compile(name, root)
 }
 
 // compileFormats compiles all the formats for the game. If one is nil....
@@ -242,7 +239,9 @@ func (g *Game) compileFormats(gameConf *tomlconf.Game, root *template.Template) 
 			*target = nil // Just to be sure.
 			return nil
 		}
+
 		*target = &format.Format{FormatString: *fmtString}
+
 		return (*target).Compile(name, root)
 	}
 
@@ -295,7 +294,11 @@ func (g *Game) GetComment() string { return g.comment }
 // goroutine
 func (g *Game) AutoStart() {
 	if g.autoStart.Get() {
-		go g.Run()
+		go func() {
+			if err := g.Run(); err != nil {
+				g.Logger.Warnf("could not run game: %s", err)
+			}
+		}()
 	}
 }
 
@@ -316,6 +319,7 @@ func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 
 	g.sendToMsgChan("stopping")
 	g.status.Set(killed)
+
 	return g.transport.StopOrKillTimeout(timeout)
 }
 

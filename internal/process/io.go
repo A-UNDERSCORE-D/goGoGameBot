@@ -13,9 +13,11 @@ func waitGroupIoCopy(wg *sync.WaitGroup, src io.Reader) io.Reader {
 		if _, err := io.Copy(pipeW, src); err != nil {
 			fmt.Printf("Warning: Error from io.Copy: %s", err)
 		}
+
 		pipeW.Close()
 
 		wg.Done()
 	}()
+
 	return pipeR
 }

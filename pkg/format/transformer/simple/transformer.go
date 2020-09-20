@@ -27,6 +27,7 @@ type Conf struct {
 	} `toml:"map_colour" comment:"maps the given RGB colour to a string"`
 }
 
+// MakeMaps creates a replace and colour map based on the given config
 func (s *Conf) MakeMaps() (replaceMap map[rune]string, colourMap map[color.Color]string) {
 	replaceMap = map[rune]string{
 		intermediate.Bold:          s.ReplaceMap.Bold,
@@ -104,16 +105,6 @@ func (s *Transformer) colourFn(in color.Color) string {
 	}
 
 	return s.colMap[s.palette.Convert(in)]
-}
-
-func (s *Transformer) reverseColour(in string) color.Color {
-	for c, s := range s.colMap {
-		if s == in {
-			return c
-		}
-	}
-
-	return nil
 }
 
 // MakeIntermediate uses a simple replace operation to convert from a transformer specific implementation to the

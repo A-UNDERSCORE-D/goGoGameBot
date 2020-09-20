@@ -2,13 +2,13 @@ package tokeniser
 
 import (
 	"fmt"
-	"image/color"
+	"image/color" //nolint:misspell // no choice
 	"testing"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
-func TestMap(t *testing.T) {
+func TestMap(t *testing.T) { //nolint:funlen // contains test data
 	defaultMap := map[rune]string{
 		intermediate.Bold:          "bold",
 		intermediate.Italic:        "italic",
@@ -58,7 +58,7 @@ func TestMap(t *testing.T) {
 			want:    "$ this is a test with an end sentinel$",
 		},
 		{
-			name:    "nill mapping",
+			name:    "nil mapping",
 			in:      "test",
 			mapping: nil,
 			want:    "test",
@@ -77,6 +77,7 @@ func TestMap(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Map(tt.in, tt.mapping, cFn); got != tt.want {
 				t.Errorf("Map() = %q, want %q", got, tt.want)
@@ -118,6 +119,7 @@ func TestStrip(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Strip(tt.in); got != tt.want {
 				t.Errorf("Strip() = %v, want %q", got, tt.want)
@@ -149,6 +151,7 @@ func TestEmitColour(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := EmitColour(tt.in); got != tt.want {
 				t.Errorf("EmitColour() = %q, want %q", got, tt.want)

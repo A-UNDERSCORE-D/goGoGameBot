@@ -27,7 +27,6 @@ type confTest struct {
 	name          string
 	tomlStr       string
 	IsValid       bool
-	dumpJSON      bool
 	expectedError string
 	expectedConf  *Config
 }
@@ -207,7 +206,7 @@ var tests = []confTest{
 
 		`,
 		IsValid:       true,
-		expectedError: `unable to resolve imports for "test": could not resolve regexp import "this_doesn't_exist" as it does not exist`,
+		expectedError: `unable to resolve imports for "test": could not resolve regexp import "this_doesn't_exist" as it does not exist`, //nolint:lll // Its a string
 		expectedConf: &Config{
 			Connection: ConfigHolder{Type: "null"},
 			Games: []*Game{{
@@ -270,7 +269,7 @@ var tests = []confTest{
 	}, {
 		name:          "bad command import",
 		IsValid:       true,
-		expectedError: `unable to resolve imports for "": could not resolve command import "this doesn't exist" as it does not exist`,
+		expectedError: `unable to resolve imports for "": could not resolve command import "this doesn't exist" as it does not exist`, //nolint:lll // Its a string
 		tomlStr: minViableToml + `
 		[[game]]
 		import_commands = ["this doesn't exist"]
@@ -281,7 +280,7 @@ var tests = []confTest{
 	}, {
 		name:          "bad format import",
 		IsValid:       true,
-		expectedError: `unable to resolve imports for "": could not resolve format import "this doesn't exist either" as it does not exist`,
+		expectedError: `unable to resolve imports for "": could not resolve format import "this doesn't exist either" as it does not exist`, //nolint:lll // Its a string
 		tomlStr: minViableToml + `
 		[[game]]
 			[game.chat]
@@ -322,16 +321,7 @@ func errStrOr(e error, def string) string {
 	return def
 }
 
-func all(cmps ...bool) bool {
-	for _, c := range cmps {
-		if !c {
-			return false
-		}
-	}
-	return true
-}
-
-func cmpConfig(a, b *Config) (out bool) {
+func cmpConfig(a, b *Config) (out bool) { //nolint:gocognit // Its a struct compare, its going to be complex
 	defer func() {
 		if err := recover(); err != nil && strings.Contains(err.(error).Error(), "nil pointer dereference") {
 			out = false
@@ -385,7 +375,7 @@ outer:
 
 var gameNumFields = func() int { return reflect.TypeOf(Game{}).NumField() }()
 
-func cmpGame(a, b *Game) bool {
+func cmpGame(a, b *Game) bool { //nolint:gocognit // Its a comparison
 	if (a == nil || b == nil) && a != b {
 		return false
 	}
@@ -407,11 +397,12 @@ func cmpGame(a, b *Game) bool {
 		!reflect.DeepEqual(a.Chat, b.Chat) ||
 		!reflect.DeepEqual(a.CommandImports, b.CommandImports) ||
 		!reflect.DeepEqual(a.Commands, b.Commands) ||
-		!reflect.DeepEqual(a.RegexpImports, a.RegexpImports) ||
-		!reflect.DeepEqual(a.Regexps, b.Regexps) {
+		!reflect.DeepEqual(a.RegexpImports, b.RegexpImports) ||
+		!reflect.DeepEqual(a.Regexps, b.Regexps) { //nolint:go-lint // Its done this way intentionally
 
 		return false
 	}
+
 	return true
 }
 
@@ -419,6 +410,7 @@ func jsonMust(res []byte, err error) []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return res
 }
 
@@ -431,6 +423,7 @@ func tomlTreeFromMapMust(in map[string]interface{}) *toml.Tree {
 	if err != nil {
 		panic(err)
 	}
+
 	return tree
 }
 
@@ -442,11 +435,11 @@ func diff(a, b string) {
 		if len(bSplit) <= i {
 			fmt.Println("+", v)
 			fmt.Println("--------------------------")
+
 			continue
 		}
 
 		lineDiff(v, bSplit[i])
-
 	}
 }
 
@@ -496,9 +489,11 @@ func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 
 func TestInclusion(t *testing.T) { //nolint:gocognit // Its a test
 	for _, tt := range tests {
+		tt := tt
 		if !tt.IsValid {
 			continue // Cant test inclusion on invalid configs.
 		}
+
 		t.Run(tt.name, func(t *testing.T) {
 			tree, err := toml.Load(tt.tomlStr)
 			if err != nil {
@@ -526,7 +521,7 @@ func TestInclusion(t *testing.T) { //nolint:gocognit // Its a test
 
 func makeStrPtr(x string) *string { return &x }
 
-func dumpExampleConf(t *testing.T) {
+func dumpExampleConf(t *testing.T) { //nolint:funlen // Must be long
 	realConf, err := toml.TreeFromMap(
 		map[string]interface{}{
 			"path":              "/opt/games/somegame",

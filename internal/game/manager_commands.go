@@ -43,7 +43,11 @@ func (m *Manager) startGameCmd(data *command.Data) {
 			continue
 		}
 
-		go g.Run()
+		go func() {
+			if err := g.Run(); err != nil {
+				m.Logger.Warnf("got an error from game.Run on %s: %s", g.GetName(), err)
+			}
+		}()
 	}
 }
 
@@ -124,7 +128,9 @@ func restartGame(game interfaces.Game, responder interfaces.CommandResponder) {
 		return
 	}
 
-	go game.Run()
+	go func() {
+		_ = game.Run()
+	}()
 }
 
 func (m *Manager) stopCmd(data *command.Data) {
@@ -208,8 +214,7 @@ func (m *Manager) reconnectCmd(data *command.Data) {
 }
 
 func (m *Manager) rawCmd(data *command.Data) {
-
-	if len(data.Args) <= 0 {
+	if len(data.Args) == 0 {
 		data.ReturnNotice("raw requires an argument")
 	}
 

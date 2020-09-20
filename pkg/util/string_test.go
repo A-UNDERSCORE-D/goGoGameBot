@@ -40,6 +40,7 @@ var splitOnSpaceTests = []struct {
 
 func TestCleanSplitOnSpace(t *testing.T) {
 	for _, tt := range splitOnSpaceTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := CleanSplitOnSpace(tt.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CleanSplitOnSpace() = %#v, want %#v", got, tt.want)
@@ -50,6 +51,7 @@ func TestCleanSplitOnSpace(t *testing.T) {
 
 func BenchmarkCleanSplitOnSpace(b *testing.B) {
 	for _, tt := range splitOnSpaceTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				CleanSplitOnSpace(tt.args)
@@ -112,6 +114,7 @@ var wordEolTests = []struct {
 
 func TestWordEol(t *testing.T) {
 	for _, tt := range wordEolTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := WordEol(tt.args.s, tt.args.wordIdx); got != tt.want {
 				t.Errorf("WordEol() = %q, want %q", got, tt.want)
@@ -122,6 +125,7 @@ func TestWordEol(t *testing.T) {
 
 func BenchmarkWordEol(b *testing.B) {
 	for _, tt := range wordEolTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				WordEol(tt.args.s, tt.args.wordIdx)
@@ -168,6 +172,7 @@ func TestEscapeString(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := EscapeString(tt.args); got != tt.want {
 				t.Errorf("EscapeString() = %q, want %q", got, tt.want)
@@ -194,6 +199,7 @@ func TestStripAll(t *testing.T) {
 		{"zwsp", "test s\u200btring", "test string"},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := StripAll(tt.stringIn); got != tt.want {
 				t.Errorf("StripAll() = %v, want %v", got, tt.want)
@@ -224,6 +230,7 @@ func TestIdxOrEmpty(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := IdxOrEmpty(tt.args.slice, tt.args.idx); got != tt.want {
 				t.Errorf("IdxOrEmpty() = %v, want %v", got, tt.want)
@@ -303,6 +310,7 @@ func TestJoinToMaxLength(t *testing.T) { //nolint:funlen // it contains test dat
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := JoinToMaxLength(tt.args.toJoin, tt.args.sep, tt.args.maxLength); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("JoinToMaxLength() = %#v, want %#v", got, tt.want)
@@ -337,6 +345,7 @@ func TestReverseIdx(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ReverseIdx(testArr, tt.idx); got != tt.want {
 				t.Errorf("ReverseIdx() = %v, want %v", got, tt.want)
@@ -364,6 +373,7 @@ var addZwspTests = []struct {
 
 func TestAddZwsp(t *testing.T) {
 	for _, tt := range addZwspTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := AddZwsp(tt.args); got != tt.want {
 				t.Errorf("AddZwsp() = %q, want %q", got, tt.want)
@@ -374,6 +384,7 @@ func TestAddZwsp(t *testing.T) {
 
 func BenchmarkAddZwsp(b *testing.B) {
 	for _, tt := range addZwspTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				AddZwsp(tt.args)

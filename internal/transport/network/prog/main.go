@@ -23,14 +23,15 @@ var (
 	configPath = pflag.StringP(
 		"config", "c", "./config.xml", "Sets the configuration file to use with this game instance",
 	)
-	waitForConf = pflag.BoolP("waitforconfig", "w", false, "if set, wait for a connection to give us a config")
-	name        = pflag.StringP("name", "n", "game", "sets the name of this game, mostly for logging")
-	logger      = log.New(log.FTimestamp, os.Stdout, "MAIN", log.TRACE)
+	// waitForConf = pflag.BoolP("waitforconfig", "w", false, "if set, wait for a connection to give us a config")
+	name   = pflag.StringP("name", "n", "game", "sets the name of this game, mostly for logging")
+	logger = log.New(log.FTimestamp, os.Stdout, "MAIN", log.TRACE)
 	// TODO: Allow passing config by means of an RPC call? at least after the first one
 )
 
 func main() {
 	pflag.Parse()
+
 	conf, err := parseConfig(*configPath)
 	notNil("could not parse config: %s", err)
 	p, err := getProcess(conf)
@@ -72,12 +73,14 @@ func parseConfig(confPath string) (*network.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	conf := &network.Config{}
 
 	err = xml.Unmarshal(data, conf)
 	if err != nil {
 		return nil, err
 	}
+
 	return conf, nil
 }
 

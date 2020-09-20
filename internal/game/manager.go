@@ -166,12 +166,6 @@ func (m *Manager) ReloadGames(configs []*tomlconf.Game) {
 			m.gamesMutex.RUnlock()
 		}
 	}
-
-	/* 	for i := 0; i < len(configs); i++ { // indexing because a range would copy quite a lot
-		conf := configs[i]
-
-
-	} */
 }
 
 func (m *Manager) gameIdxFromName(name string) int {
@@ -282,7 +276,7 @@ func (m *Manager) StartGame(name string) error {
 			return ErrAlreadyRunning
 		}
 
-		go g.Run()
+		go func() { _ = g.Run() }()
 
 		return nil
 	}
@@ -370,6 +364,7 @@ func (m *Manager) setupCommands() error {
 	return nil
 }
 
+// Stop stops all running games on the manager and disconnects the bot.
 func (m *Manager) Stop(msg string, restart bool) {
 	m.restarting.Set(restart)
 	m.status.Set(shutdown)
@@ -382,7 +377,7 @@ func (m *Manager) reload(conf *tomlconf.Config) error {
 	m.rootConf = conf
 	m.ReloadGames(conf.Games)
 
-	// TODO: ensure that type wasnt changed
+	// TODO: ensure that type wasn't changed
 	if err := m.bot.Reload(conf.Connection.RealConf); err != nil {
 		return err
 	}

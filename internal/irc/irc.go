@@ -47,7 +47,7 @@ type Conf struct {
 
 	// TODO: Cert based auth? (via SASL)
 	Authenticate bool   `toml:"authenticate" comment:"Should we authenticate with the IRC network"`
-	SASL         bool   `toml:"sasl" comment:"Should authentication use SASL for negotiation (this is faster and more secure)"`
+	SASL         bool   `toml:"sasl" comment:"Should authentication use SASL for negotiation (this is faster and more secure)"` //nolint:lll // Cant be made shorter
 	AuthUser     string `toml:"auth_user" comment:"User account to authenticate for"`
 	AuthPasswd   string `toml:"auth_passwd" comment:"Password for account authentication"`
 }
@@ -131,6 +131,7 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
+
 	out := make([]byte, 0, len(toSend)+1)
 	copy(out, toSend)
 
@@ -143,6 +144,7 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	return i.socket.Write(out)
 }
 
+//nolint:unparam // Its to mimic the Write interface
 func (i *IRC) writeLine(command string, args ...string) (int, error) {
 	l := util.MakeSimpleIRCLine(command, args...)
 	lBytes, err := l.LineBytes()
@@ -218,6 +220,7 @@ func (i *IRC) Connect() error {
 		// The socket was closed during
 		return errors.New("socket closed while connecting")
 	}
+
 	var oErr error
 
 	for _, name := range i.channels.Get() {
@@ -498,7 +501,9 @@ func (i *IRC) SendAdminMessage(msg string) {
 // JoinChannel joins the bot to the named channel and adds it to the channel list for later autojoins
 func (i *IRC) JoinChannel(name string) {
 	if i.Connected.Get() {
-		i.writeLine("JOIN", name)
+		if _, err := i.writeLine("JOIN", name); err != nil {
+			i.log.Warn("could not write join command: ", err)
+		}
 	}
 
 	i.channels.Set(append(i.channels.Get(), name))
@@ -564,5 +569,14 @@ func (i *IRC) SendRaw(raw string) {
 		return
 	}
 
-	i.write([]byte(raw))
+	rawBytes := []byte(raw)
+
+	n, err := i.write([]byte(raw))
+	if n != len(rawBytes) {
+		i.log.Warnf("Did not send enough bytes: %d != %d", n, len(rawBytes))
+	}
+
+	if err != nil {
+		i.log.Warn("could not send message: ", err)
+	}
 }

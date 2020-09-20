@@ -45,6 +45,7 @@ func TestManager_HasEvent(t *testing.T) {
 	m.Attach("spaces are fun", nil, 20)
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.HasEvent(tt.args); got != tt.want {
 				t.Errorf("Manager.HasEvent() = %v, want %v", got, tt.want)
@@ -65,6 +66,7 @@ func TestManager_Attach(t *testing.T) {
 	m := Manager{}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			m.Attach(tt.args, nil, -1)
 			if !m.HasEvent(tt.args) {
@@ -116,6 +118,7 @@ func TestManager_Detach(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.Detach(tt.args); got != tt.want {
 				t.Errorf("Manager.Detach() = %v, want %v", got, tt.want)
@@ -124,7 +127,7 @@ func TestManager_Detach(t *testing.T) {
 	}
 }
 
-func TestManager_Dispatch(t *testing.T) { //nolint:funlen // It contains test data
+func TestManager_Dispatch(t *testing.T) { //nolint:funlen,gocognit // It contains test data
 	tests := []struct {
 		name            string
 		eventName       string
@@ -169,6 +172,7 @@ func TestManager_Dispatch(t *testing.T) { //nolint:funlen // It contains test da
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			dataChan := make(chan string, 10)
 			m := createManagerWithEvent(tt.eventName, tt.handlers...)
@@ -206,7 +210,7 @@ func TestManager_AttachOneShot(t *testing.T) {
 	m := new(Manager)
 	callCount := 0
 
-	m.AttachOneShot("test", func(event Event) { callCount++ }, PriHighest)
+	m.AttachOneShot("test", func(_ Event) { callCount++ }, PriHighest)
 
 	for i := 0; i < 5; i++ {
 		m.Dispatch(NewSimpleEvent("test"))

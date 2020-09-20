@@ -24,6 +24,7 @@ func (c *Config) resolveImports() error {
 			return fmt.Errorf("unable to resolve imports for %q: %w", game.Name, err)
 		}
 	}
+
 	return nil
 }
 
@@ -71,5 +72,6 @@ func validateConfig(inConf *Config) error {
 			return fmt.Errorf("invalid config for game %q. Missing transport", g.Name)
 		}
 	}
+
 	return nil
 }

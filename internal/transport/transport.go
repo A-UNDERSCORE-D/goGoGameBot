@@ -1,4 +1,4 @@
-// ...
+// Package transport provides an interface that allows for generic transport layers between gggb and a process
 package transport
 
 import (
@@ -53,6 +53,7 @@ type Transport interface {
 	io.StringWriter
 }
 
+// ErrNoTransport indicates that a nonexistent transport was requested
 var ErrNoTransport = errors.New("transport with that name does not exist")
 
 // GetTransport returns a transport based on the given name.
@@ -61,10 +62,10 @@ func GetTransport(name string, transportConfig tomlconf.ConfigHolder, logger *lo
 	case "process":
 		return processTransport.New(transportConfig, logger)
 	case "network":
-
 		if !strings.HasPrefix(version.Version, "devel") {
 			panic("Network transports are WIP, and not available in non-dev builds")
 		}
+
 		return network.New(transportConfig, logger)
 	default:
 		return nil, fmt.Errorf("cannot create transport %q: %w", name, ErrNoTransport)

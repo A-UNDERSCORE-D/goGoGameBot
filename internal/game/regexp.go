@@ -32,7 +32,7 @@ func (gl RegexpList) Swap(i, j int) {
 func NewRegexp(conf tomlconf.Regexp, manager *RegexpManager, root *template.Template) (*Regexp, error) {
 	compiledRe, err := regexp.Compile(conf.Regexp)
 	if err != nil {
-		return nil, fmt.Errorf("could not compile regexp %s for mannager %s: %s", conf.Name, manager, err)
+		return nil, fmt.Errorf("could not compile regexp %s for manager %s: %s", conf.Name, manager, err)
 	}
 
 	// TODO: move this to the DataForFmt object, functions get weird when they're attached like this
@@ -48,6 +48,7 @@ func NewRegexp(conf tomlconf.Regexp, manager *RegexpManager, root *template.Temp
 		if err != format.ErrEmptyFormat {
 			return nil, fmt.Errorf("could not compile format for regexp %s on %s: %s", conf.Name, manager, err)
 		}
+
 		templ = nil // it was empty. Means this regexp is probably used to eat a line
 	}
 
@@ -187,6 +188,7 @@ func (r *RegexpManager) UpdateFromConf(res []tomlconf.Regexp, root *template.Tem
 		if err != nil {
 			return err
 		}
+
 		r.game.Debugf("adding regexp %s", re)
 		reList = append(reList, re)
 	}

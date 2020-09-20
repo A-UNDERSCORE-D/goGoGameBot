@@ -15,6 +15,7 @@ func (s *SerialiseError) ToError() error {
 	if s.IsError {
 		return errors.New(s.ErrorStr)
 	}
+
 	return nil
 }
 

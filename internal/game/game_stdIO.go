@@ -33,6 +33,7 @@ func (g *Game) WriteString(s string) (n int, err error) {
 
 func (g *Game) monitorStdIO(start chan struct{}, wg *sync.WaitGroup) {
 	<-start
+
 	if !g.IsRunning() {
 		g.manager.Error(errors.New(g.prefixMsg("cannot watch stdio on a non-running game")))
 		return
@@ -40,6 +41,7 @@ func (g *Game) monitorStdIO(start chan struct{}, wg *sync.WaitGroup) {
 
 	monitorChan := func(c <-chan []byte, stdout bool, wg *sync.WaitGroup) {
 		defer wg.Done()
+
 		for b := range c {
 			g.handleStdIO(string(b), stdout)
 		}

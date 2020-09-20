@@ -43,7 +43,7 @@ var (
 	noLog = pflag.Bool("dont-log", false, "disables logging to disk")
 )
 
-func main() {
+func main() { //nolint:funlen // Cant easily be broken up currently
 	pflag.Parse()
 
 	rl, _ := readline.New("> ")
@@ -62,43 +62,39 @@ func main() {
 		lvl = log.TRACE
 	}
 
-	l := log.New(log.FTimestamp, writer, "MAIN", lvl)
-	logger = l
+	logger = log.New(log.FTimestamp, writer, "MAIN", lvl)
 
 	for _, line := range strings.Split(asciiArt, "\n") {
-		l.Info(line)
+		logger.Info(line)
 	}
 
-	l.Infof("goGoGameBot version %s loading....", version.Version)
+	logger.Infof("goGoGameBot version %s loading....", version.Version)
 
 	conf, err := tomlconf.GetConfig(*configFile)
 	if err != nil {
-		l.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
+		logger.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
 	}
 
-	conn, err := getConn(conf, l)
+	conn, err := getConn(conf, logger)
 	if err != nil {
-		l.Crit("could not create connection: ", err)
+		logger.Crit("could not create connection: ", err)
 	}
 
-	gm, err := game.NewManager(conf, conn, l.Clone().SetPrefix("GM"))
+	gm, err := game.NewManager(conf, conn, logger.Clone().SetPrefix("GM"))
 	if err != nil {
-		l.Crit("could not create GameManager: ", err)
+		logger.Crit("could not create GameManager: ", err)
 	}
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-
-	go func() { sig := <-sigChan; gm.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
+	setupSignalHandler(gm)
 
 	go runCLI(gm, rl)
 
 	restart, err := gm.Run()
 	if err != nil {
-		l.Warnf("Got an error from bot on exit: %s", err)
+		logger.Warnf("Got an error from bot on exit: %s", err)
 	}
 
-	l.Info("Goodbye")
+	logger.Info("Goodbye")
 
 	if restart {
 		execSelf()
@@ -112,6 +108,13 @@ func main() {
 	}()
 
 	_ = rl.Close()
+}
+
+func setupSignalHandler(gameManager *game.Manager) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+
+	go func() { sig := <-sigChan; gameManager.Stop(fmt.Sprintf("Caught Signal: %s", sig), false) }()
 }
 
 func execSelf() {

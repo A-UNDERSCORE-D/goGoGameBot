@@ -54,6 +54,7 @@ var formatCompileTests = []struct {
 
 func TestFormat_Compile(t *testing.T) {
 	for _, tt := range formatCompileTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.f.Compile("test", nil, tt.args...); (err != nil) != tt.wantErr {
 				t.Errorf("Format.Compile() error = %v, wantErr %v", err, tt.wantErr)
@@ -64,6 +65,7 @@ func TestFormat_Compile(t *testing.T) {
 
 func BenchmarkFormat_Compile(b *testing.B) {
 	for _, tt := range formatCompileTests {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				tt.f.compiled = false
@@ -135,6 +137,7 @@ func TestFormat_ExecuteBytes(t *testing.T) {
 	cleanExecuteTests()
 
 	for _, tt := range testsForExecute {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.f.Compile("test_"+tt.name, nil, nil); err != nil {
 				t.Error(err)
@@ -160,6 +163,7 @@ func BenchmarkFormat_ExecuteBytes(b *testing.B) {
 	cleanExecuteTests() // TODO: use testing.cleanup when its a thing
 
 	for _, tt := range testsForExecute {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()
 			if !tt.f.compiled {
@@ -177,6 +181,7 @@ func TestFormat_Execute(t *testing.T) {
 	cleanExecuteTests()
 
 	for _, tt := range testsForExecute {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.f.Compile("test_"+tt.name, nil, nil); err != nil {
 				t.Error(err)
@@ -198,6 +203,7 @@ func BenchmarkFormat_Execute(b *testing.B) {
 	cleanExecuteTests()
 
 	for _, tt := range testsForExecute {
+		tt := tt
 		b.Run(tt.name, func(b *testing.B) {
 			b.StopTimer()
 			if !tt.f.compiled {
