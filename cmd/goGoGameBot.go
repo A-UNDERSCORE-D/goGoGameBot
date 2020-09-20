@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	configFile = pflag.StringP("config", "c", "./config.xml", "Sets the config file location")
+	configFile = pflag.StringP("config", "c", "./config.toml", "Sets the config file location")
 	logger     *log.Logger
 	traceLog   = pflag.Bool("trace", false, "enable trace logging (extremely verbose)")
 	logFile    = pflag.StringP(
