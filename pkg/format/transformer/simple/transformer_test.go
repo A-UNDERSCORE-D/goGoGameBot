@@ -29,7 +29,7 @@ func cmpSliceNoOrder(s1, s2 []color.Color) bool {
 	return true
 }
 
-func TestNewSimpleTransformer(t *testing.T) {
+func TestNewSimpleTransformer(t *testing.T) { //nolint:funlen // contains test data
 	type args struct {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string

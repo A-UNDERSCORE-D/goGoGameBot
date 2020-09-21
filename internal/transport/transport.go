@@ -10,7 +10,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/processTransport"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/process"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -60,7 +60,7 @@ var ErrNoTransport = errors.New("transport with that name does not exist")
 func GetTransport(name string, transportConfig tomlconf.ConfigHolder, logger *log.Logger) (Transport, error) {
 	switch strings.ToLower(name) {
 	case "process":
-		return processTransport.New(transportConfig, logger)
+		return process.New(transportConfig, logger)
 	case "network":
 		if !strings.HasPrefix(version.Version, "devel") {
 			panic("Network transports are WIP, and not available in non-dev builds")

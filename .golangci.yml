@@ -62,7 +62,7 @@ linters:
     - goprintffuncname
     - interfacer
     - nakedret
-    # - godox
+    - godox
     # TODO: - goerr113 For now, no, add this later
     - nestif
     - nolintlint
