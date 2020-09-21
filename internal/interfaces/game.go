@@ -7,15 +7,15 @@ import (
 	"sync"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 )
 
 // GameManager handles games
 type GameManager interface {
-	ReloadGames(configs []config.Game) // Reload the games on this Manager with the given configs
-	GetGameFromName(name string) Game  // get the Game instance on this Manager that has the given name, or nil
-	GameExists(name string) bool       // check whether or not this Manager has a Game with this name
-	AddGame(game Game) error           // add a Game to this manager (game names should be case sensitive and unique)
+	ReloadGames(configs []tomlconf.Game) // Reload the games on this Manager with the given configs
+	GetGameFromName(name string) Game    // get the Game instance on this Manager that has the given name, or nil
+	GameExists(name string) bool         // check whether or not this Manager has a Game with this name
+	AddGame(game Game) error             // add a Game to this manager (game names should be case sensitive and unique)
 	ForEachGame(f func(Game), skip []Game)
 	StopAllGames()
 }
@@ -23,7 +23,8 @@ type GameManager interface {
 // Game Represents a runnable game server
 type Game interface {
 	GetName() string
-	UpdateFromConfig(config.Game) error
+	GetComment() string
+	UpdateFromConfig(*tomlconf.Game) error
 	StopOrKiller
 	Runner
 	AutoStarter
@@ -49,7 +50,7 @@ type StopOrKiller interface {
 
 // Runner holds methods to Run a process and query the status
 type Runner interface {
-	Run()
+	Run() error
 	IsRunning() bool
 }
 

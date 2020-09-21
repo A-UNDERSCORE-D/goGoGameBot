@@ -50,6 +50,7 @@ var intermedTests = []struct {
 
 func TestIRCTransformer_MakeIntermediate(t *testing.T) {
 	for _, tt := range intermedTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			ir := Transformer{}
 			if got := ir.MakeIntermediate(tt.in); got != tt.want {
@@ -82,6 +83,7 @@ func TestIRCTransformer_Transform(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			ir := Transformer{}
 			if got := ir.Transform(tt.in); got != tt.want {
@@ -93,6 +95,7 @@ func TestIRCTransformer_Transform(t *testing.T) {
 
 func TestChainTransformer(t *testing.T) {
 	for _, tt := range intermedTests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			chained := tt.in
 			ir := Transformer{}
@@ -100,7 +103,7 @@ func TestChainTransformer(t *testing.T) {
 				chained = ir.MakeIntermediate(ir.Transform(chained))
 			}
 			if chained != tt.want {
-				t.Errorf("Chained tranformer = %q, want %q", chained, tt.want)
+				t.Errorf("Chained transformer = %q, want %q", chained, tt.want)
 			}
 		})
 	}

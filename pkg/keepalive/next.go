@@ -21,6 +21,7 @@ var curIdx = 0
 
 // TODO: make this have a struct that stores the numbers, rather than doing it with globals. that way multiple things
 // TODO: can have their own response sets
+
 // Next returns the next string in the set, wrapping around if needed
 func Next() string {
 	if curIdx > len(sets[curSet])-1 {

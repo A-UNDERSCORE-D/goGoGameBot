@@ -4,7 +4,7 @@ package minecraft
 
 import (
 	"encoding/json"
-	"image/color"
+	"image/color" //nolint:misspell // Go devs cant spell colour
 	"regexp"
 	"strings"
 
@@ -77,7 +77,7 @@ type jsonSection struct {
 	Italic        bool        `json:"italic,omitempty"`
 	Underline     bool        `json:"underlined,omitempty"`
 	Strikethrough bool        `json:"strikethrough,omitempty"`
-	Colour        string      `json:"color,omitempty"` // Why cant people spell colour?
+	Colour        string      `json:"color,omitempty"` //nolint:misspell // Why cant people spell colour?
 	ClickEvent    *clickEvent `json:"clickEvent,omitempty"`
 }
 

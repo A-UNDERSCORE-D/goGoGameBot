@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
 )
 
 // NewManager creates a Manager and configures it using the given data.
-func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
+func NewManager(conf *tomlconf.Config, bot interfaces.Bot, logger *log.Logger) (*Manager, error) {
 	m := &Manager{
 		bot:      bot,
 		Logger:   logger.Clone().SetPrefix("GM"),
@@ -26,7 +26,7 @@ func NewManager(conf *config.Config, bot interfaces.Bot, logger *log.Logger) (*M
 
 	m.Cmd = command.NewManager(logger.Clone().SetPrefix("CMD"), bot.IsCommandPrefix, bot.StaticCommandPrefixes()...)
 	m.setupHooks()
-	m.ReloadGames(conf.GameManager.Games)
+	m.ReloadGames(conf.Games)
 
 	if err := m.setupCommands(); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (m *Manager) setupHooks() {
 
 // Manager manages games, and communication between them, eachother, and an interfaces.Bot
 type Manager struct {
-	rootConf     *config.Config
+	rootConf     *tomlconf.Config
 	games        []interfaces.Game
 	gamesMutex   sync.RWMutex
 	bot          interfaces.Bot
@@ -133,19 +133,17 @@ func (m *Manager) String() string {
 
 // ReloadGames uses the passed config values to reload the games stored on it. Any new games
 // found in the config are added, rather than reloaded
-func (m *Manager) ReloadGames(configs []config.Game) {
+func (m *Manager) ReloadGames(configs []*tomlconf.Game) {
 	// No need to hold the games mutex as of yet as we're not iterating the games list itself
 	m.Debug("reloading games")
 	defer m.Debug("games reload complete")
 
-	for i := 0; i < len(configs); i++ { // indexing because a range would copy quite a lot
-		conf := configs[i]
-
-		switch i := m.gameIdxFromName(conf.Name); i {
+	for _, gameConf := range configs {
+		switch internalIdx := m.gameIdxFromName(gameConf.Name); internalIdx {
 		case -1: // Game does not exist
-			m.Debugf("adding a new game during reload: %s", conf.Name)
+			m.Debugf("adding a new game during reload: %s", gameConf.Name)
 
-			g, err := NewGame(conf, m)
+			g, err := NewGame(gameConf, m)
 			if err != nil {
 				m.Error(err)
 				continue
@@ -156,12 +154,12 @@ func (m *Manager) ReloadGames(configs []config.Game) {
 				continue
 			}
 		default:
-			m.Debugf("updating config on %s", conf.Name)
+			m.Debugf("updating config on %s", gameConf.Name)
 			// use RLock here because we're only reading the slice, and mutating an index on that slice
 			m.gamesMutex.RLock()
 
-			g := m.games[i]
-			if err := g.UpdateFromConfig(conf); err != nil {
+			g := m.games[internalIdx]
+			if err := g.UpdateFromConfig(gameConf); err != nil {
 				m.Error(fmt.Errorf("reloading game %s errored: %s", g, err))
 			}
 
@@ -278,7 +276,7 @@ func (m *Manager) StartGame(name string) error {
 			return ErrAlreadyRunning
 		}
 
-		go g.Run()
+		go func() { _ = g.Run() }()
 
 		return nil
 	}
@@ -366,6 +364,7 @@ func (m *Manager) setupCommands() error {
 	return nil
 }
 
+// Stop stops all running games on the manager and disconnects the bot.
 func (m *Manager) Stop(msg string, restart bool) {
 	m.restarting.Set(restart)
 	m.status.Set(shutdown)
@@ -374,11 +373,12 @@ func (m *Manager) Stop(msg string, restart bool) {
 	m.done.Broadcast()
 }
 
-func (m *Manager) reload(conf *config.Config) error {
+func (m *Manager) reload(conf *tomlconf.Config) error {
 	m.rootConf = conf
-	m.ReloadGames(conf.GameManager.Games)
+	m.ReloadGames(conf.Games)
 
-	if err := m.bot.Reload(conf.ConnConfig.Config); err != nil {
+	// TODO: ensure that type wasn't changed
+	if err := m.bot.Reload(conf.Connection.RealConf); err != nil {
 		return err
 	}
 

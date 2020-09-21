@@ -1,14 +1,14 @@
 package tokeniser
 
 import (
-	"image/color"
+	"image/color" //nolint:misspell // no choice
 	"reflect"
 	"testing"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
-func TestTokenise(t *testing.T) {
+func TestTokenise(t *testing.T) { //nolint:funlen // contains test data
 	tests := []struct {
 		name string
 		in   string
@@ -69,6 +69,7 @@ func TestTokenise(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Tokenise(tt.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Tokenise() = %#v, want %#v", got, tt.want)

@@ -14,9 +14,9 @@ func (g *Game) checkError(err error) {
 	}
 }
 
-// IsRunning returns whether or not the process is currently running
+// IsRunning returns whether or not the transport is currently running
 func (g *Game) IsRunning() bool {
-	return g.process.IsRunning()
+	return g.transport.IsRunning()
 }
 
 func (g *Game) prefixMsg(args ...interface{}) string {
@@ -68,7 +68,7 @@ func (g *Game) templSendMessage(c string, v ...interface{}) (string, error) {
 	return msg, nil
 }
 
-// Status returns the status of the game's process as a string
+// Status returns the status of the game's transport as a string
 func (g *Game) Status() string {
-	return g.process.GetStatus()
+	return g.transport.GetHumanStatus()
 }

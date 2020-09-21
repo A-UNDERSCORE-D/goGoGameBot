@@ -13,7 +13,6 @@ import (
 
 // RawEvent represents an incoming raw IRC Line that needs to be handled
 type RawEvent struct {
-	// TODO: have this just embed the Line?
 	event.BaseEvent
 	Line ircmsg.IrcMessage
 	Time time.Time

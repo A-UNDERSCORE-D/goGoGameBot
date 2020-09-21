@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
 )
@@ -43,7 +43,11 @@ func (m *Manager) startGameCmd(data *command.Data) {
 			continue
 		}
 
-		go g.Run()
+		go func() {
+			if err := g.Run(); err != nil {
+				m.Logger.Warnf("got an error from game.Run on %s: %s", g.GetName(), err)
+			}
+		}()
 	}
 }
 
@@ -124,7 +128,9 @@ func restartGame(game interfaces.Game, responder interfaces.CommandResponder) {
 		return
 	}
 
-	go game.Run()
+	go func() {
+		_ = game.Run()
+	}()
 }
 
 func (m *Manager) stopCmd(data *command.Data) {
@@ -148,7 +154,7 @@ func (m *Manager) restartCmd(data *command.Data) {
 func (m *Manager) reloadCmd(data *command.Data) {
 	data.ReturnMessage("reloading config")
 
-	newConf, err := config.GetConfig(m.rootConf.ConfigPath)
+	newConf, err := tomlconf.GetConfig(m.rootConf.OriginalPath)
 	if err != nil {
 		m.Error(err)
 		data.ReturnMessage("reload failed")
@@ -179,7 +185,9 @@ func (m *Manager) statusCmd(data *command.Data) {
 		case v == "all":
 			data.ReturnMessage(ourStats)
 			m.ForEachGame(
-				func(g interfaces.Game) { data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status())) }, nil,
+				func(g interfaces.Game) {
+					data.ReturnMessage(fmt.Sprintf("[%s] %s. (%s)", g.GetName(), g.Status(), g.GetComment()))
+				}, nil,
 			)
 
 			return
@@ -206,8 +214,7 @@ func (m *Manager) reconnectCmd(data *command.Data) {
 }
 
 func (m *Manager) rawCmd(data *command.Data) {
-
-	if len(data.Args) <= 0 {
+	if len(data.Args) == 0 {
 		data.ReturnNotice("raw requires an argument")
 	}
 

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net"
@@ -15,6 +14,8 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/keepalive"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
@@ -30,25 +31,25 @@ type Admin struct {
 
 // Conf holds the configuration for an IRC instance
 type Conf struct {
-	DontVerifyCerts bool   `xml:"dont_verify_certs,attr"`
-	SSL             bool   `xml:"ssl,attr"`
-	CmdPfx          string `xml:"command_prefix,attr"`
+	VerifyCerts bool   `toml:"verify_certs" default:"true" comment:"verify TLS certs when connecting (default: true)"`
+	SSL         bool   `toml:"ssl" default:"true" comment:"Use SSL/TLS (really TLS) for connection (default: true)"`
+	CmdPfx      string `toml:"command_prefix" default:"~" comment:"Command prefix to respond to (default: '~')"`
 
-	Host          string   `xml:"host"`
-	Port          string   `xml:"port"`
-	HostPasswd    string   `xml:"host_password"`
-	Admins        []Admin  `xml:"admin"`
-	AdminChannels []string `xml:"admin_channel"`
+	Host          string   `toml:"host"`
+	Port          string   `toml:"port"`
+	HostPasswd    string   `toml:"host_password"`
+	Admins        []Admin  `toml:"admins"`
+	AdminChannels []string `toml:"admin_channels"`
 
-	Nick  string `xml:"nick"`
-	Ident string `xml:"ident"`
-	Gecos string `xml:"gecos"`
+	Nick  string `toml:"nick"`
+	Ident string `toml:"ident"`
+	Gecos string `toml:"gecos"`
 
 	// TODO: Cert based auth? (via SASL)
-	Authenticate bool   `xml:"authenticate"`
-	SASL         bool   `xml:"use_sasl"`
-	AuthUser     string `xml:"auth_user"`
-	AuthPasswd   string `xml:"auth_password"`
+	Authenticate bool   `toml:"authenticate" comment:"Should we authenticate with the IRC network"`
+	SASL         bool   `toml:"sasl" comment:"Should authentication use SASL for negotiation (this is faster and more secure)"` //nolint:lll // Cant be made shorter
+	AuthUser     string `toml:"auth_user" comment:"User account to authenticate for"`
+	AuthPasswd   string `toml:"auth_passwd" comment:"Password for account authentication"`
 }
 
 // IRC Represents a connection to an IRC server
@@ -69,7 +70,7 @@ type IRC struct {
 }
 
 // New creates a new IRC instance ready for use
-func New(conf string, logger *log.Logger) (*IRC, error) {
+func New(conf tomlconf.ConfigHolder, logger *log.Logger) (*IRC, error) {
 	out := &IRC{
 		log:            logger,
 		RawEvents:      new(event.Manager),
@@ -77,11 +78,11 @@ func New(conf string, logger *log.Logger) (*IRC, error) {
 		socketDoneChan: make(chan struct{}),
 	}
 
-	if err := out.Reload(conf); err != nil {
+	if err := out.Reload(conf.RealConf); err != nil {
 		return nil, err
 	}
 
-	if out.DontVerifyCerts {
+	if !out.VerifyCerts {
 		out.log.Warn("IRC instance created without certificate verification. This is susceptible to MITM attacks")
 	}
 
@@ -142,6 +143,7 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	return i.socket.Write(out)
 }
 
+//nolint:unparam // Its to mimic the Write interface
 func (i *IRC) writeLine(command string, args ...string) (int, error) {
 	l := util.MakeSimpleIRCLine(command, args...)
 	lBytes, err := l.LineBytes()
@@ -173,9 +175,9 @@ func (i *IRC) Connect() error {
 
 	if i.SSL {
 		// nolint:gosec // The user explicitly asked for it and we warn about it
-		s, err = tls.DialWithDialer(dialer, "tcp", target, &tls.Config{InsecureSkipVerify: i.DontVerifyCerts})
+		s, err = tls.DialWithDialer(dialer, "tcp", target, &tls.Config{InsecureSkipVerify: !i.VerifyCerts})
 
-		if i.DontVerifyCerts {
+		if !i.VerifyCerts {
 			i.log.Warnf("**** Not verifying certs. THIS IS INSECURE ****")
 		}
 	} else {
@@ -197,7 +199,7 @@ func (i *IRC) Connect() error {
 		}
 	}
 
-	i.capabilityManager.negotiateCaps()
+	i.capabilityManager.negotiateCaps() // TODO: return an error here
 
 	if _, err := i.writeLine("USER", i.Ident, "*", "*", i.Gecos); err != nil {
 		return err
@@ -497,7 +499,9 @@ func (i *IRC) SendAdminMessage(msg string) {
 // JoinChannel joins the bot to the named channel and adds it to the channel list for later autojoins
 func (i *IRC) JoinChannel(name string) {
 	if i.Connected.Get() {
-		i.writeLine("JOIN", name)
+		if _, err := i.writeLine("JOIN", name); err != nil {
+			i.log.Warn("could not write join command: ", err)
+		}
 	}
 
 	i.channels.Set(append(i.channels.Get(), name))
@@ -514,10 +518,10 @@ func (i *IRC) String() string {
 }
 
 // Reload parses and reloads the config on the IRC instance
-func (i *IRC) Reload(conf string) error {
+func (i *IRC) Reload(tree interfaces.Unmarshaler) error {
 	newConf := new(Conf)
-	if err := xml.Unmarshal([]byte(conf), newConf); err != nil {
-		return fmt.Errorf("could not parse config: %s", err)
+	if err := tree.Unmarshal(newConf); err != nil {
+		return fmt.Errorf("could not unmarshal IRC config: %w", err)
 	}
 
 	i.Conf = newConf
@@ -563,5 +567,14 @@ func (i *IRC) SendRaw(raw string) {
 		return
 	}
 
-	i.write([]byte(raw))
+	rawBytes := []byte(raw)
+
+	n, err := i.write([]byte(raw))
+	if n != len(rawBytes) {
+		i.log.Warnf("Did not send enough bytes: %d != %d", n, len(rawBytes))
+	}
+
+	if err != nil {
+		i.log.Warn("could not send message: ", err)
+	}
 }

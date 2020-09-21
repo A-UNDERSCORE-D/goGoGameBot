@@ -1,7 +1,7 @@
 package simple
 
 import (
-	"image/color"
+	"image/color" //nolint:misspell // no choice
 	"reflect"
 	"testing"
 
@@ -29,7 +29,7 @@ func cmpSliceNoOrder(s1, s2 []color.Color) bool {
 	return true
 }
 
-func TestNewSimpleTransformer(t *testing.T) {
+func TestNewSimpleTransformer(t *testing.T) { //nolint:funlen // contains test data
 	type args struct {
 		replaceMap map[rune]string
 		colourMap  map[color.Color]string
@@ -94,6 +94,7 @@ func TestNewSimpleTransformer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			tf := New(tt.args.replaceMap, tt.args.colourMap)
 			switch {
@@ -149,6 +150,7 @@ func TestSimpleTransformer_MakeIntermediate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			s := New(constructorArgs.replaceMap, constructorArgs.colourMap)
 			if got := s.MakeIntermediate(tt.in); got != tt.want {
@@ -205,6 +207,7 @@ func TestSimpleTransformer_Transform(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			s := New(constructorArgs.replaceMap, constructorArgs.colourMap)
 			if got := s.Transform(tt.in); got != tt.want {

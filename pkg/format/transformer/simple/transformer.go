@@ -12,21 +12,22 @@ import (
 // Conf Holds a replacemap and a colourmap in a format that's simple to store in XML
 type Conf struct {
 	ReplaceMap struct {
-		Bold          string `xml:"bold"`
-		Italic        string `xml:"italic"`
-		Underline     string `xml:"underline"`
-		Strikethrough string `xml:"strikethrough"`
-		Reset         string `xml:"reset"`
-	} `xml:"replace_map"`
+		Bold          string
+		Italic        string
+		Underline     string
+		Strikethrough string
+		Reset         string
+	} `xml:"replace_map" comment:"Replace the listed formatting codes with the given string"`
 
 	ColourMap []struct {
-		R      uint8  `xml:"r,attr"`
-		G      uint8  `xml:"g,attr"`
-		B      uint8  `xml:"b,attr"`
-		Mapped string `xml:",chardata"`
-	} `xml:"colour_map>colour"`
+		R      uint8 `toml:"red"`
+		G      uint8 `toml:"green"`
+		B      uint8 `toml:"blue"`
+		Mapped string
+	} `toml:"map_colour" comment:"maps the given RGB colour to a string"`
 }
 
+// MakeMaps creates a replace and colour map based on the given config
 func (s *Conf) MakeMaps() (replaceMap map[rune]string, colourMap map[color.Color]string) {
 	replaceMap = map[rune]string{
 		intermediate.Bold:          s.ReplaceMap.Bold,
@@ -104,16 +105,6 @@ func (s *Transformer) colourFn(in color.Color) string {
 	}
 
 	return s.colMap[s.palette.Convert(in)]
-}
-
-func (s *Transformer) reverseColour(in string) color.Color {
-	for c, s := range s.colMap {
-		if s == in {
-			return c
-		}
-	}
-
-	return nil
 }
 
 // MakeIntermediate uses a simple replace operation to convert from a transformer specific implementation to the

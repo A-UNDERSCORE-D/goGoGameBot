@@ -1,11 +1,11 @@
 package transformer
 
 import (
-	"encoding/xml"
+	"errors"
 	"fmt"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/minecraft"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/simple"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/strip"
@@ -24,14 +24,18 @@ type Transformer interface {
 }
 
 // GetTransformer Instantiates a Transformer implementation given a config
-func GetTransformer(conf config.TransformerConfig) (Transformer, error) {
+func GetTransformer(conf *tomlconf.ConfigHolder) (Transformer, error) {
+	if conf == nil {
+		return nil, errors.New("cannot get a transformer from a nil config")
+	}
+
 	x := strings.ToLower(conf.Type)
 	switch x {
 	case "strip":
 		return new(strip.Transformer), nil
 	case "simple":
-		var stc simple.Conf
-		if err := xml.Unmarshal([]byte(conf.Config), &stc); err != nil {
+		stc := new(simple.Conf)
+		if err := conf.RealConf.Unmarshal(stc); err != nil {
 			return nil, fmt.Errorf("could not create new SimpleTransformer: %w", err)
 		}
 

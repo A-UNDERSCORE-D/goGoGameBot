@@ -1,24 +1,22 @@
 package game
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"sync"
 )
 
 func (g *Game) watchStdinChan() {
-	for {
-		toSend := <-g.stdinChan
+	for toSend := range g.stdinChan {
 		toSend = append(bytes.Trim(toSend, "\r\n"), '\n')
-
-		if _, err := g.process.Write(toSend); err != nil {
+		if _, err := g.transport.Write(toSend); err != nil {
 			g.manager.Error(fmt.Errorf("could not write to stdin chan for %q: %s", g.name, err))
 		}
 	}
 }
 
-// Write writes the given data to the process's STDIN, it it safe to use concurrently
+// Write writes the given data to the transport's STDIN, it it safe to use concurrently
 func (g *Game) Write(p []byte) (n int, err error) {
 	if !g.IsRunning() {
 		return 0, errors.New("cannot write to a non-running game")
@@ -33,26 +31,24 @@ func (g *Game) WriteString(s string) (n int, err error) {
 	return g.Write([]byte(s))
 }
 
-func (g *Game) monitorStdIO() {
+func (g *Game) monitorStdIO(start chan struct{}, wg *sync.WaitGroup) {
+	<-start
+
 	if !g.IsRunning() {
 		g.manager.Error(errors.New(g.prefixMsg("cannot watch stdio on a non-running game")))
+		return
 	}
 
-	go func() {
-		s := bufio.NewScanner(g.process.Stdout)
-		for s.Scan() {
-			g.handleStdIO(s.Text(), true)
-		}
-		g.checkError(s.Err())
-	}()
+	monitorChan := func(c <-chan []byte, stdout bool, wg *sync.WaitGroup) {
+		defer wg.Done()
 
-	go func() {
-		s := bufio.NewScanner(g.process.Stderr)
-		for s.Scan() {
-			g.handleStdIO(s.Text(), false)
+		for b := range c {
+			g.handleStdIO(string(b), stdout)
 		}
-		g.checkError(s.Err())
-	}()
+	}
+
+	go monitorChan(g.transport.Stdout(), true, wg)
+	go monitorChan(g.transport.Stderr(), false, wg)
 }
 
 const (

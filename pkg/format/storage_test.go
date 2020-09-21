@@ -42,6 +42,7 @@ func TestStorage_Delete(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			storage.Delete(tt.targetName)
 			if _, ok := storage.get(tt.targetName); ok {
@@ -86,6 +87,7 @@ func TestStorage_GetBool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetBool(tt.targetName, tt.default_); got != tt.want {
 				t.Errorf("GetBool() = %v, want %v", got, tt.want)
@@ -129,6 +131,7 @@ func TestStorage_GetInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetInt(tt.targetName, tt.default_); got != tt.want {
 				t.Errorf("GetInt() = %v, want %v", got, tt.want)
@@ -154,18 +157,19 @@ func TestStorage_GetString(t *testing.T) {
 		{
 			"get empty string",
 			"emptyString",
-			"this isnt empty",
+			"this isn't empty",
 			"",
 		},
 		{
 			"get not exist",
 			"not exist",
-			"this doesnt exist",
-			"this doesnt exist",
+			"this doesn't exist",
+			"this doesn't exist",
 		},
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := s.GetString(tt.targetName, tt.default_); got != tt.want {
 				t.Errorf("GetString() = %v, want %v", got, tt.want)
@@ -189,6 +193,7 @@ func TestStorage_SetBool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetBool(tt.targetName, tt.setting)
 
@@ -218,6 +223,7 @@ func TestStorage_SetInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetInt(tt.targetName, tt.setting)
 
@@ -247,6 +253,7 @@ func TestStorage_SetString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.testName, func(t *testing.T) {
 			s.SetString(tt.targetName, tt.setting)
 

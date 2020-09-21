@@ -1,7 +1,7 @@
 package tokeniser
 
 import (
-	"image/color"
+	"image/color" //nolint:misspell // Go devs cant spell colour
 	"strings"
 
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
@@ -20,7 +20,7 @@ type Token struct {
 // Tokenise turns an input string containing intermediate format codes and returns a slice of Tokens representing
 // the data given. It is intended for use by Transformer implementations that do not want to do the heavy lifting
 // required to parse the intermediate format
-func Tokenise(in string) []Token {
+func Tokenise(in string) []Token { //nolint:funlen,gocognit // Its a tokeniser, its going to be large
 	var out []Token
 
 	buf := strings.Builder{}
@@ -49,7 +49,7 @@ func Tokenise(in string) []Token {
 			if seenSentinel {
 				seenSentinel = false
 				if len(in)-i < 7 {
-					// Dont have enough space -- write out as if we didnt see it
+					// Dont have enough space -- write out as if we didn't see it
 					seenSentinel = false
 
 					buf.WriteString(intermediate.SColourString)

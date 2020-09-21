@@ -26,7 +26,8 @@ func TestSingleCommand_Fire(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		tt := tt
+		t.Run(tt.name, func(_ *testing.T) {
 			c := &SingleCommand{
 				adminRequired: tt.fields.adminRequired,
 				callback:      tt.fields.callback,
@@ -49,6 +50,7 @@ func TestSingleCommand_AdminRequired(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := (&SingleCommand{adminRequired: tt.adminRequired}).AdminRequired(); got != tt.adminRequired {
 				t.Errorf("SingleCommand.AdminRequired() = %v, want %v", got, tt.adminRequired)
@@ -65,6 +67,7 @@ func TestSingleCommand_Help(t *testing.T) {
 		{"single case", "help for command is helpful"},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := (&SingleCommand{help: tt.helpMsg}).Help(); got != tt.helpMsg {
 				t.Errorf("SingleCommand.Help() = %v, want %v", got, tt.helpMsg)
@@ -118,6 +121,7 @@ func TestSubCommandList_findSubcommand(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SubCommandList{
 				SingleCommand: baseSC,
@@ -162,6 +166,7 @@ func TestSubCommandList_addSubcommand(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SubCommandList{
 				SingleCommand: SingleCommand{},
@@ -239,6 +244,7 @@ func TestSubCommandList_Fire(t *testing.T) { //nolint:funlen // it contains test
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			messager.Clear()
 			s := &SubCommandList{

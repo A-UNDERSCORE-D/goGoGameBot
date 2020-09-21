@@ -96,7 +96,7 @@ func (m *Manager) internalAddCommand(cmd Command) error {
 		return fmt.Errorf("command %q already exists on %v", cmd.Name(), m)
 	}
 
-	m.Logger.Debugf("adding command %s: %v", cmd.Name(), cmd)
+	m.Logger.Debugf("adding command %s", cmd)
 	m.cmdMutex.Lock()
 	m.commands[strings.ToLower(cmd.Name())] = cmd
 	m.cmdMutex.Unlock()

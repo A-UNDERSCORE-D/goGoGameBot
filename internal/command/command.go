@@ -16,6 +16,7 @@ type Command interface {
 	Fire(data *Data)
 	Help() string
 	Name() string
+	fmt.Stringer
 }
 
 // SingleCommand represents a Command with no special subcommand magic. It implements the Command interface
@@ -41,6 +42,10 @@ func (c *SingleCommand) Help() string { return c.help }
 
 // Name is a getter for the name of the command
 func (c *SingleCommand) Name() string { return c.name }
+
+func (c *SingleCommand) String() string {
+	return fmt.Sprintf("command %s (A:%d) %q", c.name, c.adminRequired, c.help)
+}
 
 // SubCommandList is an implementation of Command that holds a list of subCommands that it can fire
 type SubCommandList struct {
@@ -130,4 +135,8 @@ func (s *SubCommandList) Fire(data *Data) {
 	}
 
 	c.Fire(newData)
+}
+
+func (s *SubCommandList) String() string {
+	return fmt.Sprintf("Subcommand %s holding %d commands", s.name, len(s.subCommands))
 }

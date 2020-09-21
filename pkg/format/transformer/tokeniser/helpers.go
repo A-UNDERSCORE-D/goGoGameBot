@@ -2,7 +2,7 @@ package tokeniser
 
 import (
 	"fmt"
-	"image/color"
+	"image/color" //nolint:misspell // go devs cant spell colour
 	"strconv"
 	"strings"
 

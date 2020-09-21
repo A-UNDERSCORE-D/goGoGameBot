@@ -138,6 +138,7 @@ func TestManager_AddCommand(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.m.AddCommand(tt.args.name, tt.args.requiresAdmin, nil, tt.args.help); (err != nil) != tt.wantErr {
 				t.Errorf("Manager.AddCommand() error = %v, wantErr %v", err, tt.wantErr)
@@ -183,6 +184,7 @@ func TestManager_getCommandByName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			if got := m.getCommandByName(tt.cmdName); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Manager.getCommandByName() = %v, want %v", got, tt.want)
@@ -245,6 +247,7 @@ func TestManager_AddSubCommand(t *testing.T) { //nolint:funlen // Its got the te
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.m.AddSubCommand(
 				tt.args.rootName, tt.args.name, tt.args.requiresAdmin, tt.args.callback, tt.args.help,
@@ -498,6 +501,7 @@ func TestManager_ParseLine(t *testing.T) { //nolint:funlen // it has test data i
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			messager.Clear()
 			messager.AddAdmin("picard!jean-luc@*", 1337)

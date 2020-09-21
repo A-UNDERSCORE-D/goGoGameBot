@@ -1,7 +1,10 @@
 // Package nullconn holds a null connection that satisfies interfaces.Bot
 package nullconn
 
-import "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+import (
+	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+)
 
 // New creates a new NullConn for use with a bot
 func New(l *log.Logger) *NullConn {
@@ -67,8 +70,8 @@ func (n *NullConn) AdminLevel(source string) int { return 0 }
 func (n *NullConn) JoinChannel(name string) { n.log.Infof("join channel requested: %s", name) }
 
 // Reload reloads the Bot using the given (string) config
-func (n *NullConn) Reload(conf string) error {
-	n.log.Infof("reload requested with conf %q", conf)
+func (n *NullConn) Reload(conf interfaces.Unmarshaler) error {
+	n.log.Infof("reload requested with conf %#v", conf)
 	return nil
 }
 

@@ -42,6 +42,7 @@ linters:
     - gosec
     - govet
     - golint
+    - gofmt
     - ineffassign
     - lll
     # - maligned -- On second thought, perhaps
@@ -62,6 +63,9 @@ linters:
     - interfacer
     - nakedret
     - godox
+    # TODO: - goerr113 For now, no, add this later
+    - nestif
+    - nolintlint
 
 issues:
   exclude-use-default: false
