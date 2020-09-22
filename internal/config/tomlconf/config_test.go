@@ -78,7 +78,7 @@ var tests = []confTest{
 			[game.transport]
 			type = "process"
 
-			conf.binary = "asd"
+			config.binary = "asd"
 		`,
 		expectedConf: &Config{
 			Connection: ConfigHolder{Type: "null"},
@@ -131,7 +131,7 @@ var tests = []confTest{
 
 			[game.transport]
 			type = "process"
-			conf.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
+			config.binary = "1337ThisDoesntExistAndWillProbablyNeverExist"
 		`,
 
 		expectedConf: &Config{
@@ -214,7 +214,7 @@ var tests = []confTest{
 		import_regexps = ["this_doesn't_exist"]
 			[game.transport]
 			type = "process"
-			conf.whatever = "asd"
+			config.whatever = "asd"
 
 		`,
 		IsValid:       true,
@@ -254,7 +254,7 @@ var tests = []confTest{
 		
 			[game.transport]
 			type = "process"
-			conf.asd = "asd"
+			config.asd = "asd"
 		`,
 		expectedConf: &Config{
 			Connection: ConfigHolder{Type: "null"},
@@ -291,7 +291,7 @@ var tests = []confTest{
 		import_commands = ["this doesn't exist"]
 			[game.transport]
 			type = "process"
-			conf.asd = "asd"
+			config.asd = "asd"
 		`,
 	}, {
 		name:          "bad format import",
@@ -304,7 +304,7 @@ var tests = []confTest{
 
 			[game.transport]
 			type = "process"
-			conf.asd = "asd"
+			config.asd = "asd"
 		`,
 	}, /* {
 		name:    "large complex",
@@ -570,7 +570,6 @@ func dumpExampleConf(t *testing.T) { //nolint:funlen // Must be long
 		},
 		Chat: Chat{
 			BridgedChannel: "#some_channel",
-			AdminChannel:   "#some_channel",
 			ImportFormat:   makeStrPtr("some_format"),
 			Formats:        FormatSet{},
 			BridgeChat:     true,
