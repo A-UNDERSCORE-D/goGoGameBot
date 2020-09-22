@@ -23,15 +23,3 @@ jobs:
         uses: guyarb/golang-test-annoations@v0.1
         with:
           test-results: test.json
-
----
-name: build go
-on: [release]
-
-jobs:
-  build:
-    name: Build go
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
