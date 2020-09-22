@@ -5,8 +5,8 @@ import (
 	"image/color" //nolint:misspell // I dont control others' package names
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/tokeniser"
 )
 
 // Conf Holds a replacemap and a colourmap in a format that's simple to store in XML

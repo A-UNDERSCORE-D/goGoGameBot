@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 // Strip strips away all intermediate formatting

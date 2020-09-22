@@ -7,13 +7,13 @@ import (
 	"io"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/process"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/network"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/process"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/util"
+	"awesome-dragon.science/go/goGoGameBot/internal/version"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 // Transport is a way for a Game to talk to an underlying Process.

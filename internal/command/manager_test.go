@@ -8,8 +8,8 @@ import (
 
 	"github.com/goshuirc/irc-go/ircutils"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 var (

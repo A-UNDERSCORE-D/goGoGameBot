@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
+	"awesome-dragon.science/go/goGoGameBot/internal/command"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/mutexTypes"
 )
 
 // NewManager creates a Manager and configures it using the given data.

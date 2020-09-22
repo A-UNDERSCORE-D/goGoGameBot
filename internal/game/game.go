@@ -9,12 +9,12 @@ import (
 	"text/template"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/mutexTypes"
 )
 
 const (

@@ -1,6 +1,6 @@
 package irc
 
-import "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
+import "awesome-dragon.science/go/goGoGameBot/pkg/event"
 
 func (i *IRC) handleNickInUse(e event.Event) {
 	rawEvent := event2RawEvent(e)

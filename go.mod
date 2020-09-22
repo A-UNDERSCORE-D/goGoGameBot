@@ -1,4 +1,4 @@
-module git.ferricyanide.solutions/A_D/goGoGameBot
+module awesome-dragon.science/go/goGoGameBot
 
 go 1.13
 

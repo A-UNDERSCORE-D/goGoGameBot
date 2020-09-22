@@ -3,9 +3,9 @@ package irc
 import (
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc/ctcp"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/internal/irc/ctcp"
+	"awesome-dragon.science/go/goGoGameBot/pkg/event"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 // HookMessage hooks on messages to a channel

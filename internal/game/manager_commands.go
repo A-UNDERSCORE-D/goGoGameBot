@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util/systemstats"
+	"awesome-dragon.science/go/goGoGameBot/internal/command"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util/systemstats"
 )
 
 const (

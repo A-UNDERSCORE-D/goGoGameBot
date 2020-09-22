@@ -1,7 +1,7 @@
 package irc
 
 import (
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
+	"awesome-dragon.science/go/goGoGameBot/pkg/event"
 )
 
 func event2RawEvent(e event.Event) *RawEvent {

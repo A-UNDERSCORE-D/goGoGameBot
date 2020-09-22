@@ -14,13 +14,13 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/keepalive"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/pkg/event"
+	"awesome-dragon.science/go/goGoGameBot/pkg/keepalive"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/mutexTypes"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 // Admin holds a mask level pair, for use in commands

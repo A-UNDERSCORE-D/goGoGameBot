@@ -4,7 +4,7 @@ package network
 import (
 	"encoding/xml"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/util"
 )
 
 // Config is a config for a networkTransport

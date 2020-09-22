@@ -3,9 +3,9 @@ package game
 import (
 	"errors"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/command"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
+	"awesome-dragon.science/go/goGoGameBot/internal/command"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format"
 )
 
 func (g *Game) createCommandCallback(fmt format.Format) command.Callback {

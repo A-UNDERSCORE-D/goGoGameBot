@@ -1,6 +1,6 @@
 package process
 
-import "git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
+import "awesome-dragon.science/go/goGoGameBot/internal/transport/util"
 
 // Config is the process transports config
 type Config struct {

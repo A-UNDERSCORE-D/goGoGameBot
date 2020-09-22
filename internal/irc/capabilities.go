@@ -4,8 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/event"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 type capability struct {

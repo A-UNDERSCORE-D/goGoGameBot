@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 func cmpSliceNoOrder(s1, s2 []color.Color) bool {

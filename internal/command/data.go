@@ -3,7 +3,7 @@ package command
 import (
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
 )
 
 // Data represents all the data available for a command call

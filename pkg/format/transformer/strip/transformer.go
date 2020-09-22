@@ -1,7 +1,7 @@
 package strip
 
 import (
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/tokeniser"
 )
 
 // Transformer is a simple transformer that simply removes all intermediate form formatting codes it sees

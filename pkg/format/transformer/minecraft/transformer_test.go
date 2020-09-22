@@ -47,11 +47,11 @@ var tests = []struct {
 	},
 	{
 		name:  "URL test",
-		input: "hey check out this thing! https://git.ferricyanide.solutions/A_D/goGoGameBot it has cool stuff!",
+		input: "hey check out this thing! https://awesome-dragon.science/go/goGoGameBot it has cool stuff!",
 		want: `[{"text":"hey check out this thing! "},` +
-			`{"text":"https://git.ferricyanide.solutions/A_D/goGoGameBot",` +
+			`{"text":"https://awesome-dragon.science/go/goGoGameBot",` +
 			`"underlined":true,"color":"blue","clickEvent":{"action":"open_url",` + //nolint:misspell // no choice
-			`"value":"https://git.ferricyanide.solutions/A_D/goGoGameBot"}},{"text":" it has cool stuff!"}]`,
+			`"value":"https://awesome-dragon.science/go/goGoGameBot"}},{"text":" it has cool stuff!"}]`,
 	},
 	{
 		name:  "url test 2",

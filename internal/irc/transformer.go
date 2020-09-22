@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/tokeniser"
 )
 
 const (

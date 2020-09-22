@@ -12,10 +12,10 @@ import (
 
 	"github.com/anmitsu/go-shlex"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/process"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 // New creates a new ProcessTransport for use with a process

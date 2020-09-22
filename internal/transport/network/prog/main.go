@@ -11,10 +11,10 @@ import (
 	"os/signal"
 	"path"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network/protocol"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/process"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/network"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/network/protocol"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 	"github.com/anmitsu/go-shlex"
 	"github.com/spf13/pflag"
 )

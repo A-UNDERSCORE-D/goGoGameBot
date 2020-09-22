@@ -3,12 +3,12 @@ package game
 import (
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/tokeniser"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 type chatBridge struct {

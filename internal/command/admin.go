@@ -1,6 +1,6 @@
 package command
 
-import "git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+import "awesome-dragon.science/go/goGoGameBot/pkg/util"
 
 // Admin represents a mask with a level of admin access
 type Admin struct {

@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/process"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/network/protocol"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/transport/util"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/process"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/network"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/network/protocol"
+	"awesome-dragon.science/go/goGoGameBot/internal/transport/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 const maxCache = 10000 // Max size for caches before lines are dropped

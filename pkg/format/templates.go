@@ -5,7 +5,7 @@ import (
 	"errors"
 	"text/template"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 // UtilFuncs is a standard set of functions added to all Format's template.Template

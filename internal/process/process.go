@@ -15,8 +15,8 @@ import (
 	"github.com/dustin/go-humanize" // nolint:misspell // I dont control others' package names
 	psutilProc "github.com/shirou/gopsutil/process"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/mutexTypes"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/mutexTypes"
 )
 
 // NewProcess returns a ready to use process object with the given options. If any errors occur during creation and

@@ -7,8 +7,8 @@ import (
 	"github.com/goshuirc/irc-go/ircmsg"
 	"github.com/goshuirc/irc-go/ircutils"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/event"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/util"
+	"awesome-dragon.science/go/goGoGameBot/pkg/event"
+	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
 // RawEvent represents an incoming raw IRC Line that needs to be handled

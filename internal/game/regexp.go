@@ -8,8 +8,8 @@ import (
 	"sync"
 	"text/template"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format"
 )
 
 // RegexpList is a slice of pointers to regexps that exists simply to implement the sort interface

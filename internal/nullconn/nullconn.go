@@ -2,8 +2,8 @@
 package nullconn
 
 import (
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 // New creates a new NullConn for use with a bot

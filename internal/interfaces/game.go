@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
 )
 
 // GameManager handles games

@@ -4,7 +4,7 @@ import (
 	"image/color" //nolint:misspell // Go devs cant spell colour
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 // StringToken is the value given to Token instances holding a raw string

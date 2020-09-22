@@ -5,7 +5,7 @@ import (
 	"image/color" //nolint:misspell // no choice
 	"testing"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/intermediate"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/intermediate"
 )
 
 func TestMap(t *testing.T) { //nolint:funlen // contains test data

@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer"
 )
 
 func (g *Game) setupTransformer(conf *tomlconf.Game) error {

@@ -12,7 +12,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
+	"awesome-dragon.science/go/goGoGameBot/internal/version"
 )
 
 func getSystemUsageStats() string {

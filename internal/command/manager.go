@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 const noAdmin = 0

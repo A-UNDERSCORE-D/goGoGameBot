@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
 )
 
 func (g *Game) checkError(err error) {

@@ -13,14 +13,14 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/spf13/pflag"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/game"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/interfaces"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/nullconn"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/internal/game"
+	"awesome-dragon.science/go/goGoGameBot/internal/interfaces"
+	"awesome-dragon.science/go/goGoGameBot/internal/irc"
+	"awesome-dragon.science/go/goGoGameBot/internal/nullconn"
+	"awesome-dragon.science/go/goGoGameBot/internal/version"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/tokeniser"
+	"awesome-dragon.science/go/goGoGameBot/pkg/log"
 )
 
 const (

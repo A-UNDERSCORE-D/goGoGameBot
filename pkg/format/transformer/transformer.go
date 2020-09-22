@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/config/tomlconf"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/minecraft"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/simple"
-	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/strip"
+	"awesome-dragon.science/go/goGoGameBot/internal/config/tomlconf"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/minecraft"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/simple"
+	"awesome-dragon.science/go/goGoGameBot/pkg/format/transformer/strip"
 )
 
 // Transformer refers to a string transformer. String Transformers convert messages from an intermediate format
