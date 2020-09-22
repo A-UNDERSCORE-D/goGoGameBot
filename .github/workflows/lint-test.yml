@@ -1,6 +1,16 @@
 name: Lint and Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "master"
+      - "feature/*"
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,3 +42,4 @@ jobs:
           version: v1.31
           # TODOs should be warned locally, but not on here
           args: "--exclude 'LINE CONTAINS TODO/BUG/FIXME: '"
+          only-new-issues: true
