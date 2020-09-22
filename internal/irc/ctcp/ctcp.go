@@ -6,7 +6,7 @@ import (
 )
 
 const ctcpChar = 0x01
-const ctcpCharString = string(ctcpChar)
+const ctcpCharString = string(byte(ctcpChar))
 
 // IsCTCP returns whether or not the given string is a valid CTCP command
 func IsCTCP(s string) bool {
