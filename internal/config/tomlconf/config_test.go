@@ -634,5 +634,6 @@ func dumpExampleConf(t *testing.T) { //nolint:funlen // Must be long
 }
 
 func Test_Something(t *testing.T) {
+	t.SkipNow()
 	dumpExampleConf(t)
 }
