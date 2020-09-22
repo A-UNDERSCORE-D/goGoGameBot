@@ -2,19 +2,9 @@ name: lint-go
 
 on: [push, pull_request]
 jobs:
-  everything:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          stable: true
-
-      - name: Lint
-        uses: Mushus/golangci-linter@v1
-        with:
-          config: .golangci.yml
-
       - name: test
         run: go test -json ./... > test.json
 
@@ -23,3 +13,15 @@ jobs:
         uses: guyarb/golang-test-annoations@v0.1
         with:
           test-results: test.json
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          stable: true
+
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.31
