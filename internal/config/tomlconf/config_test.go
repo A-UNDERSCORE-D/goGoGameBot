@@ -91,6 +91,10 @@ var tests = []confTest{
 							"binary": "asd",
 						}),
 					},
+					Chat: Chat{
+						BridgeChat:    true,
+						AllowForwards: true,
+					},
 				},
 			},
 		},
@@ -146,9 +150,12 @@ var tests = []confTest{
 			RegexpTemplates: map[string][]Regexp{
 				"test_regexps1": {
 					{
-						Name:   "test_regexp",
-						Format: "this is a regexp test",
-						Regexp: "this regexp test has a regexp",
+						Name:         "test_regexp",
+						Format:       "this is a regexp test",
+						Regexp:       "this regexp test has a regexp",
+						Eat:          true,
+						SendToChan:   true,
+						SendToOthers: true,
 					},
 				},
 			},
@@ -166,7 +173,9 @@ var tests = []confTest{
 							Extra:   map[string]string{"test_one": "test_one: asd"},
 						},
 
-						ImportFormat: &strTest,
+						ImportFormat:  &strTest,
+						AllowForwards: true,
+						BridgeChat:    true,
 					},
 					Transport: ConfigHolder{
 						Type: "process",
@@ -178,9 +187,12 @@ var tests = []confTest{
 					RegexpImports: []string{"test_regexps1"},
 					Regexps: []Regexp{
 						{
-							Name:   "test_regexp",
-							Format: "this is a regexp test",
-							Regexp: "this regexp test has a regexp",
+							Name:         "test_regexp",
+							Format:       "this is a regexp test",
+							Regexp:       "this regexp test has a regexp",
+							Eat:          true,
+							SendToChan:   true,
+							SendToOthers: true,
 						},
 					},
 
@@ -264,6 +276,10 @@ var tests = []confTest{
 				Commands: map[string]Command{
 					"one": {Format: "test", Help: "tests things", RequiresAdmin: 1337},
 				},
+				Chat: Chat{
+					BridgeChat:    true,
+					AllowForwards: true,
+				},
 			}},
 		},
 	}, {
@@ -290,7 +306,7 @@ var tests = []confTest{
 			type = "process"
 			conf.asd = "asd"
 		`,
-	}, {
+	}, /* {
 		name:    "large complex",
 		IsValid: true,
 		tomlStr: `
@@ -308,9 +324,9 @@ var tests = []confTest{
 		mask = "*!*@golang_rocks"
 		# TODO: the rest of this, 2 games, multiple imports of different types
 
-			
+
 		`,
-	},
+	}, */
 }
 
 func errStrOr(e error, def string) string {
