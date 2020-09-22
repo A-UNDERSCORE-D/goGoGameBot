@@ -1,0 +1,37 @@
+name: lint-go
+
+on: [push, pull_request]
+jobs:
+  everything:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          stable: true
+
+      - name: Lint
+        uses: Mushus/golangci-linter@v1
+        with:
+          config: .golangci.yml
+
+      - name: test
+        run: go test -json ./... > test.json
+
+      - name: annotate tests
+        if: always()
+        uses: guyarb/golang-test-annoations@v0.1
+        with:
+          test-results: test.json
+
+---
+name: build go
+on: [release]
+
+jobs:
+  build:
+    name: Build go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
