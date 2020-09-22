@@ -30,3 +30,5 @@ jobs:
       - uses: golangci/golangci-lint-action@v2
         with:
           version: v1.31
+          # TODOs should be warned locally, but not on here
+          args: "--exclude 'LINE CONTAINS TODO/BUG/FIXME: '"
