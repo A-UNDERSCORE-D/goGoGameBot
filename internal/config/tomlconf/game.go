@@ -30,7 +30,6 @@ type Game struct {
 // Chat is a config for game.Chat
 type Chat struct {
 	BridgedChannel string `toml:"bridged_channel" comment:"The channel to bridge chat between"`
-	AdminChannel   string `toml:"admin_channel" comment:"a channel to provide admin logs in (UNUSED)"`
 	// string ptr to check for null
 	ImportFormat *string `toml:"import_format"`
 	Formats      FormatSet

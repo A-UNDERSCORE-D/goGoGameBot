@@ -37,9 +37,8 @@ func NewRegexp(conf tomlconf.Regexp, manager *RegexpManager, root *template.Temp
 
 	// TODO: move this to the DataForFmt object, functions get weird when they're attached like this
 	funcs := template.FuncMap{
-		"sendToMsgChan":   manager.game.templSendToMsgChan,
-		"sendToAdminChan": manager.game.templSendToAdminChan,
-		"sendPrivmsg":     manager.game.templSendMessage, // TODO: rename this
+		"sendToMsgChan": manager.game.templSendToMsgChan,
+		"sendPrivmsg":   manager.game.templSendMessage, // TODO: rename this
 	}
 
 	templ := &format.Format{FormatString: conf.Format}
@@ -132,7 +131,7 @@ func (r *Regexp) checkAndExecute(line string, stdout bool) (bool, error) {
 	}
 
 	if r.sendToChan {
-		r.manager.game.sendToMsgChan(resp)
+		r.manager.game.sendToBridgedChannel(resp)
 	}
 
 	if r.sendToOtherGames {

@@ -23,12 +23,8 @@ func (g *Game) prefixMsg(args ...interface{}) string {
 	return fmt.Sprintf("[%s] %s", g.name, fmt.Sprint(args...))
 }
 
-func (g *Game) sendToMsgChan(args ...interface{}) {
-	g.manager.bot.SendMessage(g.controlChannels.msg, g.prefixMsg(args...))
-}
-
-func (g *Game) sendToAdminChan(args ...interface{}) {
-	g.manager.bot.SendMessage(g.controlChannels.admin, g.prefixMsg(args...))
+func (g *Game) sendToBridgedChannel(args ...interface{}) {
+	g.manager.bot.SendMessage(g.chatBridge.channel, g.prefixMsg(args...))
 }
 
 func (g *Game) writeToAllOthers(msg string) {
@@ -43,16 +39,9 @@ func (g *Game) writeToAllOthers(msg string) {
 	}, []interfaces.Game{g})
 }
 
-func (g *Game) templSendToAdminChan(v ...interface{}) string {
-	msg := fmt.Sprint(v...)
-	g.sendToAdminChan(msg)
-
-	return msg
-}
-
 func (g *Game) templSendToMsgChan(v ...interface{}) string {
 	msg := fmt.Sprint(v...)
-	g.sendToMsgChan(msg)
+	g.sendToBridgedChannel(msg)
 
 	return msg
 }

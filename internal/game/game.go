@@ -62,27 +62,21 @@ type formatSet struct {
 	storage  *format.Storage
 }
 
-type channelPair struct {
-	admin string
-	msg   string
-}
-
 // Game represents a game server and its transport
 type Game struct {
 	*log.Logger
-	name            string
-	comment         string
-	transport       transport.Transport
-	manager         *Manager
-	status          mutexTypes.Int
-	autoRestart     int
-	autoStart       mutexTypes.Bool
-	regexpManager   *RegexpManager
-	stdinChan       chan []byte
-	preRollRe       *regexp.Regexp
-	preRollReplace  string
-	controlChannels channelPair
-	chatBridge      *chatBridge
+	name           string
+	comment        string
+	transport      transport.Transport
+	manager        *Manager
+	status         mutexTypes.Int
+	autoRestart    int
+	autoStart      mutexTypes.Bool
+	regexpManager  *RegexpManager
+	stdinChan      chan []byte
+	preRollRe      *regexp.Regexp
+	preRollReplace string
+	chatBridge     *chatBridge
 }
 
 // Sentinel errors
@@ -92,7 +86,7 @@ var (
 )
 
 func (g *Game) runStep() bool {
-	g.sendToMsgChan("starting")
+	g.sendToBridgedChannel("starting")
 	g.status.Set(normal)
 
 	start := make(chan struct{})
@@ -109,7 +103,7 @@ func (g *Game) runStep() bool {
 		return false
 	}
 
-	g.sendToMsgChan(humanStatus)
+	g.sendToBridgedChannel(humanStatus)
 
 	if g.status.Get() == killed || code != 0 || g.autoRestart <= 0 {
 		return false
@@ -122,7 +116,7 @@ func (g *Game) runStep() bool {
 // you will probably want to use it in a goroutine
 func (g *Game) Run() error {
 	for g.runStep() {
-		g.sendToMsgChan(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
+		g.sendToBridgedChannel(fmt.Sprintf("Clean exit. Restarting in %d seconds", g.autoRestart))
 		time.Sleep(time.Second * time.Duration(g.autoRestart))
 	}
 
@@ -135,9 +129,9 @@ func (g *Game) validateConfig(conf *tomlconf.Game) error {
 		return fmt.Errorf("invalid config name")
 	}
 
-	if conf.Chat.AdminChannel == "" || conf.Chat.BridgedChannel == "" {
-		g.Warn("cannot have an empty admin or msg channel. bailing out of reload")
-		return fmt.Errorf("cannot have an empty admin or msg channel")
+	if conf.Chat.BridgedChannel == "" {
+		g.Warn("cannot have an empty bridged channel. bailing out of reload")
+		return fmt.Errorf("cannot have an empty bridged channel")
 	}
 
 	return nil
@@ -211,10 +205,6 @@ func (g *Game) UpdateFromConfig(conf *tomlconf.Game) error {
 	g.Info("transport reloaded successfully")
 	g.autoStart.Set(conf.AutoStart)
 	g.autoRestart = conf.AutoRestart // TODO: maybe check for 0 here; and/or check for restart loop
-
-	// TODO: what are these used for?
-	g.controlChannels.admin = conf.Chat.AdminChannel
-	g.controlChannels.msg = conf.Chat.BridgedChannel
 
 	g.preRollRe = preRollRe
 	g.preRollReplace = conf.PreRoll.Replace
@@ -311,13 +301,13 @@ func (g *Game) String() string {
 func (g *Game) StopOrKillTimeout(timeout time.Duration) error {
 	if !g.transport.IsRunning() {
 		if g.manager.status.Get() != shutdown {
-			g.sendToMsgChan("cannot stop a non-running game")
+			g.sendToBridgedChannel("cannot stop a non-running game")
 		}
 
 		return nil
 	}
 
-	g.sendToMsgChan("stopping")
+	g.sendToBridgedChannel("stopping")
 	g.status.Set(killed)
 
 	return g.transport.StopOrKillTimeout(timeout)
