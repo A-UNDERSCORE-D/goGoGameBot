@@ -131,14 +131,15 @@ func (i *IRC) write(toSend []byte) (int, error) {
 	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
-	out := make([]byte, 0, len(toSend)+1)
+
+	out := make([]byte, len(toSend))
 	copy(out, toSend)
 
 	if !bytes.HasSuffix(out, []byte{'\r', '\n'}) {
 		out = append(out, '\r', '\n')
 	}
 
-	i.log.Debug("<< ", string(out[len(out)-3]))
+	i.log.Debug("<< ", string(out[:len(out)-2]))
 
 	return i.socket.Write(out)
 }
@@ -219,6 +220,7 @@ func (i *IRC) Connect() error {
 		// The socket was closed during
 		return errors.New("socket closed while connecting")
 	}
+
 	var oErr error
 
 	for _, name := range i.channels.Get() {
