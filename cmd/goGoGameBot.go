@@ -19,6 +19,7 @@ import (
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/irc"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/nullconn"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/internal/version"
+	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/format/transformer/tokeniser"
 	"git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log"
 )
 
@@ -130,9 +131,13 @@ type terminalUtil struct{}
 
 func (terminalUtil) AdminLevel(string) int { return 1337 }
 
-func (terminalUtil) SendMessage(_, message string) { logger.Info(message) }
+func (terminalUtil) SendMessage(_, message string) {
+	logger.Info(tokeniser.Strip(message))
+}
 
-func (terminalUtil) SendNotice(_, message string) { logger.Info(message) }
+func (terminalUtil) SendNotice(_, message string) {
+	logger.Infof("(notice) %s", tokeniser.Strip(message))
+}
 
 func runCLI(gm *game.Manager, rl *readline.Instance) {
 	lineChan := make(chan string, 1)

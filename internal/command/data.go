@@ -56,26 +56,14 @@ func (d *Data) SendTargetMessage(msg string) { d.SendMessage(d.Target, msg) }
 // data object
 func (d *Data) SendSourceMessage(msg string) { d.SendMessage(d.Source, msg) }
 
-// ReturnNotice either sends a notice to the caller of a command, or logs the notice to the INFO level using the Manager
-// on the Data object. The decision on where to send the message is based on whether or not the source of the command
-// that the Data represents is IRC or not
+// ReturnNotice either sends a notice to the caller of a command
 func (d *Data) ReturnNotice(msg string) {
-	if d.FromTerminal {
-		d.Manager.Logger.Info(msg)
-	} else {
-		d.SendSourceNotice(msg)
-	}
+	d.SendSourceNotice(msg)
 }
 
-// ReturnMessage either sends a notice to the caller of a command, or logs the message to the INFO level using the
-// Manager on the Data object. The decision on where to send the message is based on whether or not the source of
-// the command that the Data represents is IRC or not
+// ReturnMessage either sends a notice to the caller of a command
 func (d *Data) ReturnMessage(msg string) {
-	if d.FromTerminal {
-		d.Manager.Logger.Info(msg)
-	} else {
-		d.SendTargetMessage(msg)
-	}
+	d.SendTargetMessage(msg)
 }
 
 // String implements the stringer interface
