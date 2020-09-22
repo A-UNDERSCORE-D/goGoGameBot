@@ -280,7 +280,7 @@ func (i *IRC) Run() error {
 	select {
 	case e := <-i.RawEvents.WaitForChan("ERROR"):
 		if !i.StopRequested.Get() {
-			return fmt.Errorf("IRC server sent us an ERROR line: %s", event2RawEvent(e).Line)
+			return fmt.Errorf("IRC server sent us an ERROR line: %s", strings.Join(event2RawEvent(e).Line.Params, " "))
 		}
 	case <-i.socketDoneChan:
 		return fmt.Errorf("IRC socket closed")
