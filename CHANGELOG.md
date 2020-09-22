@@ -9,14 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2020-09-22
+
 ### Fixed
 
 - IRC Permissions are no longer evaluated in a case sensitive manner
+- Command responses in the TUI now correctly strip formatting
 
 ### Added
 
 - logs are now written to a file in the working directory the bot is started in. Log file name can be controlled with
 the `-l` flag, and logging can be disabled with `--dont-log`
+
+### Changed
+
+- Config format is now TOML
 
 ## [0.4.13] - 2020-03-27
 
@@ -129,10 +136,10 @@ an "Intermediate Form". For example, the IRC formatter (which is local to the IR
 colour to the intermediate form
 - Continuing to the above, the new Transformers available everywhere are:
 
-| Name     | Description |
-| -------- | -------- |
-| Strip  | Does what it says on the tin. Strips intermediate form |
-| Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string|
+| Name   | Description                                                                                                                                                                   |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Strip  | Does what it says on the tin. Strips intermediate form                                                                                                                        |
+| Simple | Does simple text transformations (find and replace) for "standard" formatting, and will convert colour to the given palette and then replace the colour with the given string |
 
 - Pre Roll regexp config option. This option allows you to transform every incoming line from stdin and stderr with a regex
 - The IRC Conn now maintains its own ping to the server, which will disconnect it after 30 seconds
