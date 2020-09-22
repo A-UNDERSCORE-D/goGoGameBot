@@ -194,7 +194,7 @@ func (m *Manager) statusCmd(data *command.Data) {
 
 		case m.GameExists(v):
 			g := m.GetGameFromName(v)
-			data.ReturnMessage(fmt.Sprintf("[%s] %s", g.GetName(), g.Status()))
+			data.ReturnMessage(fmt.Sprintf("[%s] %s (%s)", g.GetName(), g.Status(), g.GetComment()))
 		default:
 			data.ReturnNotice(fmt.Sprintf("unknown game %q", v))
 		}
