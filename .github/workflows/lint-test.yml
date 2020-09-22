@@ -16,7 +16,7 @@ jobs:
           config: .golangci.yml
 
       - name: test
-        run: go test -json ./... test.json
+        run: go test -json ./... > test.json
 
       - name: annotate tests
         if: always()
