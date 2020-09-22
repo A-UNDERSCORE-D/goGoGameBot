@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- GGGB Now imports using the vanity URL awesome-dragon.science/go/goGoGameBot
+
+### Fixed
+
+- bug causing some IRC lines to either be cut off or cause panics
+
 ## [0.5.1] - 2020-09-22
 
 ### Fixed
@@ -344,32 +352,31 @@ With format being the "standard" formatter with all its available tools and sett
 
 - Many undocumented additions
 
-
-
 [Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
-[0.4.13]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/556dbb0bf50a3ad7c6578fbe928a7e3a5949c45a...18ba52a01e20dbaefbeb9c11f225d12992327add
-[0.4.12]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/a609992f8cb8c7cab99458989beb528a3bfbf425...556dbb0bf50a3ad7c6578fbe928a7e3a5949c45a
-[0.4.11]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0fede936c424bf9248fb6e25be19ba5c0959f93d...a609992f8cb8c7cab99458989beb528a3bfbf425
-[0.4.10]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0f3fb07ae2e6971c70ff318971da3e7e9dbe2985...0fede936c424bf9248fb6e25be19ba5c0959f93d
-[0.4.9]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/662cc0a9d6b16cb879171e5d7fece9c2f94813e7...0f3fb07ae2e6971c70ff318971da3e7e9dbe2985
-[0.4.8]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/0563e36d876550fa2e77413f2f43cbedb6389663...662cc0a9d6b16cb879171e5d7fece9c2f94813e7
-[0.4.7]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/41e314f473987a85db1bff74aecbe2b878dc6462...0563e36d876550fa2e77413f2f43cbedb6389663
-[0.4.6]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/121712681fb22f0099251f83249bb8451b58f212...41e314f473987a85db1bff74aecbe2b878dc6462
-[0.4.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/933d526afe8f7c31d0c809d03ec2182b8d205d51...121712681fb22f0099251f83249bb8451b58f212
-[0.4.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7d083518df663bd8cd7b71f525c2c3624b69dfb7...933d526afe8f7c31d0c809d03ec2182b8d205d51
-[0.4.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9c16e5bdef8c6382b72b20f3713ab4a4d45883ff...7d083518df663bd8cd7b71f525c2c3624b69dfb7
-[0.4.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/f9f59d1c07c93a54019804a22df4feef23409dca...9c16e5bdef8c6382b72b20f3713ab4a4d45883ff
-[0.4.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/9ab227b07856945179e05159c48fc0bb08025efa...f9f59d1c07c93a54019804a22df4feef23409dca
-[0.3.5]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/88f7d651928e613dc57fa0e8d5b0de2cc970fc6d...9ab227b07856945179e05159c48fc0bb08025efa
-[0.3.4]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/b38b8c345c4f614ff167ceff17ea75a3d477aca0...88f7d651928e613dc57fa0e8d5b0de2cc970fc6d
-[0.3.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3...b38b8c345c4f614ff167ceff17ea75a3d477aca0
-[0.3.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/059e4fc266c88b2b877892ff6fe3c27703c28428...7853b0a8ac7fe63fc9be5e671ffbcfe209a2e3c3
-[0.3.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/cb2ad2488fdb8c2ff69080a567777bdc113dd780...059e4fc266c88b2b877892ff6fe3c27703c28428
-[0.3.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/e150762e9da3b0c48f4688610fe78c17aee1595d...cb2ad2488fdb8c2ff69080a567777bdc113dd780
-[0.2.3]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/3b8f793144078472c44c4874e3ab0db1c6d6ffe4...e150762e9da3b0c48f4688610fe78c17aee1595d
-[0.2.2]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/d7bd61c31ff1bfb051c527866b0e64d3b434dac4...3b8f793144078472c44c4874e3ab0db1c6d6ffe4
-[0.2.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/05443765e782d1b7aa0220fc9309755b28ffa11e...d7bd61c31ff1bfb051c527866b0e64d3b434dac4
-[0.2.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/c54e1526b5d97e5f7e9ed7c0412e1164bb0c04cb...05443765e782d1b7aa0220fc9309755b28ffa11e
-[0.1.1]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/b27ecee11a0add85feb208210c07419d42d4a97d...c54e1526b5d97e5f7e9ed7c0412e1164bb0c04cb
-[0.1.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot/compare/673bce90c9a03f2cc7c3d0cd7005bf06a0bfafa6...b27ecee11a0add85feb208210c07419d42d4a97d
-[0.0.0]:      https://git.ferricyanide.solutions/A_D/goGoGameBot
+[0.5.1]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.13...v0.5.1
+[0.4.13]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.12...v0.4.16
+[0.4.12]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.11...v0.4.12
+[0.4.11]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.10...v0.4.11
+[0.4.10]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.9...v0.4.10
+[0.4.9]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.8...v0.4.9
+[0.4.8]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.7...v0.4.8
+[0.4.7]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.6...v0.4.7
+[0.4.6]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.5...v0.4.6
+[0.4.5]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/c0.4.4...v0.4.5
+[0.4.4]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.2...v0.4.4
+[0.4.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.1...v0.4.2
+[0.4.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.0...v0.4.1
+[0.4.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.5...v0.4.0
+[0.3.5]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.4...v0.3.5
+[0.3.4]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.3...v0.3.4
+[0.3.3]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.2...v0.3.3
+[0.3.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.1...v0.3.2
+[0.3.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.0...v0.3.1
+[0.3.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.3...v0.3.0
+[0.2.3]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.2...v0.2.3
+[0.2.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.1...v0.2.2
+[0.2.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.0...v0.2.1
+[0.2.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.1...v0.2.0
+[0.1.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.0...0.1.1
+[0.1.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.0.0...v0.1.0
+[0.0.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare
