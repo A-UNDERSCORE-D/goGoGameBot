@@ -35,7 +35,7 @@ jobs:
 
       - name: Build GGGB
         run: |
-          go build -trimpath -ldflags "-X git.ferricyanide.solutions/A_D/goGoGameBot/internal/version.Version=v0.5.0" -o goGoGameBot ./cmd/goGoGameBot.go
+          go build -trimpath -ldflags "-X awesome-dragon.science/go/goGoGameBot/internal/version.Version=v0.5.0" -o goGoGameBot ./cmd/goGoGameBot.go
           sha256sum goGoGameBot > sha256.sum
 
       - name: Create Release
