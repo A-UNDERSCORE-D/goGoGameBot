@@ -50,6 +50,9 @@ type Conf struct {
 	SASL         bool   `toml:"sasl" comment:"Should authentication use SASL for negotiation (this is faster and more secure)"` //nolint:lll // Cant be made shorter
 	AuthUser     string `toml:"auth_user" comment:"User account to authenticate for"`
 	AuthPasswd   string `toml:"auth_passwd" comment:"Password for account authentication"`
+
+	SuppressMOTD bool `toml:"suppress_motd" comment:"Suppress logging of IRC MOTD messages being logged"`
+	SuppressPing bool `toml:"suppress_ping" comment:"Suppress logging of internal PING messages being logged"`
 }
 
 // IRC Represents a connection to an IRC server
@@ -96,7 +99,7 @@ func (i *IRC) setupCapManager() {
 	i.capabilityManager.supportCap("userhost-in-names")
 	i.capabilityManager.supportCap("server-time")
 
-	if i.SSL {
+	if i.SSL && i.SASL {
 		i.capabilityManager.supportCap("sasl")
 		i.capabilityManager.CapEvents.Attach("sasl", i.authenticateWithSasl, event.PriNorm)
 	} else if i.SASL {
@@ -127,7 +130,7 @@ type LineHandler func(message *ircmsg.IrcMessage, irc *IRC)
 // ErrNotConnected returned from Write when the IRC instance is not connected to a server
 var ErrNotConnected = errors.New("cannot send a message when not connected")
 
-func (i *IRC) write(toSend []byte) (int, error) {
+func (i *IRC) write(toSend []byte, logMsg bool) (int, error) {
 	if !i.Connected.Get() {
 		return 0, ErrNotConnected
 	}
@@ -139,7 +142,9 @@ func (i *IRC) write(toSend []byte) (int, error) {
 		out = append(out, '\r', '\n')
 	}
 
-	i.log.Debug("<< ", string(out[:len(out)-2]))
+	if logMsg {
+		i.log.Debug("<< ", string(out[:len(out)-2]))
+	}
 
 	return i.socket.Write(out)
 }
@@ -153,7 +158,7 @@ func (i *IRC) writeLine(command string, args ...string) (int, error) {
 		return -1, err
 	}
 
-	return i.write(lBytes)
+	return i.write(lBytes, !(command == "PING" && i.SuppressPing))
 }
 
 const maxDialTimeout = time.Second * 10
@@ -245,7 +250,7 @@ func (i *IRC) Disconnect(msg string) {
 	i.StopRequested.Set(true)
 
 	go func() {
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Millisecond * 500)
 
 		if i.Connected.Get() {
 			i.log.Warn("disconnect did not happen as expected. forcing a socket close")
@@ -342,16 +347,41 @@ func (i *IRC) checkLag() {
 	}
 }
 
+var motdNumerics = [...]string{"375", "372", "376"}
+
+func isMotdNumeric(in string) bool {
+	for _, v := range motdNumerics {
+		if in == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (i *IRC) shouldSuppressLog(line ircmsg.IrcMessage) bool {
+	if isMotdNumeric(line.Command) && i.SuppressMOTD {
+		return true
+	}
+
+	if line.Command == "PONG" && i.SuppressPing {
+		return true
+	}
+
+	return false
+}
+
 func (i *IRC) readLoop() {
 	s := bufio.NewScanner(i.socket)
 	for s.Scan() {
 		str := s.Text()
-		i.log.Debug(">> ", str)
-
 		line, err := ircmsg.ParseLine(str)
+
 		if err != nil {
 			i.log.Warnf("IRC.readLoop(): Discarding invalid Line %q: %s", str, err)
 			continue
+		} else if !i.shouldSuppressLog(line) {
+			i.log.Debug(">> ", str)
 		}
 
 		if line.Command == "PING" {
@@ -571,7 +601,7 @@ func (i *IRC) SendRaw(raw string) {
 
 	rawBytes := []byte(raw)
 
-	n, err := i.write([]byte(raw))
+	n, err := i.write([]byte(raw), true)
 	if n != len(rawBytes) {
 		i.log.Warnf("Did not send enough bytes: %d != %d", n, len(rawBytes))
 	}
