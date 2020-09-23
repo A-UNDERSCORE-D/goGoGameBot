@@ -100,9 +100,9 @@ func (m *Manager) runBot() {
 	for {
 		if err := m.bot.Run(); err != nil {
 			m.Warnf("error occurred while running bot %s: %s", m.bot, err)
+			m.Info("Sleeping for 1s")
+			time.Sleep(time.Second * 1)
 		}
-
-		m.sendStatusMessageToAllGames("Chat connected.")
 
 		if m.status.Get() != normal {
 			break
@@ -114,6 +114,7 @@ func (m *Manager) runBot() {
 			time.Sleep(time.Second * 10)
 		} else {
 			m.sendStatusMessageToAllGames("Chat is disconnected due to a reconnect request")
+			time.Sleep(time.Millisecond * 100)
 		}
 	}
 }

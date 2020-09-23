@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - IRC has two new config options, suppress_motd and suppress_ping. They prevent logging of their mentioned message types
 
+## Fixed
+
+- A timing bug that could cause the IRC implementation to spin out of control opening new sockets far too quickly
+
 ## [0.5.2] - 2020-09-23
 
 ### Changed
