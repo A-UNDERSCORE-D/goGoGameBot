@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2020-09-23
+
 ### Changed
 
 - GGGB Now imports using the vanity URL awesome-dragon.science/go/goGoGameBot
@@ -352,31 +354,32 @@ With format being the "standard" formatter with all its available tools and sett
 
 - Many undocumented additions
 
-[Unreleased]: https://git.ferricyanide.solutions/A_D/goGoGameBot
-[0.5.1]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.13...v0.5.1
-[0.4.13]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.12...v0.4.16
-[0.4.12]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.11...v0.4.12
-[0.4.11]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.10...v0.4.11
-[0.4.10]: https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.9...v0.4.10
-[0.4.9]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.8...v0.4.9
-[0.4.8]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.7...v0.4.8
-[0.4.7]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.6...v0.4.7
-[0.4.6]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.5...v0.4.6
-[0.4.5]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/c0.4.4...v0.4.5
-[0.4.4]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.2...v0.4.4
-[0.4.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.1...v0.4.2
-[0.4.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.0...v0.4.1
-[0.4.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.5...v0.4.0
-[0.3.5]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.4...v0.3.5
-[0.3.4]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.3...v0.3.4
-[0.3.3]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.2...v0.3.3
-[0.3.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.1...v0.3.2
-[0.3.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.0...v0.3.1
-[0.3.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.3...v0.3.0
-[0.2.3]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.2...v0.2.3
-[0.2.2]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.1...v0.2.2
-[0.2.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.0...v0.2.1
-[0.2.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.1...v0.2.0
-[0.1.1]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.0...0.1.1
-[0.1.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.0.0...v0.1.0
-[0.0.0]:  https://github.com/A-UNDERSCORE-D/goGoGameBot/compare
+[Unreleased]: https://github.com/A-UNDERSCORE-D/goGoGameBot
+[0.5.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.1...v0.5.2
+[0.5.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.13...v0.5.1
+[0.4.13]:     https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.12...v0.4.16
+[0.4.12]:     https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.11...v0.4.12
+[0.4.11]:     https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.10...v0.4.11
+[0.4.10]:     https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.9...v0.4.10
+[0.4.9]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.8...v0.4.9
+[0.4.8]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.7...v0.4.8
+[0.4.7]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.6...v0.4.7
+[0.4.6]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.5...v0.4.6
+[0.4.5]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/c0.4.4...v0.4.5
+[0.4.4]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.2...v0.4.4
+[0.4.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.1...v0.4.2
+[0.4.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.0...v0.4.1
+[0.4.0]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.5...v0.4.0
+[0.3.5]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.4...v0.3.5
+[0.3.4]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.3...v0.3.4
+[0.3.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.2...v0.3.3
+[0.3.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.1...v0.3.2
+[0.3.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.3.0...v0.3.1
+[0.3.0]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.3...v0.3.0
+[0.2.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.2...v0.2.3
+[0.2.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.1...v0.2.2
+[0.2.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.2.0...v0.2.1
+[0.2.0]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.1...v0.2.0
+[0.1.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.1.0...0.1.1
+[0.1.0]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.0.0...v0.1.0
+[0.0.0]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare
