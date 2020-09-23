@@ -24,3 +24,6 @@ internal/transport/network/prog/test_binaries/*
 .vscode
 config*.xml
 config*.toml
+*.log
+*config.toml
+*config.xml
