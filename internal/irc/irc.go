@@ -171,7 +171,6 @@ const maxDialTimeout = time.Second * 10
 // Connect connects to IRC and does the required negotiation for registering on the network and any capabilities
 // that have been requested
 func (i *IRC) Connect() error {
-
 	if i.Connected.Get() {
 		return fmt.Errorf("Already connected to IRC: %w", ErrorIRCAlreadyConnected)
 	}
@@ -278,6 +277,9 @@ func (i *IRC) Run() error {
 	}
 
 	if err := i.Connect(); err != nil {
+		if !errors.Is(err, ErrorIRCAlreadyConnected) {
+			i.Connected.Set(false)
+		}
 		return err
 	}
 
@@ -289,6 +291,7 @@ func (i *IRC) Run() error {
 		cancel()
 		i.lastPong.Set(time.Time{})
 		i.lag.Set(time.Duration(0))
+		_ = i.socket.Close()
 		i.Connected.Set(false)
 	}()
 

@@ -9,13 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2020-09-23
+
+### Fixed
+
+- IRC could kill its own connection and softlock itself
+
 ## [0.5.3] - 2020-09-23
 
-## Added
+### Added
 
 - IRC has two new config options, suppress_motd and suppress_ping. They prevent logging of their mentioned message types
 
-## Fixed
+### Fixed
 
 - A timing bug that could cause the IRC implementation to spin out of control opening new sockets far too quickly
 
