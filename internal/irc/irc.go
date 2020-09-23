@@ -23,6 +23,11 @@ import (
 	"awesome-dragon.science/go/goGoGameBot/pkg/util"
 )
 
+// Various Errors
+var (
+	ErrorIRCAlreadyConnected = errors.New("IRC is already connected")
+)
+
 // Admin holds a mask level pair, for use in commands
 type Admin struct {
 	Mask  string `xml:"mask,attr"`
@@ -166,6 +171,11 @@ const maxDialTimeout = time.Second * 10
 // Connect connects to IRC and does the required negotiation for registering on the network and any capabilities
 // that have been requested
 func (i *IRC) Connect() error {
+
+	if i.Connected.Get() {
+		return fmt.Errorf("Already connected to IRC: %w", ErrorIRCAlreadyConnected)
+	}
+
 	i.log.Infof("Starting IRC connection to %s:%s SSL: %t", i.Host, i.Port, i.SSL)
 	i.setupCapManager()
 
