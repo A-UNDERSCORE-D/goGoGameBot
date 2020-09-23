@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2020-09-23
+
 ## Added
 
 - IRC has two new config options, suppress_motd and suppress_ping. They prevent logging of their mentioned message types
@@ -363,6 +365,7 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://github.com/A-UNDERSCORE-D/goGoGameBot
+[0.5.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.2...v0.5.3
 [0.5.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.1...v0.5.2
 [0.5.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.13...v0.5.1
 [0.4.13]:     https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.12...v0.4.16
