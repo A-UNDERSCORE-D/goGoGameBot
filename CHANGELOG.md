@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2020-09-24
+
+### Fixed
+
+- Nil pointer dereference when using `.InvokeTemplate` from within a format
+
 ## [0.5.4] - 2020-09-23
 
 ### Fixed
@@ -371,6 +377,8 @@ With format being the "standard" formatter with all its available tools and sett
 - Many undocumented additions
 
 [Unreleased]: https://github.com/A-UNDERSCORE-D/goGoGameBot
+[0.5.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.5...v0.5.5
+[0.5.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.3...v0.5.4
 [0.5.3]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.2...v0.5.3
 [0.5.2]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.5.1...v0.5.2
 [0.5.1]:      https://github.com/A-UNDERSCORE-D/goGoGameBot/compare/v0.4.13...v0.5.1

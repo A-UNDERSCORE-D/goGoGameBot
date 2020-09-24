@@ -271,6 +271,8 @@ func (g *Game) compileFormats(gameConf *tomlconf.Game, root *template.Template) 
 		}
 	}
 
+	outFmts.root = root
+
 	return outFmts, nil
 }
 
