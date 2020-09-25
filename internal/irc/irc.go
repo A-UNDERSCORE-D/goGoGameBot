@@ -280,6 +280,7 @@ func (i *IRC) Run() error {
 		if !errors.Is(err, ErrorIRCAlreadyConnected) {
 			i.Connected.Set(false)
 		}
+
 		return err
 	}
 

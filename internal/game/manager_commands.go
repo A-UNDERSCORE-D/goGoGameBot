@@ -133,7 +133,7 @@ func restartGame(game interfaces.Game, responder interfaces.CommandResponder) {
 	}()
 }
 
-func (m *Manager) stopCmd(data *command.Data) {
+func (m *Manager) shutdownCmd(data *command.Data) {
 	msg := "Stop requested"
 	if len(data.Args) > 0 {
 		msg = strings.Join(data.Args, " ")

@@ -318,7 +318,7 @@ func (m *Manager) setupCommands() error {
 		restartHelp = "restarts the specified games, as with stop, games may be killed if a stop times out"
 		rawHelp     = "sends the arguments provided directly to the standard in of the running game"
 
-		stopMHelp    = "stops the running bot instance, disconnects all connections, and stops all games"
+		shutdownHelp = "shuts down the running bot instance, disconnects all connections, and stops all games"
 		restartMHelp = "stops the running bot instance, disconnects all connections, and stops all games, " +
 			"and then starts it all back up"
 		reloadHelp = "reloads the config file from disk and applies it to the running bot." +
@@ -340,7 +340,7 @@ func (m *Manager) setupCommands() error {
 		m.Cmd.AddSubCommand(gamectl, "stop", 2, m.stopGameCmd, stopHelp),
 		m.Cmd.AddSubCommand(gamectl, "raw", 3, m.rawGameCmd, rawHelp),
 		m.Cmd.AddSubCommand(gamectl, "restart", 2, m.restartGameCmd, restartHelp),
-		m.Cmd.AddCommand("stop", 3, m.stopCmd, stopMHelp),
+		m.Cmd.AddCommand("shutdown", 3, m.shutdownCmd, shutdownHelp),
 		m.Cmd.AddCommand("restart", 3, m.restartCmd, restartMHelp),
 		m.Cmd.AddCommand("reload", 3, m.reloadCmd, reloadHelp),
 		m.Cmd.AddCommand("status", 0, m.statusCmd, statusHelp),
