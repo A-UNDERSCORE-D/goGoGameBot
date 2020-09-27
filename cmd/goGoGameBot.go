@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -42,28 +41,30 @@ var (
 		"sets the log file to be used. Must contain a %s for the date",
 	)
 	noLog = pflag.Bool("dont-log", false, "disables logging to disk")
+	ver   = pflag.BoolP("version", "v", false, "Print current version")
 )
 
-func main() { //nolint:funlen // Cant easily be broken up currently
+func main() {
 	pflag.Parse()
 
-	rl, _ := readline.New("> ")
-	lvl := log.DEBUG
-	file, err := getLogFile(*logFile)
-
-	if err != nil {
-		panic(fmt.Sprintf("could not open log file: %s", err))
+	if *ver {
+		fmt.Printf("GGGB Version %s\n", version.Version)
+		return
 	}
 
-	defer file.Close()
-
-	writer := io.MultiWriter(rl, file)
-
+	lvl := log.DEBUG
 	if *traceLog {
 		lvl = log.TRACE
 	}
 
-	logger = log.New(log.FTimestamp, writer, "MAIN", lvl)
+	l, logFile, rl, err := setupLoggingAndCommandline("> ", *logFile, log.FTimestamp, lvl)
+	if err != nil {
+		panic(err)
+	}
+
+	logger = l
+
+	defer logFile.Close()
 
 	for _, line := range strings.Split(asciiArt, "\n") {
 		logger.Info(line)
@@ -71,19 +72,9 @@ func main() { //nolint:funlen // Cant easily be broken up currently
 
 	logger.Infof("goGoGameBot version %s loading....", version.Version)
 
-	conf, err := tomlconf.GetConfig(*configFile)
+	gm, err := getGameManager()
 	if err != nil {
-		logger.Panicf("could not read config file. Please ensure it exists and is correctly formatted (%s)", err)
-	}
-
-	conn, err := getConn(conf, logger)
-	if err != nil {
-		logger.Crit("could not create connection: ", err)
-	}
-
-	gm, err := game.NewManager(conf, conn, logger.Clone().SetPrefix("GM"))
-	if err != nil {
-		logger.Crit("could not create GameManager: ", err)
+		logger.Crit(err)
 	}
 
 	setupSignalHandler(gm)
@@ -111,6 +102,25 @@ func main() { //nolint:funlen // Cant easily be broken up currently
 	_ = rl.Close()
 }
 
+func getGameManager() (*game.Manager, error) {
+	conf, err := tomlconf.GetConfig(*configFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not read config file. Please ensure it exists and is correctly formatted: %w", err)
+	}
+
+	conn, err := getConn(conf, logger)
+	if err != nil {
+		return nil, fmt.Errorf("Could not create connection: %w", err)
+	}
+
+	gm, err := game.NewManager(conf, conn, logger.Clone().SetPrefix("GM"))
+	if err != nil {
+		return nil, fmt.Errorf("could not create GameManager: %w", err)
+	}
+
+	return gm, nil
+}
+
 func setupSignalHandler(gameManager *game.Manager) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
@@ -127,7 +137,7 @@ func execSelf() {
 	panic(syscall.Exec(executable, os.Args, []string{}))
 }
 
-type terminalUtil struct{}
+type terminalUtil struct{} // implementation of a DataUtil
 
 func (terminalUtil) AdminLevel(string) int { return 1337 }
 
@@ -176,11 +186,29 @@ type nopWriteCloser struct{ io.Writer }
 
 func (nopWriteCloser) Close() error { return nil }
 
-func getLogFile(name string) (io.WriteCloser, error) {
-	if *noLog {
-		return nopWriteCloser{ioutil.Discard}, nil
+//nolint:lll // Cant make it shorter
+func setupLoggingAndCommandline(prompt, logPath string, flags, level int) (*log.Logger, io.WriteCloser, *readline.Instance, error) {
+	// TODO: Switch to something like https://godoc.org/github.com/peterh/liner or https://github.com/candid82/liner
+	readLine, err := readline.New(prompt)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("Could not create ReadLine: %w", err)
 	}
 
+	var file io.WriteCloser = nopWriteCloser{}
+	if !*noLog {
+		file, err = getLogFile(logPath)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("Could not open log file: %w", err)
+		}
+	}
+
+	mw := io.MultiWriter(readLine, file) // TODO: Make a version of this that doesn't die if the file dies
+	l := log.New(flags, mw, "MAIN", level)
+
+	return l, file, readLine, nil
+}
+
+func getLogFile(name string) (io.WriteCloser, error) {
 	curTime := time.Now().Format("02-01-2006")
 
 	file, err := os.OpenFile(fmt.Sprintf(name, curTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)

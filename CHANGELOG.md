@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Version flag (`-v` and `--version`) to print the current bot version and exit
+
 ### [0.5.6] - 2020-09-25
 
 ### Changed
