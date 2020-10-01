@@ -1,13 +1,13 @@
 package tomlconf
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pelletier/go-toml"
 )
 
@@ -422,18 +422,6 @@ func cmpGame(a, b *Game) bool { //nolint:gocognit // Its a comparison
 	return true
 }
 
-func jsonMust(res []byte, err error) []byte {
-	if err != nil {
-		panic(err)
-	}
-
-	return res
-}
-
-func jsonMustMarshalIndent(in interface{}) string {
-	return string(jsonMust(json.MarshalIndent(in, "", "    ")))
-}
-
 func tomlTreeFromMapMust(in map[string]interface{}) *toml.Tree {
 	tree, err := toml.TreeFromMap(in)
 	if err != nil {
@@ -504,6 +492,11 @@ func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 }
 
 func TestInclusion(t *testing.T) { //nolint:gocognit // Its a test
+	sConf := spew.NewDefaultConfig()
+	sConf.DisablePointerAddresses = true
+	sConf.SortKeys = true
+	sConf.DisableCapacities = true
+
 	for _, tt := range tests {
 		tt := tt
 		if !tt.IsValid {
@@ -528,7 +521,8 @@ func TestInclusion(t *testing.T) { //nolint:gocognit // Its a test
 				t.Fatalf("Could not resolve imports: %s", err)
 			}
 			if !cmpConfig(conf, tt.expectedConf) {
-				diff(jsonMustMarshalIndent(conf), jsonMustMarshalIndent(tt.expectedConf))
+				result := diff(sConf.Sdump(conf), sConf.Sdump(tt.expectedConf))
+				t.Log("\n", result)
 				t.Fatalf("Config did not match expected config")
 			}
 		})
