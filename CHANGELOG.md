@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Version flag (`-v` and `--version`) to print the current bot version and exit
+- Imported formats can now be overridden by a local game
 
 ### [0.5.6] - 2020-09-25
 

@@ -74,7 +74,61 @@ type FormatSet struct {
 	Quit     *string
 	Kick     *string
 	External *string
-	Extra    map[string]string
+
+	Extra map[string]string
+}
+
+// Indices into a FormatSet
+const (
+	MESSAGE = iota
+	JOIN
+	PART
+	NICK
+	QUIT
+	KICK
+	EXTERNAL
+)
+
+func (f *FormatSet) index(i int) *string {
+	switch i {
+	case MESSAGE:
+		return f.Message
+	case JOIN:
+		return f.Join
+	case PART:
+		return f.Part
+	case NICK:
+		return f.Nick
+	case QUIT:
+		return f.Quit
+	case KICK:
+		return f.Kick
+	case EXTERNAL:
+		return f.External
+	default:
+		panic(fmt.Sprintf("Unexpected index %d into FormatSet", i))
+	}
+}
+
+func (f *FormatSet) setIndex(i int, s *string) {
+	switch i {
+	case MESSAGE:
+		f.Message = s
+	case JOIN:
+		f.Join = s
+	case PART:
+		f.Part = s
+	case NICK:
+		f.Nick = s
+	case QUIT:
+		f.Quit = s
+	case KICK:
+		f.Kick = s
+	case EXTERNAL:
+		f.External = s
+	default:
+		panic(fmt.Sprintf("Unexpected index %d into FormatSet", i))
+	}
 }
 
 func (g *Game) resolveImports(c *Config) error {
@@ -99,6 +153,8 @@ func (g *Game) resolveFormatImports(c *Config) error {
 		return nil
 	}
 
+	currentFormats := g.Chat.Formats
+
 	fmtTemplate, exists := c.FormatTemplates[*g.Chat.ImportFormat]
 	if !exists {
 		return fmt.Errorf(
@@ -108,6 +164,12 @@ func (g *Game) resolveFormatImports(c *Config) error {
 	}
 
 	g.Chat.Formats = fmtTemplate
+
+	for i := MESSAGE; i <= EXTERNAL; i++ {
+		if str := currentFormats.index(i); str != nil {
+			g.Chat.Formats.setIndex(i, str)
+		}
+	}
 
 	return nil
 }

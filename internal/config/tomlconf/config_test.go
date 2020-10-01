@@ -23,6 +23,8 @@ const (
 	`
 )
 
+var nullConn = ConfigHolder{Type: "null"}
+
 type confTest struct {
 	name          string
 	tomlStr       string
@@ -30,8 +32,6 @@ type confTest struct {
 	expectedError string
 	expectedConf  *Config
 }
-
-func strPointer(in string) *string { return &in }
 
 var tests = []confTest{
 	{
@@ -138,12 +138,12 @@ var tests = []confTest{
 			Connection: ConfigHolder{Type: "null"},
 			FormatTemplates: map[string]FormatSet{
 				"test": {
-					Message: strPointer("message template test"),
-					Join:    strPointer("join template test"),
-					Part:    strPointer("part template test"),
-					Nick:    strPointer("nick template test"),
-					Quit:    strPointer("quit template test"),
-					Kick:    strPointer("kick template test"),
+					Message: makeStrPtr("message template test"),
+					Join:    makeStrPtr("join template test"),
+					Part:    makeStrPtr("part template test"),
+					Nick:    makeStrPtr("nick template test"),
+					Quit:    makeStrPtr("quit template test"),
+					Kick:    makeStrPtr("kick template test"),
 					Extra:   map[string]string{"test_one": "test_one: asd"},
 				},
 			},
@@ -164,12 +164,12 @@ var tests = []confTest{
 					Name: "whatever",
 					Chat: Chat{
 						Formats: FormatSet{
-							Message: strPointer("message template test"),
-							Join:    strPointer("join template test"),
-							Part:    strPointer("part template test"),
-							Nick:    strPointer("nick template test"),
-							Quit:    strPointer("quit template test"),
-							Kick:    strPointer("kick template test"),
+							Message: makeStrPtr("message template test"),
+							Join:    makeStrPtr("join template test"),
+							Part:    makeStrPtr("part template test"),
+							Nick:    makeStrPtr("nick template test"),
+							Quit:    makeStrPtr("quit template test"),
+							Kick:    makeStrPtr("kick template test"),
 							Extra:   map[string]string{"test_one": "test_one: asd"},
 						},
 
@@ -306,6 +306,66 @@ var tests = []confTest{
 			type = "process"
 			config.asd = "asd"
 		`,
+	}, {
+		name: "format import with override",
+		tomlStr: minViableToml + `
+		[format_templates]
+			[format_templates.test]
+			message = "asd"
+			join = "join"
+			part = "part"
+
+		[[game]]
+		name = "test"
+			[game.chat]
+			import_format = "test"
+
+			[game.chat.formats]
+			message = "whatever"
+			quit = "Im different"
+
+			[game.transport]
+			type = "none"
+			config.test = "test"
+		`,
+		IsValid: true,
+		expectedConf: &Config{
+			OriginalPath: "",
+			Connection:   nullConn,
+			FormatTemplates: map[string]FormatSet{
+				"test": {
+					Message:  makeStrPtr("asd"),
+					Join:     makeStrPtr("join"),
+					Part:     makeStrPtr("part"),
+					Nick:     nil,
+					Quit:     nil,
+					Kick:     nil,
+					External: nil,
+					Extra:    nil,
+				},
+			},
+			Games: []*Game{
+				{
+					Name:      "test",
+					Transport: ConfigHolder{Type: "none", RealConf: tomlTreeFromMapMust(map[string]interface{}{"test": "test"})},
+					Chat: Chat{
+						ImportFormat: makeStrPtr("test"),
+						Formats: FormatSet{
+							Message:  makeStrPtr("whatever"),
+							Join:     makeStrPtr("join"),
+							Part:     makeStrPtr("part"),
+							Nick:     nil,
+							Quit:     makeStrPtr("Im different"),
+							Kick:     nil,
+							External: nil,
+							Extra:    nil,
+						},
+						BridgeChat:    true,
+						AllowForwards: true,
+					},
+				},
+			},
+		},
 	}, /* {
 		name:    "large complex",
 		IsValid: true,
@@ -431,31 +491,34 @@ func tomlTreeFromMapMust(in map[string]interface{}) *toml.Tree {
 	return tree
 }
 
-func diff(a, b string) {
+func diff(a, b string) string {
+	out := &strings.Builder{}
 	aSplit := strings.Split(a, "\n")
 	bSplit := strings.Split(b, "\n")
 
 	for i, v := range aSplit {
 		if len(bSplit) <= i {
-			fmt.Println("+", v)
-			fmt.Println("--------------------------")
+			fmt.Fprintln(out, "+", v)
+			fmt.Fprintln(out, "--------------------------")
 
 			continue
 		}
 
-		lineDiff(v, bSplit[i])
+		aLine := aSplit[i]
+		bLine := bSplit[i]
+
+		if aLine == bLine {
+			fmt.Fprintln(out, aLine)
+			continue
+		}
+
+		fmt.Fprintln(out, "+", aLine)
+		fmt.Fprintln(out, "-", bLine)
 	}
+
+	return out.String()
 }
 
-func lineDiff(a, b string) {
-	if a == b {
-		fmt.Println(a)
-		return
-	}
-
-	fmt.Println("+", a)
-	fmt.Println("-", b)
-}
 func TestValidateConfig(t *testing.T) { //nolint:gocognit // Its just one func
 	for _, v := range tests {
 		//nolint:scopelint // tests run like this are safe iteration wise.
