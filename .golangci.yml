@@ -11,7 +11,7 @@ linters-settings:
           - (*git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log.Logger).Critf
           - (*git.ferricyanide.solutions/A_D/goGoGameBot/pkg/log.Logger).Panicf
   gocognit:
-    min-complexity: 15
+    min-complexity: 20
 
   maligned:
     suggest-new: true
@@ -62,7 +62,7 @@ linters:
     - goprintffuncname
     - interfacer
     - nakedret
-    - godox
+    # - godox
     # TODO: - goerr113 For now, no, add this later
     - nestif
     - nolintlint
