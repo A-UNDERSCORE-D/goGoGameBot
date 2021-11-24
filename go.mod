@@ -13,8 +13,8 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/goshuirc/irc-go v0.0.0-20200311142257-57fd157327ac
 	github.com/pelletier/go-toml v1.9.3
-	github.com/shirou/gopsutil v2.20.9+incompatible
+	github.com/shirou/gopsutil v3.21.10+incompatible
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.3.0 // indirect
-	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7 // indirect
+	github.com/tklauser/go-sysconf v0.3.9 // indirect
 )
