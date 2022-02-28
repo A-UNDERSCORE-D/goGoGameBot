@@ -37,7 +37,7 @@ jobs:
         with:
           stable: true
 
-      - uses: golangci/golangci-lint-action@v2.5.2
+      - uses: golangci/golangci-lint-action@v3.1.0
         with:
           version: v1.31
           # TODOs should be warned locally, but not on here
