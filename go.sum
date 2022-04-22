@@ -17,8 +17,8 @@ github.com/go-ole/go-ole v1.2.6/go.mod h1:pprOEPIfldk/42T2oK7lQ4v4JSDwmV0As9GaiU
 github.com/goshuirc/e-nfa v0.0.0-20160917075329-7071788e3940/go.mod h1:VOmrX6cmj7zwUeexC9HzznUdTIObHqIXUrWNYS+Ik7w=
 github.com/goshuirc/irc-go v0.0.0-20200311142257-57fd157327ac h1:0JSojWrghcpK9/wx1RpV9Bv2d+3TbBWtHWubKjU2tao=
 github.com/goshuirc/irc-go v0.0.0-20200311142257-57fd157327ac/go.mod h1:BRnLblzpqH2T5ANCODHBZLytz0NZN2KaMJ+di8oh3EM=
-github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
-github.com/pelletier/go-toml v1.9.4/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
+github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
+github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/shirou/gopsutil v3.21.11+incompatible h1:+1+c1VGhc88SSonWP6foOcLhvnKlUeu/erjjvaPEYiI=
